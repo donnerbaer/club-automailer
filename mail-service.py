@@ -432,7 +432,7 @@ def process_member_date_rule(
             recipient_member_id = recipient.get("member_id")
             receiver_member = db.session.get(
                 Member, recipient_member_id) if recipient_member_id else None
-            reference_member_id = recipient_member_id or member.id
+            reference_member_id = member.id
 
             if already_sent(rule.id, email, member_id=reference_member_id):
                 continue
