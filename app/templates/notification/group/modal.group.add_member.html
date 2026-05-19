@@ -1,0 +1,19 @@
+<button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addMemberGroupModal">
+    <i class="bi bi-person-plus-fill"></i> {{ _('Add Member') }}
+</button>
+
+<div class="modal fade" id="addMemberGroupModal" tabindex="-1" aria-labelledby="addMemberGroupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="addMemberGroupModalLabel">
+                    <i class="bi bi-person-plus-fill"></i> {{ _('Add Member to the Group') }}: {{ group.name }}
+                </h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% include 'notification/group/form.group.add_member.html' %}
+            </div>
+        </div>
+    </div>
+</div>

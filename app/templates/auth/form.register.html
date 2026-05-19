@@ -1,0 +1,42 @@
+<form method="POST" action="{{ url_for('auth.register') }}">
+    {% if nav_signup_form.errors %}
+        <ul>
+            {% for field, errors in nav_signup_form.errors.items() %}
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {{ nav_login_form.hidden_tag() }}
+    <div class="form-group">
+        <label for="username">{{ nav_signup_form.username.label.text }}</label>
+        {{ nav_signup_form.username(class="form-control", id="username") }}
+    </div>
+    <div class="form-group">
+        <label for="email">{{ nav_signup_form.email.label.text }}</label>
+        {{ nav_signup_form.email(class="form-control", id="email") }}
+    </div>
+
+    <div class="form-group">
+        <label for="password">{{ nav_signup_form.password.label.text }}</label>
+        {{ nav_signup_form.password(class="form-control", id="password") }}
+    </div>
+    <div class="form-group">
+        <label for="confirm_password">{{ nav_signup_form.confirm_password.label.text }}</label>
+        {{ nav_signup_form.confirm_password(class="form-control", id="confirm_password") }}
+    </div>
+
+
+    <div class="form-group">
+        <label for="first_name">{{ nav_signup_form.first_name.label.text }}</label>
+        {{ nav_signup_form.first_name(class="form-control", id="first_name") }}
+    </div>
+    <div class="form-group">
+        <label for="last_name">{{ nav_signup_form.last_name.label.text }}</label>
+        {{ nav_signup_form.last_name(class="form-control", id="last_name") }}
+    </div>
+    <div class="form-group mt-3">
+        {{ nav_signup_form.submit(class="form-control btn btn-primary", id="submit") }}
+    </div>
+</form>

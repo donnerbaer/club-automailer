@@ -1,0 +1,90 @@
+<form method="POST" action="{{ url_for('notification.event_post') }}">
+    {{ event_form.hidden_tag() }}
+
+    {% if event_form.errors %}
+    <div class="alert alert-danger" role="alert">
+        <strong>{{ _('There were errors in your form submission:') }}</strong>
+        <ul class="mb-0">
+            {% for field, errors in event_form.errors.items() %}
+                {% for error in errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            {{ event_form.title.label(class='form-label') }}
+            {{ event_form.title(class='form-control') }}
+        </div>
+        <div class="col-md-6">
+            {{ event_form.event_type.label(class='form-label') }}
+            {{ event_form.event_type(class='form-control') }}
+        </div>
+        <div class="col-12">
+            {{ event_form.description.label(class='form-label') }}
+            {{ event_form.description(class='form-control', rows='4') }}
+        </div>
+        <div class="col-md-6">
+            {{ event_form.start_at.label(class='form-label') }}
+            {{ event_form.start_at(class='form-control', type='datetime-local') }}
+        </div>
+        <div class="col-md-6">
+            {{ event_form.end_at.label(class='form-label') }}
+            {{ event_form.end_at(class='form-control', type='datetime-local') }}
+        </div>
+        <div class="col-12">
+            {{ event_form.location.label(class='form-label') }}
+            {{ event_form.location(class='form-control') }}
+        </div>
+        <div class="col-12 form-check mt-2 ms-2">
+            {{ event_form.is_recurring(class='form-check-input', id='event_is_recurring') }}
+            {{ event_form.is_recurring.label(class='form-check-label', for='event_is_recurring') }}
+        </div>
+        <div class="col-md-4" id="recurrence_pattern_div" style="display: none;">
+            {{ event_form.recurrence_pattern.label(class='form-label') }}
+            {{ event_form.recurrence_pattern(class='form-select') }}
+        </div>
+        <div class="col-md-4" id="recurrence_weekday_div" style="display: none;">
+            {{ event_form.recurrence_weekday.label(class='form-label') }}
+            {{ event_form.recurrence_weekday(class='form-select') }}
+        </div>
+        <div class="col-md-4" id="recurrence_count_div" style="display: none;">
+            {{ event_form.recurrence_count.label(class='form-label') }}
+            {{ event_form.recurrence_count(class='form-control') }}
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+        {{ event_form.submit(class='btn btn-primary') }}
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const isRecurringCheckbox = document.getElementById('event_is_recurring');
+        const patternDiv = document.getElementById('recurrence_pattern_div');
+        const weekdayDiv = document.getElementById('recurrence_weekday_div');
+        const countDiv = document.getElementById('recurrence_count_div');
+        const patternSelect = document.getElementById('recurrence_pattern');
+        
+        function toggleRecurrenceFields() {
+            if (isRecurringCheckbox.checked) {
+                patternDiv.style.display = 'block';
+                weekdayDiv.style.display = patternSelect.value === 'WEEKLY' ? 'block' : 'none';
+                countDiv.style.display = 'block';
+            } else {
+                patternDiv.style.display = 'none';
+                weekdayDiv.style.display = 'none';
+                countDiv.style.display = 'none';
+            }
+        }
+        
+        isRecurringCheckbox.addEventListener('change', toggleRecurrenceFields);
+        patternSelect.addEventListener('change', toggleRecurrenceFields);
+        toggleRecurrenceFields();  // Initial state
+    });
+</script>

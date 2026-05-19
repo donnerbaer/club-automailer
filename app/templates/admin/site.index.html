@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %} {{ _("Admin") }}{% endblock %}
+
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';" >
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+                <li class="breadcrumb-item">
+            <a class="" href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ _("Admin") }}
+        </li>
+    </ol>
+</nav>
+
+
+<h1>{{ _('Admin Panel') }}</h1>
+<p>{{ _('Here is some content for the admin dashboard.') }}</p>
+
+
+<div>
+    {% if current_user.has_permission('admin.users.read') %}
+        <a href="{{ url_for('user.users_view') }}" class="btn btn-primary">{{ _('Users') }}</a>
+    {% endif %}
+    {% if current_user.has_permission('admin.groups.read') %}
+        <a href="{{ url_for('admin.groups_view') }}" class="btn btn-primary">{{ _('Groups') }}</a>	
+    {% endif %}
+    {% if current_user.has_permission('admin.roles.read') %}
+		<a href="{{ url_for('admin.roles_view') }}" class="btn btn-primary">{{ _('Roles') }}</a>
+    {% endif %}
+
+    <a href="{{ url_for('admin.check_version') }}" class="btn btn-primary">{{ _('Check for Updates') }}</a>
+</div>
+
+
+<div class="mt-4 me-4">
+    <div class="alert alert-warning">
+        <h2 class="h4">{{ _('Notes') }}</h2>
+        <p class="mt-2">{{ _('How is the authorization system build?') }}</p>
+        <ul class="">
+            <li>
+                {{ _("Each user is assigned to at least one group.") }}
+            </li>
+            <li>
+                {{ _("Each group is assigned at least one role.") }}
+            </li>
+            <li>
+                {{ _("Each role has at least one authorization.") }}
+            </li>
+        </ul>
+        
+    </div>
+</div>
+
+
+{% if version_info %}
+    <div class="mt-4 me-4">
+        <div class="alert alert-info">
+            <h2 class="h4">{{ _('Version Check') }}</h2>
+            <p class="mt-2">
+                {{ _('The current version of SmartStorage is:') }} <strong>{{ version_info.current_version }}</strong>
+                {% if version_info.latest_version %}
+                    <br>
+                    {{ _('The latest version available is:') }} <strong>{{ version_info.latest_version }}</strong>
+                {% else %}
+                    <br>
+                    {{ _('Could not retrieve the latest version information.') }}
+                {% endif %}
+            </p>
+            {% if version_info.update_available %}
+                <p class="mt-2">
+                    <strong>{{ _('An update is available!') }}</strong>
+                    <a href="https://github.com/donnerbaer/smart-storage">{{ _('Get the newest release') }}</a>
+                </p>
+            {% else %}
+                <p class="mt-2">
+                    {{ _('You are using the latest version of SmartStorage.') }}
+                </p>
+            {% endif %}
+
+        </div>
+    </div>
+{% endif %}
+
+
+{% endblock %}

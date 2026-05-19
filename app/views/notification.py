@@ -1,0 +1,1192 @@
+""" This module handles the main views of the application, including the index, dashboard, and error pages."""
+
+from calendar import monthrange
+from datetime import datetime
+from datetime import timedelta
+from flask import Blueprint, render_template, redirect, url_for, request
+from flask_babel import gettext as _
+from flask_login import login_required
+from jinja2 import Undefined
+from jinja2.exceptions import SecurityError, TemplateSyntaxError, UndefinedError
+from jinja2.sandbox import SandboxedEnvironment
+
+from app import db
+from app.forms import (
+    AuthGroupCreateForm,
+    AuthGroupUpdateForm,
+    EventForm,
+    EventCleanupForm,
+    NotificationEventParticipantForm,
+    NotificationRuleForm,
+    NotificationRuleReceiverForm,
+    NotificationTemplateForm,
+    TriggerTypeForm,
+    MemberForm,
+    NotificationMemberGroupForm,
+    NotificationGroupMembershipForm,
+    NotificationLogClearForm,
+    NotificationLogCleanupForm,
+    NotificationFailedLogClearForm,
+)
+from app.model.model import (
+    Event,
+    EventParticipant,
+    Group,
+    Member,
+    NotificationLog,
+    NotificationRule,
+    NotificationRuleReceiver,
+    NotificationTemplate,
+    TriggerType,
+    ensure_notification_log_event_title_column,
+)
+import re
+from app.utils.decorators import check_permissions
+
+
+notification_bp = Blueprint(
+    'notification',
+    __name__,
+    url_prefix='/notification',
+    template_folder='templates/notification'
+)
+
+EVENT_TITLE_ENV = SandboxedEnvironment(autoescape=False, undefined=Undefined)
+
+
+def _add_months(base_date, month_count):
+    """Return a datetime shifted forward by a number of calendar months."""
+    month_index = base_date.month - 1 + month_count
+    year = base_date.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(base_date.day, monthrange(year, month)[1])
+    return base_date.replace(year=year, month=month, day=day)
+
+
+def _build_recurrence_start(base_start, recurrence_pattern, occurrence_index):
+    """Calculate the start datetime for a recurring occurrence."""
+    if recurrence_pattern == 'DAILY':
+        return base_start + timedelta(days=occurrence_index)
+    if recurrence_pattern == 'MONTHLY':
+        return _add_months(base_start, occurrence_index)
+    return base_start + timedelta(weeks=occurrence_index)
+
+
+def _format_event_title_value(value):
+    if value is None:
+        return ''
+    if isinstance(value, datetime):
+        return value.isoformat(sep=' ')
+    if hasattr(value, 'isoformat'):
+        return value.isoformat()
+    return value
+
+
+def _build_event_title_context(event):
+    return {
+        'event': {
+            'description': event.description or '',
+            'start_at': _format_event_title_value(event.start_at),
+            'end_at': _format_event_title_value(event.end_at),
+            'start_date': _format_event_title_value(event.start_at),
+            'end_date': _format_event_title_value(event.end_at),
+            'location': event.location or '',
+        },
+        'event_title': event.title,
+        'event_description': event.description or '',
+        'event_start': _format_event_title_value(event.start_at),
+        'event_end': _format_event_title_value(event.end_at),
+        'event_start_date': _format_event_title_value(event.start_at),
+        'event_end_date': _format_event_title_value(event.end_at),
+        'event_location': event.location or '',
+    }
+
+
+def _render_event_title(event):
+    title_template = event.title or ''
+    if '{{' not in title_template and '{%' not in title_template:
+        return title_template
+
+    try:
+        return EVENT_TITLE_ENV.from_string(title_template).render(
+            _build_event_title_context(event)
+        )
+    except (SecurityError, TemplateSyntaxError, UndefinedError):
+        return title_template
+
+
+def _attach_rendered_event_title(event):
+    event.rendered_title = _render_event_title(event)
+    return event
+
+
+@notification_bp.route('/')
+@login_required
+@check_permissions(['notification.view'])
+def index():
+    return render_template('notification/site.index.html')
+
+
+@notification_bp.route('/templates')
+@login_required
+@check_permissions(['notification.templates.view'])
+def templates_view():
+    templates = NotificationTemplate.query.order_by(
+        NotificationTemplate.code.asc()).all()
+    template_form = NotificationTemplateForm()
+    return render_template('notification/site.templates.html', templates=templates, template_form=template_form)
+
+
+@notification_bp.route('/templates', methods=['POST'])
+@login_required
+@check_permissions(['notification.template.create'])
+def template_post():
+    template_form = NotificationTemplateForm()
+    if template_form.validate_on_submit():
+        duplicate_code = NotificationTemplate.query.filter_by(
+            code=template_form.code.data).first()
+        if duplicate_code is None:
+            template = NotificationTemplate(
+                code=template_form.code.data,
+                subject_template=template_form.subject_template.data,
+                body_template=template_form.body_template.data,
+            )
+            db.session.add(template)
+            db.session.commit()
+            return redirect(url_for('notification.template_detail', template_id=template.id))
+        template_form.code.errors.append(_('Template code already exists.'))
+
+    templates = NotificationTemplate.query.order_by(
+        NotificationTemplate.code.asc()).all()
+    return render_template('notification/site.templates.html', templates=templates, template_form=template_form)
+
+
+@notification_bp.route('/templates/<int:template_id>')
+@login_required
+@check_permissions(['notification.template.read'])
+def template_detail(template_id):
+    template = NotificationTemplate.query.get_or_404(template_id)
+    template_update_form = NotificationTemplateForm(obj=template)
+    return render_template(
+        'notification/site.template.html',
+        template=template,
+        template_update_form=template_update_form,
+    )
+
+
+@notification_bp.route('/templates/<int:template_id>/update', methods=['POST'])
+@login_required
+@check_permissions(['notification.template.update'])
+def template_update(template_id):
+    template = NotificationTemplate.query.get_or_404(template_id)
+    template_update_form = NotificationTemplateForm()
+
+    if template_update_form.validate_on_submit():
+        duplicate_code = NotificationTemplate.query.filter(
+            NotificationTemplate.id != template.id,
+            NotificationTemplate.code == template_update_form.code.data,
+        ).first()
+        if duplicate_code is None:
+            template.code = template_update_form.code.data
+            template.subject_template = template_update_form.subject_template.data
+            template.body_template = template_update_form.body_template.data
+            db.session.add(template)
+            db.session.commit()
+            return redirect(url_for('notification.template_detail', template_id=template.id))
+        template_update_form.code.errors.append(
+            _('Template code already exists.'))
+
+    return render_template(
+        'notification/site.template.html',
+        template=template,
+        template_update_form=template_update_form,
+    )
+
+
+@notification_bp.route('/templates/<int:template_id>/delete', methods=['GET'])
+@login_required
+@check_permissions(['notification.template.delete'])
+def template_delete(template_id):
+    template = NotificationTemplate.query.get_or_404(template_id)
+    db.session.delete(template)
+    db.session.commit()
+    return redirect(url_for('notification.templates_view'))
+
+
+@notification_bp.route('/trigger-types')
+@login_required
+@check_permissions(['notification.rules.view'])
+def trigger_types_view():
+    trigger_types = TriggerType.query.order_by(TriggerType.code.asc()).all()
+    trigger_type_form = TriggerTypeForm()
+    return render_template('notification/site.trigger_types.html', trigger_types=trigger_types, trigger_type_form=trigger_type_form)
+
+
+@notification_bp.route('/trigger-types', methods=['POST'])
+@login_required
+@check_permissions(['notification.rule.create'])
+def trigger_type_post():
+    trigger_type_form = TriggerTypeForm()
+    if trigger_type_form.validate_on_submit():
+        duplicate_code = TriggerType.query.filter_by(
+            code=trigger_type_form.code.data).first()
+        if duplicate_code is None:
+            trigger_type = TriggerType(
+                code=trigger_type_form.code.data,
+                description=trigger_type_form.description.data or None,
+            )
+            db.session.add(trigger_type)
+            db.session.commit()
+            return redirect(url_for('notification.trigger_type_detail', trigger_type_id=trigger_type.id))
+        trigger_type_form.code.errors.append(
+            _('Trigger type code already exists.'))
+
+    trigger_types = TriggerType.query.order_by(TriggerType.code.asc()).all()
+    return render_template('notification/site.trigger_types.html', trigger_types=trigger_types, trigger_type_form=trigger_type_form)
+
+
+@notification_bp.route('/trigger-types/<int:trigger_type_id>')
+@login_required
+@check_permissions(['notification.rule.read'])
+def trigger_type_detail(trigger_type_id):
+    trigger_type = TriggerType.query.get_or_404(trigger_type_id)
+    trigger_type_update_form = TriggerTypeForm(obj=trigger_type)
+    return render_template(
+        'notification/site.trigger_type.html',
+        trigger_type=trigger_type,
+        trigger_type_update_form=trigger_type_update_form,
+    )
+
+
+@notification_bp.route('/trigger-types/<int:trigger_type_id>/update', methods=['POST'])
+@login_required
+@check_permissions(['notification.rule.update'])
+def trigger_type_update(trigger_type_id):
+    trigger_type = TriggerType.query.get_or_404(trigger_type_id)
+    trigger_type_update_form = TriggerTypeForm()
+
+    if trigger_type_update_form.validate_on_submit():
+        duplicate_code = TriggerType.query.filter(
+            TriggerType.id != trigger_type.id,
+            TriggerType.code == trigger_type_update_form.code.data,
+        ).first()
+        if duplicate_code is None:
+            trigger_type.code = trigger_type_update_form.code.data
+            trigger_type.description = trigger_type_update_form.description.data or None
+            db.session.add(trigger_type)
+            db.session.commit()
+            return redirect(url_for('notification.trigger_type_detail', trigger_type_id=trigger_type.id))
+        trigger_type_update_form.code.errors.append(
+            _('Trigger type code already exists.'))
+
+    return render_template(
+        'notification/site.trigger_type.html',
+        trigger_type=trigger_type,
+        trigger_type_update_form=trigger_type_update_form,
+    )
+
+
+@notification_bp.route('/trigger-types/<int:trigger_type_id>/delete', methods=['GET'])
+@login_required
+@check_permissions(['notification.rule.delete'])
+def trigger_type_delete(trigger_type_id):
+    trigger_type = TriggerType.query.get_or_404(trigger_type_id)
+    db.session.delete(trigger_type)
+    db.session.commit()
+    return redirect(url_for('notification.trigger_types_view'))
+
+
+@notification_bp.route('/rules')
+@login_required
+@check_permissions(['notification.rules.view'])
+def rules_view():
+    rules = NotificationRule.query.order_by(
+        NotificationRule.created_at.desc()).all()
+    rule_form = NotificationRuleForm()
+    trigger_type_map = {
+        trigger.id: trigger for trigger in TriggerType.query.all()}
+    template_map = {
+        template.id: template for template in NotificationTemplate.query.all()}
+    return render_template(
+        'notification/site.rules.html',
+        rules=rules,
+        rule_form=rule_form,
+        trigger_type_map=trigger_type_map,
+        template_map=template_map,
+    )
+
+
+@notification_bp.route('/rules', methods=['POST'])
+@login_required
+@check_permissions(['notification.rule.create'])
+def rule_post():
+    rule_form = NotificationRuleForm()
+    if rule_form.validate_on_submit():
+        trigger_id = int(rule_form.trigger_type.data)
+        template_id = int(rule_form.template_id.data)
+        if trigger_id == 0:
+            rule_form.trigger_type.errors.append(
+                _('Please select a trigger type.'))
+        if template_id == 0:
+            rule_form.template_id.errors.append(_('Please select a template.'))
+        if not rule_form.trigger_type.errors and not rule_form.template_id.errors:
+            rule = NotificationRule(
+                name=rule_form.name.data,
+                trigger_type=trigger_id,
+                days_before=rule_form.days_before.data,
+                trigger_value=rule_form.trigger_value.data,
+                send_time=rule_form.send_time.data,
+                template_id=template_id,
+                active=rule_form.active.data,
+            )
+            db.session.add(rule)
+            db.session.commit()
+            return redirect(url_for('notification.rule_detail', rule_id=rule.id))
+
+    rules = NotificationRule.query.order_by(
+        NotificationRule.created_at.desc()).all()
+    trigger_type_map = {
+        trigger.id: trigger for trigger in TriggerType.query.all()}
+    template_map = {
+        template.id: template for template in NotificationTemplate.query.all()}
+    return render_template(
+        'notification/site.rules.html',
+        rules=rules,
+        rule_form=rule_form,
+        trigger_type_map=trigger_type_map,
+        template_map=template_map,
+    )
+
+
+@notification_bp.route('/rules/<int:rule_id>')
+@login_required
+@check_permissions(['notification.rule.read'])
+def rule_detail(rule_id):
+    rule = NotificationRule.query.get_or_404(rule_id)
+    rule_update_form = NotificationRuleForm(obj=rule)
+    receiver_form = NotificationRuleReceiverForm()
+    trigger = TriggerType.query.get(rule.trigger_type)
+    template = NotificationTemplate.query.get(rule.template_id)
+    group_map = {group.id: group for group in Group.query.all()}
+    return render_template(
+        'notification/site.rule.html',
+        rule=rule,
+        trigger=trigger,
+        template=template,
+        group_map=group_map,
+        rule_update_form=rule_update_form,
+        receiver_form=receiver_form,
+    )
+
+
+@notification_bp.route('/rules/<int:rule_id>/update', methods=['POST'])
+@login_required
+@check_permissions(['notification.rule.update'])
+def rule_update(rule_id):
+    rule = NotificationRule.query.get_or_404(rule_id)
+    rule_update_form = NotificationRuleForm()
+
+    if rule_update_form.validate_on_submit():
+        trigger_id = int(rule_update_form.trigger_type.data)
+        template_id = int(rule_update_form.template_id.data)
+        if trigger_id == 0:
+            rule_update_form.trigger_type.errors.append(
+                _('Please select a trigger type.'))
+        if template_id == 0:
+            rule_update_form.template_id.errors.append(
+                _('Please select a template.'))
+        if not rule_update_form.trigger_type.errors and not rule_update_form.template_id.errors:
+            rule.name = rule_update_form.name.data
+            rule.trigger_type = trigger_id
+            rule.days_before = rule_update_form.days_before.data
+            rule.trigger_value = rule_update_form.trigger_value.data
+            rule.send_time = rule_update_form.send_time.data
+            rule.template_id = template_id
+            rule.active = rule_update_form.active.data
+            db.session.add(rule)
+            db.session.commit()
+            return redirect(url_for('notification.rule_detail', rule_id=rule.id))
+
+    receiver_form = NotificationRuleReceiverForm()
+    trigger = TriggerType.query.get(rule.trigger_type)
+    template = NotificationTemplate.query.get(rule.template_id)
+    group_map = {group.id: group for group in Group.query.all()}
+    return render_template(
+        'notification/site.rule.html',
+        rule=rule,
+        trigger=trigger,
+        template=template,
+        group_map=group_map,
+        rule_update_form=rule_update_form,
+        receiver_form=receiver_form,
+    )
+
+
+@notification_bp.route('/rules/<int:rule_id>/add_receiver', methods=['POST'])
+@login_required
+@check_permissions(['notification.rule.update'])
+def add_receiver_to_rule(rule_id):
+    rule = NotificationRule.query.get_or_404(rule_id)
+    receiver_form = NotificationRuleReceiverForm()
+
+    if receiver_form.validate_on_submit():
+        receiver_type = receiver_form.receiver_type.data
+        group_id = int(receiver_form.group_id.data or 0)
+        custom_email = receiver_form.custom_email.data.strip(
+        ) if receiver_form.custom_email.data else None
+
+        if receiver_type == 'group':
+            if group_id == 0:
+                receiver_form.group_id.errors.append(
+                    _('Please select a group.'))
+            elif NotificationRuleReceiver.query.filter_by(rule_id=rule.id, receiver_type='group', group_id=group_id).first() is None:
+                db.session.add(NotificationRuleReceiver(
+                    rule_id=rule.id, receiver_type='group', group_id=group_id))
+                db.session.commit()
+                return redirect(url_for('notification.rule_detail', rule_id=rule.id))
+
+        if receiver_type == 'email':
+            if not custom_email:
+                receiver_form.custom_email.errors.append(
+                    _('Please enter a custom email.'))
+            elif NotificationRuleReceiver.query.filter_by(rule_id=rule.id, receiver_type='email', custom_email=custom_email).first() is None:
+                db.session.add(NotificationRuleReceiver(
+                    rule_id=rule.id, receiver_type='email', custom_email=custom_email))
+                db.session.commit()
+                return redirect(url_for('notification.rule_detail', rule_id=rule.id))
+
+    rule_update_form = NotificationRuleForm(obj=rule)
+    trigger = TriggerType.query.get(rule.trigger_type)
+    template = NotificationTemplate.query.get(rule.template_id)
+    group_map = {group.id: group for group in Group.query.all()}
+    return render_template(
+        'notification/site.rule.html',
+        rule=rule,
+        trigger=trigger,
+        template=template,
+        group_map=group_map,
+        rule_update_form=rule_update_form,
+        receiver_form=receiver_form,
+    )
+
+
+@notification_bp.route('/rules/<int:rule_id>/remove_receiver/<int:receiver_id>', methods=['GET'])
+@login_required
+@check_permissions(['notification.rule.update'])
+def remove_receiver_from_rule(rule_id, receiver_id):
+    rule = NotificationRule.query.get_or_404(rule_id)
+    receiver = NotificationRuleReceiver.query.filter_by(
+        rule_id=rule.id, id=receiver_id).first_or_404()
+    db.session.delete(receiver)
+    db.session.commit()
+    return redirect(url_for('notification.rule_detail', rule_id=rule.id))
+
+
+@notification_bp.route('/rules/<int:rule_id>/delete', methods=['GET'])
+@login_required
+@check_permissions(['notification.rule.delete'])
+def rule_delete(rule_id):
+    rule = NotificationRule.query.get_or_404(rule_id)
+    for receiver in list(rule.receivers):
+        db.session.delete(receiver)
+    db.session.delete(rule)
+    db.session.commit()
+    return redirect(url_for('notification.rules_view'))
+
+
+@notification_bp.route('/logs')
+@login_required
+@check_permissions(['notification.logs.read'])
+def logs_view():
+    ensure_notification_log_event_title_column()
+    logs = NotificationLog.query.order_by(NotificationLog.sent_at.desc()).all()
+    rule_map = {rule.id: rule for rule in NotificationRule.query.all()}
+    member_map = {member.id: member for member in Member.query.all()}
+    event_map = {event.id: event for event in Event.query.all()}
+    clear_logs_form = NotificationLogClearForm()
+    clear_failed_logs_form = NotificationFailedLogClearForm()
+    clear_cleanup_form = NotificationLogCleanupForm()
+    cleanup_result = {
+        'deleted_failed_logs': request.args.get('deleted_failed_logs', type=int),
+    }
+    if cleanup_result['deleted_failed_logs'] is None:
+        cleanup_result = None
+    return render_template(
+        'notification/site.logs.html',
+        logs=logs,
+        rule_map=rule_map,
+        member_map=member_map,
+        event_map=event_map,
+        clear_logs_form=clear_logs_form,
+        clear_failed_logs_form=clear_failed_logs_form,
+        cleanup_form=clear_cleanup_form,
+        cleanup_result=cleanup_result,
+    )
+
+
+@notification_bp.route('/logs/clear', methods=['POST'])
+@login_required
+@check_permissions(['notification.logs.delete'])
+def clear_logs():
+    ensure_notification_log_event_title_column()
+    clear_logs_form = NotificationLogClearForm()
+    if clear_logs_form.validate_on_submit():
+        NotificationLog.query.delete()
+        db.session.commit()
+    return redirect(url_for('notification.logs_view'))
+
+
+@notification_bp.route('/logs/clear_failed', methods=['POST'])
+@login_required
+@check_permissions(['notification.logs.delete'])
+def clear_failed_logs():
+    ensure_notification_log_event_title_column()
+    clear_failed_logs_form = NotificationFailedLogClearForm()
+    if not clear_failed_logs_form.validate_on_submit():
+        return redirect(url_for('notification.logs_view'))
+
+    deleted_failed_logs = NotificationLog.query.filter_by(
+        status='FAILED').delete(synchronize_session=False)
+    db.session.commit()
+    return redirect(url_for(
+        'notification.logs_view',
+        deleted_failed_logs=deleted_failed_logs,
+    ))
+
+
+@notification_bp.route('/logs/cleanup', methods=['POST'])
+@login_required
+@check_permissions(['notification.logs.delete'])
+def cleanup_old_logs():
+    """Delete notification logs older than the specified age."""
+    ensure_notification_log_event_title_column()
+    cleanup_form = NotificationLogCleanupForm()
+    if not cleanup_form.validate_on_submit():
+        return redirect(url_for('notification.logs_view'))
+
+    age_value = cleanup_form.age_value.data
+    age_unit = cleanup_form.age_unit.data
+
+    cutoff = datetime.utcnow()
+    if age_unit == 'days':
+        cutoff -= timedelta(days=age_value)
+    elif age_unit == 'weeks':
+        cutoff -= timedelta(weeks=age_value)
+    elif age_unit == 'months':
+        cutoff = _add_months(cutoff, -age_value)
+    else:
+        cutoff = _add_months(cutoff, -(age_value * 12))
+
+    deleted_logs = db.session.query(NotificationLog).filter(
+        NotificationLog.sent_at < cutoff
+    ).delete(synchronize_session=False)
+    db.session.commit()
+
+    return redirect(url_for(
+        'notification.logs_view',
+        deleted_logs=deleted_logs,
+        age_value=age_value,
+        age_unit=age_unit,
+    ))
+
+
+@notification_bp.route('/events')
+@login_required
+@check_permissions(['notification.events.view'])
+def events_view():
+    events = Event.query.order_by(Event.start_at.desc()).all()
+    event_form = EventForm()
+    cleanup_form = EventCleanupForm()
+    trigger_type_map = {
+        trigger.code: trigger for trigger in TriggerType.query.all()}
+    cleanup_result = {
+        'deleted_events': request.args.get('deleted_events', type=int),
+        'deleted_logs': request.args.get('deleted_logs', type=int),
+        'age_value': request.args.get('age_value', type=int),
+        'age_unit': request.args.get('age_unit'),
+    }
+    if cleanup_result['deleted_events'] is None and cleanup_result['deleted_logs'] is None:
+        cleanup_result = None
+    # Detect recurrence series links for events (either from column or embedded token)
+    for ev in events:
+        _attach_rendered_event_title(ev)
+        ev._recurrence_group_id = None
+        if getattr(ev, 'recurrence_group_id', None):
+            ev._recurrence_group_id = ev.recurrence_group_id
+        else:
+            # look for token like "#sym:recurrence_group_id 123" in title or description
+            for text in (ev.title or '', ev.description or ''):
+                m = re.search(r'#sym:recurrence_group_id\s*(\d+)', text)
+                if m:
+                    ev._recurrence_group_id = int(m.group(1))
+                    break
+        ev.recurrence_series_link = url_for(
+            'notification.event_series_detail', group_id=ev._recurrence_group_id) if ev._recurrence_group_id else None
+    return render_template(
+        'notification/site.events.html',
+        events=events,
+        event_form=event_form,
+        cleanup_form=cleanup_form,
+        trigger_type_map=trigger_type_map,
+        cleanup_result=cleanup_result,
+    )
+
+
+@notification_bp.route('/events/cleanup', methods=['POST'])
+@login_required
+@check_permissions(['notification.event.delete'])
+def cleanup_old_events():
+    ensure_notification_log_event_title_column()
+    cleanup_form = EventCleanupForm()
+    if not cleanup_form.validate_on_submit():
+        events = Event.query.order_by(Event.start_at.desc()).all()
+        for event in events:
+            _attach_rendered_event_title(event)
+        event_form = EventForm()
+        trigger_type_map = {
+            trigger.code: trigger for trigger in TriggerType.query.all()}
+        return render_template(
+            'notification/site.events.html',
+            events=events,
+            event_form=event_form,
+            cleanup_form=cleanup_form,
+            trigger_type_map=trigger_type_map,
+        )
+
+    age_value = cleanup_form.age_value.data
+    age_unit = cleanup_form.age_unit.data
+
+    cutoff = datetime.utcnow()
+    if age_unit == 'days':
+        cutoff -= timedelta(days=age_value)
+    elif age_unit == 'months':
+        cutoff = _add_months(cutoff, -age_value)
+    else:
+        cutoff = _add_months(cutoff, -(age_value * 12))
+
+    event_ids = [
+        event_id for (event_id,) in db.session.query(Event.id).filter(
+            Event.start_at < cutoff
+        ).all()
+    ]
+
+    deleted_events = 0
+    deleted_logs = 0
+    if event_ids:
+        db.session.query(EventParticipant).filter(
+            EventParticipant.event_id.in_(event_ids)
+        ).delete(synchronize_session=False)
+        deleted_logs = db.session.query(NotificationLog).filter(
+            NotificationLog.event_id.in_(event_ids)
+        ).delete(synchronize_session=False)
+        deleted_events = db.session.query(Event).filter(
+            Event.id.in_(event_ids)
+        ).delete(synchronize_session=False)
+        db.session.commit()
+
+    return redirect(url_for(
+        'notification.events_view',
+        deleted_events=deleted_events,
+        deleted_logs=deleted_logs,
+        age_value=age_value,
+        age_unit=age_unit,
+    ))
+
+
+@notification_bp.route('/events', methods=['POST'])
+@login_required
+@check_permissions(['notification.event.create'])
+def event_post():
+    event_form = EventForm()
+    if event_form.validate_on_submit():
+        trigger_code = event_form.event_type.data or 'EVENT_START'
+        is_recurring = event_form.is_recurring.data
+        recurrence_pattern = event_form.recurrence_pattern.data or 'WEEKLY'
+        recurrence_count = event_form.recurrence_count.data or 1
+
+        # Create event(s)
+        if is_recurring and recurrence_count > 1:
+            # Create recurring events with a shared recurrence_group_id
+            base_start = event_form.start_at.data
+            base_end = event_form.end_at.data
+
+            # Create placeholder to get the group ID
+            placeholder = Event(
+                title="placeholder",
+                event_type=trigger_code,
+                start_at=base_start,
+            )
+            db.session.add(placeholder)
+            db.session.flush()  # Get the ID without committing
+            recurrence_group_id = placeholder.id
+            db.session.rollback()  # Undo placeholder
+
+            # Create all events with the group ID
+            created_events = []
+            for i in range(recurrence_count):
+                event_start = _build_recurrence_start(
+                    base_start,
+                    recurrence_pattern,
+                    i,
+                )
+                if base_end:
+                    duration = base_end - base_start
+                    event_end = event_start + duration
+                else:
+                    event_end = None
+
+                event = Event(
+                    title=event_form.title.data,
+                    event_type=trigger_code,
+                    description=event_form.description.data or None,
+                    start_at=event_start,
+                    end_at=event_end,
+                    location=event_form.location.data or None,
+                    is_recurring=False,
+                    recurrence_group_id=recurrence_group_id,
+                )
+                db.session.add(event)
+                created_events.append(event)
+
+            db.session.commit()
+
+            # Update the recurrence_group_id to use the first event's ID
+            recurrence_group_id = created_events[0].id
+            for event in created_events:
+                event.recurrence_group_id = recurrence_group_id
+            db.session.commit()
+
+            # Redirect to series overview
+            return redirect(url_for('notification.event_series_detail', group_id=recurrence_group_id))
+        else:
+            # Create single event
+            event = Event(
+                title=event_form.title.data,
+                event_type=trigger_code,
+                description=event_form.description.data or None,
+                start_at=event_form.start_at.data,
+                end_at=event_form.end_at.data,
+                location=event_form.location.data or None,
+                is_recurring=False,
+            )
+            db.session.add(event)
+            db.session.commit()
+            return redirect(url_for('notification.event_detail', event_id=event.id))
+
+    events = Event.query.order_by(Event.start_at.desc()).all()
+    trigger_type_map = {
+        trigger.code: trigger for trigger in TriggerType.query.all()}
+    return render_template(
+        'notification/site.events.html',
+        events=events,
+        event_form=event_form,
+        trigger_type_map=trigger_type_map,
+    )
+
+
+@notification_bp.route('/events/<int:event_id>')
+@login_required
+@check_permissions(['notification.event.read'])
+def event_detail(event_id):
+    event = Event.query.get_or_404(event_id)
+    _attach_rendered_event_title(event)
+    event_update_form = EventForm(obj=event)
+    participant_form = NotificationEventParticipantForm(event_id=event.id)
+    trigger = TriggerType.query.filter_by(code=event.event_type).first()
+    # detect recurrence series link for this event
+    event._recurrence_group_id = None
+    if getattr(event, 'recurrence_group_id', None):
+        event._recurrence_group_id = event.recurrence_group_id
+    else:
+        for text in (event.title or '', event.description or ''):
+            m = re.search(r'#sym:recurrence_group_id\s*(\d+)', text)
+            if m:
+                event._recurrence_group_id = int(m.group(1))
+                break
+    event.recurrence_series_link = url_for(
+        'notification.event_series_detail', group_id=event._recurrence_group_id) if event._recurrence_group_id else None
+    return render_template(
+        'notification/site.event.html',
+        event=event,
+        trigger=trigger,
+        event_update_form=event_update_form,
+        participant_form=participant_form,
+    )
+
+
+@notification_bp.route('/events/<int:event_id>/update', methods=['POST'])
+@login_required
+@check_permissions(['notification.event.update'])
+def event_update(event_id):
+    event = Event.query.get_or_404(event_id)
+    event_update_form = EventForm()
+
+    if event_update_form.validate_on_submit():
+        trigger_code = event_update_form.event_type.data or 'EVENT_START'
+        event.title = event_update_form.title.data
+        event.event_type = trigger_code
+        event.description = event_update_form.description.data or None
+        event.start_at = event_update_form.start_at.data
+        event.end_at = event_update_form.end_at.data
+        event.location = event_update_form.location.data or None
+        db.session.add(event)
+        db.session.commit()
+        return redirect(url_for('notification.event_detail', event_id=event.id))
+
+    participant_form = NotificationEventParticipantForm(event_id=event.id)
+    trigger = TriggerType.query.filter_by(code=event.event_type).first()
+    return render_template(
+        'notification/site.event.html',
+        event=event,
+        trigger=trigger,
+        event_update_form=event_update_form,
+        participant_form=participant_form,
+    )
+
+
+@notification_bp.route('/events/<int:event_id>/add_member', methods=['POST'])
+@login_required
+@check_permissions(['notification.event.update'])
+def add_member_to_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    participant_form = NotificationEventParticipantForm(event_id=event.id)
+
+    if participant_form.validate_on_submit():
+        member_id = int(participant_form.member.data)
+        if member_id == 0:
+            participant_form.member.errors.append(
+                _('Please select a member to add to the event.'))
+        else:
+            member = Member.query.get_or_404(member_id)
+            existing_participant = EventParticipant.query.filter_by(
+                event_id=event.id,
+                member_id=member.id,
+            ).first()
+            if existing_participant is None:
+                db.session.add(EventParticipant(
+                    event_id=event.id, member_id=member.id, status='registered'))
+                db.session.commit()
+            return redirect(url_for('notification.event_detail', event_id=event.id))
+
+    event_update_form = EventForm(obj=event)
+    return render_template(
+        'notification/site.event.html',
+        event=event,
+        event_update_form=event_update_form,
+        participant_form=participant_form,
+    )
+
+
+@notification_bp.route('/events/<int:event_id>/remove_member/<int:member_id>', methods=['GET'])
+@login_required
+@check_permissions(['notification.event.update'])
+def remove_member_from_event(event_id, member_id):
+    event = Event.query.get_or_404(event_id)
+    participant = EventParticipant.query.filter_by(
+        event_id=event.id, member_id=member_id).first_or_404()
+    db.session.delete(participant)
+    db.session.commit()
+    return redirect(url_for('notification.event_detail', event_id=event.id))
+
+
+@notification_bp.route('/events/<int:event_id>/delete', methods=['GET'])
+@login_required
+@check_permissions(['notification.event.delete'])
+def event_delete(event_id):
+    event = Event.query.get_or_404(event_id)
+    db.session.delete(event)
+    db.session.commit()
+    return redirect(url_for('notification.events_view'))
+
+
+@notification_bp.route('/events/series/<int:group_id>')
+@login_required
+@check_permissions(['notification.events.view'])
+def event_series_detail(group_id):
+    """Show all events in a series and allow adding participants to each."""
+    series_events = Event.query.filter_by(recurrence_group_id=group_id).order_by(
+        Event.start_at.asc()).all()
+
+    if not series_events:
+        return redirect(url_for('notification.events_view'))
+
+    for event in series_events:
+        _attach_rendered_event_title(event)
+
+    first_event = series_events[0]
+    participant_forms = {
+        first_event.id: NotificationEventParticipantForm(
+            event_id=first_event.id)
+    }
+    for event in series_events[1:]:
+        participant_forms[event.id] = NotificationEventParticipantForm(
+            event_id=event.id)
+
+    return render_template(
+        'notification/site.event_series.html',
+        series_events=series_events,
+        participant_forms=participant_forms,
+    )
+
+
+@notification_bp.route('/groups')
+@login_required
+@check_permissions(['notification.groups.view'])
+def groups_view():
+    groups = Group.query.all()
+    group_form = AuthGroupCreateForm()
+    return render_template('notification/site.groups.html', groups=groups, group_form=group_form)
+
+
+@notification_bp.route('/groups', methods=['POST'])
+@login_required
+@check_permissions(['notification.group.create'])
+def group_post():
+    group_form = AuthGroupCreateForm()
+    if group_form.validate_on_submit():
+        if Group.query.filter_by(name=group_form.name.data).first() is None:
+            group = Group(
+                name=group_form.name.data,
+                description=group_form.description.data or None,
+            )
+            db.session.add(group)
+            db.session.commit()
+            return redirect(url_for('notification.groups_view'))
+        group_form.name.errors.append(_('Group name already exists.'))
+
+    groups = Group.query.all()
+    return render_template('notification/site.groups.html', groups=groups, group_form=group_form)
+
+
+@notification_bp.route('/groups/<int:group_id>')
+@login_required
+@check_permissions(['notification.group.read'])
+def group_detail(group_id):
+    group = Group.query.get_or_404(group_id)
+    group_update_form = AuthGroupUpdateForm(obj=group)
+    group_membership_form = NotificationGroupMembershipForm(group_id=group.id)
+    return render_template(
+        'notification/site.group.html',
+        group=group,
+        group_update_form=group_update_form,
+        group_membership_form=group_membership_form,
+    )
+
+
+@notification_bp.route('/groups/<int:group_id>/update', methods=['POST'])
+@login_required
+@check_permissions(['notification.group.update'])
+def group_update(group_id):
+    group = Group.query.get_or_404(group_id)
+    group_update_form = AuthGroupUpdateForm()
+
+    if group_update_form.validate_on_submit():
+        duplicate_group = Group.query.filter(
+            Group.id != group.id,
+            Group.name == group_update_form.name.data,
+        ).first()
+        if duplicate_group is None:
+            group.name = group_update_form.name.data
+            group.description = group_update_form.description.data or None
+            db.session.add(group)
+            db.session.commit()
+            return redirect(url_for('notification.group_detail', group_id=group.id))
+        group_update_form.name.errors.append(_('Group name already exists.'))
+
+    group_membership_form = NotificationGroupMembershipForm(group_id=group.id)
+    return render_template(
+        'notification/site.group.html',
+        group=group,
+        group_update_form=group_update_form,
+        group_membership_form=group_membership_form,
+    )
+
+
+@notification_bp.route('/groups/<int:group_id>/add_member', methods=['POST'])
+@login_required
+@check_permissions(['notification.group.update'])
+def add_member_to_group(group_id):
+    """Add a member to a notification group."""
+    group = Group.query.get_or_404(group_id)
+    group_membership_form = NotificationGroupMembershipForm(group_id=group.id)
+
+    if group_membership_form.validate_on_submit():
+        member_id = int(group_membership_form.member.data)
+        if member_id == 0:
+            group_membership_form.member.errors.append(
+                _('Please select a member to add to the group.'))
+        else:
+            member = Member.query.get_or_404(member_id)
+            if member not in group.members:
+                group.members.append(member)
+                db.session.add(group)
+                db.session.commit()
+            return redirect(url_for('notification.group_detail', group_id=group.id))
+
+    group_update_form = AuthGroupUpdateForm(obj=group)
+    return render_template(
+        'notification/site.group.html',
+        group=group,
+        group_update_form=group_update_form,
+        group_membership_form=group_membership_form,
+    )
+
+
+@notification_bp.route('/groups/<int:group_id>/remove_member/<int:member_id>', methods=['GET'])
+@login_required
+@check_permissions(['notification.group.update'])
+def remove_member_from_group(group_id, member_id):
+    """Remove a member from a notification group."""
+    group = Group.query.get_or_404(group_id)
+    member = Member.query.get_or_404(member_id)
+    if member in group.members:
+        group.members.remove(member)
+        db.session.commit()
+    return redirect(url_for('notification.group_detail', group_id=group.id))
+
+
+@notification_bp.route('/groups/<int:group_id>/delete', methods=['GET'])
+@login_required
+@check_permissions(['notification.group.delete'])
+def group_delete(group_id):
+    group = Group.query.get_or_404(group_id)
+    group.members.clear()
+    db.session.delete(group)
+    db.session.commit()
+    return redirect(url_for('notification.groups_view'))
+
+
+@notification_bp.route('/members')
+@login_required
+@check_permissions(['notification.members.read'])
+def members_view():
+    members = Member.query.all()
+    member_form = MemberForm()
+    return render_template('notification/site.members.html', members=members, member_form=member_form)
+
+
+@notification_bp.route('/members', methods=['POST'])
+@login_required
+@check_permissions(['notification.member.create'])
+def member_post():
+    member_form = MemberForm()
+    if member_form.validate_on_submit():
+        member = Member(
+            member_number=member_form.member_number.data,
+            first_name=member_form.first_name.data,
+            last_name=member_form.last_name.data,
+            email=member_form.email.data,
+            phone=member_form.phone.data,
+            birth_date=member_form.birth_date.data,
+            join_date=member_form.join_date.data,
+            active=member_form.active.data,
+        )
+        db.session.add(member)
+        db.session.commit()
+        return redirect(url_for('notification.member_detail', member_id=member.id))
+
+    members = Member.query.all()
+    return render_template('notification/site.members.html', members=members, member_form=member_form)
+
+
+@notification_bp.route('/members/<int:member_id>')
+@login_required
+@check_permissions(['notification.member.read'])
+def member_detail(member_id):
+    member = Member.query.get_or_404(member_id)
+    member_update_form = MemberForm(obj=member)
+    member_group_form = NotificationMemberGroupForm(member_id=member.id)
+    return render_template(
+        'notification/site.member.html',
+        member=member,
+        member_update_form=member_update_form,
+        member_group_form=member_group_form,
+    )
+
+
+@notification_bp.route('/members/<int:member_id>/update', methods=['POST'])
+@login_required
+@check_permissions(['notification.member.update'])
+def member_update(member_id):
+    member = Member.query.get_or_404(member_id)
+    member_update_form = MemberForm()
+
+    if member_update_form.validate_on_submit():
+        member.member_number = member_update_form.member_number.data
+        member.first_name = member_update_form.first_name.data
+        member.last_name = member_update_form.last_name.data
+        member.email = member_update_form.email.data
+        member.phone = member_update_form.phone.data
+        member.birth_date = member_update_form.birth_date.data
+        member.join_date = member_update_form.join_date.data
+        member.active = member_update_form.active.data
+        db.session.add(member)
+        db.session.commit()
+        return redirect(url_for('notification.member_detail', member_id=member.id))
+
+    return render_template(
+        'notification/site.member.html',
+        member=member,
+        member_update_form=member_update_form,
+    )
+
+
+@notification_bp.route('/members/<int:member_id>/add_group', methods=['POST'])
+@login_required
+@check_permissions(['notification.member.update'])
+def add_group_to_member(member_id):
+    """Add a notification group to a member."""
+    member = Member.query.get_or_404(member_id)
+    member_group_form = NotificationMemberGroupForm(member_id=member.id)
+
+    if member_group_form.validate_on_submit():
+        group_id = int(member_group_form.group.data)
+        if group_id == 0:
+            member_group_form.group.errors.append(
+                _('Please select a group to add to the member.'))
+        else:
+            group = Group.query.get_or_404(group_id)
+            if group not in member.groups:
+                member.groups.append(group)
+                db.session.add(member)
+                db.session.commit()
+            return redirect(url_for('notification.member_detail', member_id=member.id))
+
+    member_update_form = MemberForm(obj=member)
+    return render_template(
+        'notification/site.member.html',
+        member=member,
+        member_update_form=member_update_form,
+        member_group_form=member_group_form,
+    )
+
+
+@notification_bp.route('/members/<int:member_id>/remove_group/<int:group_id>', methods=['GET'])
+@login_required
+@check_permissions(['notification.member.update'])
+def remove_group_from_member(member_id, group_id):
+    """Remove a notification group from a member."""
+    member = Member.query.get_or_404(member_id)
+    group = Group.query.get_or_404(group_id)
+    if group in member.groups:
+        member.groups.remove(group)
+        db.session.commit()
+    return redirect(url_for('notification.member_detail', member_id=member.id))
+
+
+@notification_bp.route('/members/<int:member_id>/delete', methods=['GET'])
+@login_required
+@check_permissions(['notification.member.delete'])
+def member_delete(member_id):
+    member = Member.query.get_or_404(member_id)
+
+    for event_participant in list(member.events):
+        db.session.delete(event_participant)
+
+    for event in Event.query.filter_by(created_by=member.id).all():
+        event.created_by = None
+
+    member.groups.clear()
+    db.session.delete(member)
+    db.session.commit()
+    return redirect(url_for('notification.members_view'))

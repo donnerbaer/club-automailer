@@ -1,0 +1,19 @@
+{% if current_user.has_permission('notification.group.create') %}
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+	<i class="bi bi-plus-circle"></i> {{ _('Create group') }}
+</button>
+<div class="modal fade" id="createGroupModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="createGroupModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h1 class="modal-title fs-5" id="createGroupModalLabel"><i class="bi bi-plus-circle"></i> {{ _('Create group') }}</h1>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				{% set action_url = url_for('notification.group_post') %}
+				{% include 'notification/group/form.group.html' %}
+			</div>
+		</div>
+	</div>
+</div>
+{% endif %}

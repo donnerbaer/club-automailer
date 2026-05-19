@@ -1,0 +1,20 @@
+{% if current_user.has_permission('notification.group.update') %}
+<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#updateGroupModal">
+    <i class="bi bi-pencil"></i> {{ _('Edit group') }}
+</button>
+<div class="modal fade" id="updateGroupModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="updateGroupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="updateGroupModalLabel"><i class="bi bi-pencil"></i> {{ _('Edit group') }}: {{ group.name }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% set action_url = url_for('notification.group_update', group_id=group.id) %}
+                {% set group_form = group_update_form %}
+                {% include 'notification/group/form.group.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

@@ -1,0 +1,15 @@
+<form method="POST" action="{{ url_for('notification.trigger_type_post') }}">
+    {{ trigger_type_form.hidden_tag() }}
+    <div class="mb-3">
+        {{ trigger_type_form.code.label(class='form-label') }}
+        {{ trigger_type_form.code(class='form-control') }}
+    </div>
+    <div class="mb-3">
+        {{ trigger_type_form.description.label(class='form-label') }}
+        {{ trigger_type_form.description(class='form-control', rows='5') }}
+    </div>
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+        {{ trigger_type_form.submit(class='btn btn-primary') }}
+    </div>
+</form>

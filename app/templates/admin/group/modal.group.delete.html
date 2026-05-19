@@ -1,0 +1,28 @@
+{% if current_user.has_permission('admin.group.delete') %}
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteGroupModal">
+    <i class="bi bi-trash"></i> {{ _('Delete Group') }}
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="deleteGroupModal" tabindex="-1" aria-labelledby="deleteGroupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="deleteGroupModalLabel">{{ _('Delete Group') }}: {{ group.name}} </h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i> {{ _('Warning!') }}
+                    {{ _('Are you sure you want to delete the group? This action cannot be undone.') }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="{{ url_for('admin.delete_group', group_id=group.id) }}" class="btn btn-danger">Delete Group</a>
+            <button type="button" class="btn btn-secondary align-start" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

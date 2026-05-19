@@ -1,0 +1,122 @@
+<!-- Navbar: shows navigation items conditionally based on `current_user` and
+	permission checks. Use `current_user.has_permission('<permission>')` to
+	control visibility of admin and feature-specific links. Common permission
+	examples: 'items.read', 'admin.users.read', 'admin.backend.access'. -->
+<nav class="navbar navbar-expand-xl bg-dark border-bottom border-body fixed-top" data-bs-theme="dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{{ url_for('main.index') }}">ENT</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 text-nowrap">
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i> {{ _('Home') }}</a>
+        </li>
+		{% if current_user.is_authenticated %}
+			<li class="nav-item">
+				<a class="nav-link" href="{{ url_for('main.dashboard') }}"><i class="bi bi-speedometer"></i> {{ _('Dashboard') }}</a>
+			</li>
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+					<i class="bi bi-bell"> </i>{{ _('Notifications') }}
+				</a>
+				<ul class="dropdown-menu">
+					{% if current_user.has_permission('notification.view') %}
+					<li><a class="dropdown-item" href="{{ url_for('notification.index') }}">{{ _('Dashboard') }}</a></li>
+					{% endif %}
+					<li><hr class="dropdown-divider"></li>
+					{% if current_user.has_permission('notification.members.read') %}
+					<li><a class="dropdown-item" href="{{ url_for('notification.members_view') }}">{{ _('Members') }}</a></li>
+					{% endif %}
+					{% if current_user.has_permission('notification.groups.view') %}
+					<li><a class="dropdown-item" href="{{ url_for('notification.groups_view') }}">{{ _('Groups') }}</a></li>
+					{% endif %}
+					{% if current_user.has_permission('notification.events.view') %}
+					<li><a class="dropdown-item" href="{{ url_for('notification.events_view') }}">{{ _('Events') }}</a></li>
+					{% endif %}
+					{% if current_user.has_permission('notification.templates.view') %}
+					<li><a class="dropdown-item" href="{{ url_for('notification.templates_view') }}">{{ _('Templates') }}</a></li>
+					{% endif %}
+					{% if current_user.has_permission('notification.rules.view') %}
+					<li><a class="dropdown-item" href="{{ url_for('notification.trigger_types_view') }}">{{ _('Trigger Types') }}</a></li>
+					<li><a class="dropdown-item" href="{{ url_for('notification.rules_view') }}">{{ _('Rules') }}</a></li>
+					{% endif %}
+					{% if current_user.has_permission('notification.logs.read') %}
+					<li><a class="dropdown-item" href="{{ url_for('notification.logs_view') }}">{{ _('Logs') }}</a></li>
+					{% endif %}
+				</ul>
+			</li>
+
+
+			{% if current_user.has_permission('admin.backend.access') %}
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+					<i class="bi bi-gear-fill"></i> {{ _('Admin') }}
+				</a>
+				<ul class="dropdown-menu">
+					<li><a class="dropdown-item" href="{{ url_for('admin.admin_view') }}">{{ _('Dashboard') }}</a></li>
+					<li><hr class="dropdown-divider"></li>
+					{% if current_user.has_permission('admin.groups.read') %}
+					<li><a class="dropdown-item" href="{{ url_for('admin.groups_view') }}">{{ _('Groups') }}</a></li>
+					{% endif %}
+					{% if current_user.has_permission('admin.roles.read') %}
+					<li><a class="dropdown-item" href="{{ url_for('admin.roles_view') }}">{{ _('Roles') }}</a></li>
+					{% endif %}
+					{% if current_user.has_permission('admin.users.read') %}
+					<li><a class="dropdown-item" href="{{ url_for('admin.view_users') }}">{{ _('Users') }}</a></li>
+					{% endif %}
+					
+				</ul>
+			</li>
+			{% endif %}
+		{% endif %}
+	</ul>
+
+	{% if current_user.is_authenticated %}
+    <form class="d-flex me-4" action="{{ url_for('main.search_view') }}" method="POST" role="search" style="min-width: 200px;">
+        <div class="input-group">
+			{{ navbar_search_form.hidden_tag() }}
+            <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
+			{{ navbar_search_form.query(class="form-control form-control-dark", placeholder=_("Search"), aria_label=_("Search")) }}
+			{{ navbar_search_form.submit(class="btn btn-success", aria_label=_("Search")) }}
+        </div>
+    </form>
+	
+	<div class="flex-shrink-0 dropdown mx-2">
+		<a href="#" class="d-block link-light text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+			<img src="{{ url_for('image.serve_current_user_image') }}"
+				alt="Profile picture of"
+				width="40" height="40"
+				class="rounded-circle bg-light"> {{ current_user.first_name }} {{ current_user.last_name }}
+		</a>
+		<ul class="dropdown-menu dropdown-menu-end">
+			<li><a class="dropdown-item" href="{{ url_for('user.user_view', user_id=current_user.id)}}">{{ _('My Profile')}}</a></li>
+			<li><hr class="dropdown-divider"></li>
+			<li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"> {{ _("Logout")}}</a></li>
+		</ul>
+	</div>
+	{% else %}         
+	<div class="d-flex align-items-center">
+		<div class="me-2">
+			<button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#loginModal">
+				{{ _("Sign-in") }}
+			</button>
+		</div>
+		<!-- Sign-up button -->
+		<!--
+		<div>
+			<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registrateModal">
+				{{ _("Sign-up") }}
+			</button>
+		</div>
+		-->
+	</div>
+	{% endif %}
+    </div>
+  </div>
+</nav>
+
+{% if not current_user.is_authenticated %}
+{% include 'auth/modal.login.html' %}
+{% endif %}

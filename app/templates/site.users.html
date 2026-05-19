@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %} {{ _("List of all users") }}{% endblock %}
+
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';" >
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a class="" href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ _('Users') }}
+        </li>
+    </ol>
+</nav>
+
+<h1>{{ _("Users") }}</h1>
+
+<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createUserModal">
+    <i class="bi bi-person-plus-fill"></i> {{ _("Create User") }}
+</button>
+
+<div class="modal fade" id="createUserModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="createUserModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="createUserModal"><i class="bi bi-person-plus-fill"></i> {{ _("Create User") }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="container">
+                    {% include 'user/form.user.create.html' %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if users|length == 0 %}
+    <p>{{ _('No users found.') }}</p>
+{% elif not current_user.has_permission('admin.users.read') %}
+    <p>{{ _('Number of users') }}: 1
+{% else %}
+    <p>{{ _('Number of users') }}: {{ users|length }}</p>
+{% endif %}
+
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th scope="col">{{ _("ID") }}</th>
+            <th scope="col">{{ _("Firstname") }}</th>
+            <th scope="col">{{ _("Lastname") }}</th>
+            <th scope="col">{{ _("Actions") }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users: %}
+        {% if user.id == current_user.id or current_user.has_permission('admin.users.read')%}
+        <tr>
+            <td scope="row">{{user.id}}</td>
+            <td>{{user.first_name}}</td>
+            <td>{{user.last_name}}</td>
+            <td><a href="{{ url_for('user.user_view', user_id=user.id) }}" class="btn btn-primary">{{ _('Display') }}</a></td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+
+    </tbody>
+</table>
+{% endblock %}

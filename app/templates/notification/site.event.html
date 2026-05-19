@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %} {{ event.rendered_title or event.title }} - {{ _('Events') }}{% endblock %}
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.events_view') }}">{{ _('Events') }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ event.rendered_title or event.title }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="h1 mb-1">{{ _('Event') }}: {{ event.rendered_title or event.title }}
+            {% if event.recurrence_series_link %}
+            <a class="ms-2 text-decoration-none" href="{{ event.recurrence_series_link }}" title="{{ _('View series') }}">
+                <i class="bi bi-link-45deg"></i>
+            </a>
+            {% endif %}
+        </h1>
+        <p class="text-muted mb-0">
+            {% if trigger %}
+            <a class="text-decoration-none" href="{{ url_for('notification.trigger_type_detail', trigger_type_id=trigger.id) }}">{{ trigger.description or trigger.code }}</a>
+            {% else %}
+            {{ event.event_type }}
+            {% endif %}
+        </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary" href="{{ url_for('notification.events_view') }}">
+            <i class="bi bi-arrow-left"></i> {{ _('Back to events') }}
+        </a>
+        {% include 'notification/event/modal.event.update.html' %}
+        {% include 'notification/event/modal.event.delete.html' %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body-tertiary">{{ _('Event details') }}</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">{{ _('ID') }}</dt>
+                    <dd class="col-sm-8">{{ event.id }}</dd>
+
+                    <dt class="col-sm-4">{{ _('Title') }}</dt>
+                    <dd class="col-sm-8">{{ event.rendered_title or event.title }}
+                        {% if event.recurrence_series_link %}
+                        <a class="ms-2 text-decoration-none" href="{{ event.recurrence_series_link }}" title="{{ _('View series') }}">
+                            <i class="bi bi-link-45deg"></i>
+                        </a>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="col-sm-4">{{ _('Trigger Type') }}</dt>
+                    <dd class="col-sm-8">
+                        {% if trigger %}
+                        <a class="text-decoration-none" href="{{ url_for('notification.trigger_type_detail', trigger_type_id=trigger.id) }}">{{ trigger.description or trigger.code }}</a>
+                        {% else %}
+                        {{ event.event_type }}
+                        {% endif %}
+                    </dd>
+
+                    <dt class="col-sm-4">{{ _('Description') }}</dt>
+                    <dd class="col-sm-8">{{ event.description or '-' }}</dd>
+
+                    <dt class="col-sm-4">{{ _('Start At') }}</dt>
+                    <dd class="col-sm-8">{{ event.start_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+
+                    <dt class="col-sm-4">{{ _('End At') }}</dt>
+                    <dd class="col-sm-8">{{ event.end_at.strftime('%Y-%m-%d %H:%M') if event.end_at else '-' }}</dd>
+
+                    <dt class="col-sm-4">{{ _('Location') }}</dt>
+                    <dd class="col-sm-8">{{ event.location or '-' }}</dd>
+
+                    <dt class="col-sm-4">{{ _('Members') }}</dt>
+                    <dd class="col-sm-8">{{ event.participants|length }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center gap-2">
+                <span>{{ _('Participants') }}</span>
+                {% if current_user.has_permission('notification.event.update') %}
+                    {% include 'notification/event/modal.event.add_member.html' %}
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if event.participants|length == 0 %}
+                <div class="alert alert-info mb-0" role="alert">{{ _('No members assigned.') }}</div>
+                {% else %}
+                <ul class="list-group list-group-flush">
+                    {% for participant in event.participants %}
+                    {% set member = participant.member %}
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
+                        <div>
+                            <div class="fw-semibold">
+                                <a class="text-decoration-none" href="{{ url_for('notification.member_detail', member_id=member.id) }}">
+                                    {{ member.first_name }} {{ member.last_name }}
+                                </a>
+                            </div>
+                            <div class="text-muted small">{{ member.member_number or member.email or '-' }}</div>
+                        </div>
+                        {% if current_user.has_permission('notification.event.update') %}
+                        <div>
+                            {% include 'notification/event/modal.event.remove_member.html' %}
+                        </div>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if event_update_form is defined and event_update_form.errors %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('updateEventModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    });
+</script>
+{% endif %}
+
+{% if participant_form is defined and participant_form.errors %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('addEventMemberModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    });
+</script>
+{% endif %}
+
+{% endblock %}

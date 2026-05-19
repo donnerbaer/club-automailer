@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %} {{ _("Update User") }}: {{user.last_name}}, {{user.first_name}}{% endblock %}
+
+
+{% block main %}
+
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';" >
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a class="" href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a class="" href="{{ url_for('user.users_view') }}">{{ _('Users') }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ user.first_name }} {{ user.last_name }}</li>
+    </ol>
+</nav>
+
+<h1>{{ user.first_name}} {{ user.last_name }}</h1>
+
+<img src="{{ url_for('image.serve_user_image', filename=user.image_filename) }}" alt="User Image" class="img-thumbnail mb-3" style="height:250px">
+<div>
+    <a href="{{ url_for('user.user_view', user_id=user.id) }}" class="btn btn-danger">{{ _("Cancel") }}</a>
+</div>
+
+<form action="" method="POST"  enctype="multipart/form-data">
+    {% if form.errors %}
+        <div class="alert alert-warning">
+            <ul>
+                {% for field, errors in form.errors.items() %}
+                    {% for error in errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-danger">
+                {{ _('Errors:') }}
+            {% if messages|length > 1 %}
+                <ul>
+            {% endif %}
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            {% if messages|length > 1 %}
+                </ul>
+            {% endif %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    {{ form.hidden_tag() }}
+
+    <div class="form-group">
+        <label for="username">{{ form.username.label.text }}</label>
+        {{ form.username(class="form-control", id="username") }}
+    </div>
+
+
+    <div class="form-group">
+        <label for="first_name">{{ form.first_name.label.text }}</label>
+        {{ form.first_name(class="form-control", id="first_name") }}
+    </div>
+    <div class="form-group">
+        <label for="last_name">{{ form.last_name.label.text }}</label>
+        {{ form.last_name(class="form-control", id="last_name") }}
+    </div>
+    <div>
+        <label for="email">{{ form.email.label.text }}</label>
+        {{ form.email(class="form-control", id="email") }}
+    </div>
+
+    <div class="form-group">
+        <label for="image">{{ form.image.label.text }}</label>
+        {{ form.image(class="form-control", id="image") }}
+    </div>
+    <div class="form-group">
+        {{ form.delete_image(class="form-check-input") }}
+        {{ form.delete_image.label(class="form-check-label") }}
+    </div>
+    <div class="form-group">
+        <label for="new_password">{{ form.new_password.label.text }}</label>
+        {{ form.new_password(class="form-control", id="new_password") }}
+    </div>
+    <div class="form-group">
+        <label for="confirm_password">{{ form.confirm_password.label.text }}</label>
+        {{ form.confirm_password(class="form-control", id="confirm_password") }}
+    </div>
+
+
+    <div class="form-group">
+        <label for="old_password">{{ form.old_password.label.text }} <span class="text-danger">{{ _('Required') }}</span></label>
+        {{ form.old_password(class="form-control", id="old_password") }}
+    </div>
+
+    <div class="form-group">
+        <div class="d-flex gap-2 mt-3">
+            {{ form.submit(class="btn btn-success flex-fill", id="submit") }}
+            <a href="{{ url_for('user.user_view', user_id=user.id) }}" class="btn btn-danger flex-fill">{{ _("Cancel") }}</a>
+        </div>
+    </div>
+
+</form>
+
+{% endblock %}

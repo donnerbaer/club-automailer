@@ -1,0 +1,26 @@
+<form method="POST" action="{{ url_for('notification.add_group_to_member', member_id=member.id) }}">
+    {{ member_group_form.hidden_tag() }}
+
+    {% if member_group_form.errors %}
+    <div class="alert alert-danger" role="alert">
+        <strong>{{ _('There were errors in your form submission:') }}</strong>
+        <ul class="mb-0">
+            {% for field, errors in member_group_form.errors.items() %}
+                {% for error in errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="mb-3">
+        {{ member_group_form.group.label(class='form-label') }}
+        {{ member_group_form.group(class='form-select') }}
+    </div>
+
+    <div class="mt-4 d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+        {{ member_group_form.submit(class='btn btn-success') }}
+    </div>
+</form>

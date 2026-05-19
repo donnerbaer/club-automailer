@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %} {{ _("Profile") }}: {{ user.first_name }} {{ user.last_name }}{% endblock %}
+
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';" >
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a class="" href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a class="" href="{{ url_for('user.users_view') }}">{{ _('Users') }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ user.first_name }} {{ user.last_name }}</li>
+    </ol>
+</nav>
+
+<h1 class="h1">{{ user.first_name }} {{ user.last_name }}</h1>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-auto col-sm">
+            <img src="{{url_for('image.serve_user_image', filename=user.image_filename)}}" alt="User Image" class="img-thumbnail mb-3" style="max-width:250px">
+        </div>
+        <div class="col-9">
+            <ul class="list-group">
+                <li class="list-group-item row">
+                    <div class="col-4"><strong>{{ _("Username") }}</strong></div>
+                    <div class="col-8">{{ user.username }}</div>
+                </li>
+                <li class="list-group-item row">
+                    <div class="col-4"><strong>{{ _("First Name") }}</strong></div>
+                    <div class="col-8">{{ user.first_name }}</div>
+                </li>
+                <li class="list-group-item row">
+                    <div class="col-4"><strong>{{ _("Last Name") }}</strong></div>
+                    <div class="col-8">{{ user.last_name }}</div>
+                </li>
+                <li class="list-group-item row">
+                    <div class="col-4"><strong>{{ _("Email") }}</strong></div>
+                    <div class="col-8">{{ user.email }}</div>
+                </li>
+                <li class="list-group-item row">
+                    <div class="col-4"><strong>{{ _("Created At") }}</strong></div>
+                    <div class="col-8">{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+                </li>
+                <li class="list-group-item row">
+                    <div class="col-4"><strong>{{ _("Image Filename") }}</strong></div>
+                    <div class="col-8">
+                        {{ user.image_filename if user.image_filename else _("No image uploaded") }}
+                    </div>
+                </li>
+                <li class="list-group-item row">
+                    <div class="col-4"><strong>{{ _("Image URL") }}</strong></div>
+                    <div class="col-8">
+                        {% if user.image_filename %}
+                            <a href="{{ url_for('image.serve_user_image', filename=user.image_filename) }}" target="_blank">
+                                {{ url_for('image.serve_user_image', filename=user.image_filename) }}
+                            </a>
+                        {% else %}
+                            {{ _("No image uploaded") }}
+                        {% endif %}
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                {% if current_user.has_permission('admin.user.update') or current_user.id == user.id %}
+                <a href="{{ url_for('user.update_user', user_id=user.id) }}" class="btn btn-secondary"><i class="bi bi-pencil-fill"> </i>{{ _("Edit") }}</a>
+                {% endif %}
+                {% include 'user/modal.delete.html' %}
+            </div>
+        </div>
+     </div>
+</div>
+
+
+<section class="mt-4">
+
+</section>
+
+
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %} {{ _('Templates') }} - {{ _('Notification') }}{% endblock %}
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ _('Templates') }}
+        </li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="h1 mb-1">{{ _('Templates') }}</h1>
+        <p class="text-muted mb-0">{{ _('Manage email subject and body templates used by notification rules.') }}</p>
+    </div>
+    {% if current_user.has_permission('notification.template.create') %}
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTemplateModal">
+        <i class="bi bi-file-earmark-plus"></i> {{ _('Create template') }}
+    </button>
+    {% include 'notification/template/modal.template.create.html' %}
+    {% if template_form.errors %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modalElement = document.getElementById('createTemplateModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+        });
+    </script>
+    {% endif %}
+    {% endif %}
+</div>
+
+{% if templates|length == 0 %}
+<div class="alert alert-info" role="alert">
+    {{ _('No templates found.') }}
+</div>
+{% else %}
+<div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+        <thead>
+            <tr>
+                <th scope="col">{{ _('ID') }}</th>
+                <th scope="col">{{ _('Code') }}</th>
+                <th scope="col">{{ _('Subject') }}</th>
+                <th scope="col">{{ _('Updated') }}</th>
+                <th scope="col">{{ _('Actions') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for template in templates %}
+            <tr>
+                <td>{{ template.id }}</td>
+                <td><span class="badge text-bg-secondary">{{ template.code }}</span></td>
+                <td>{{ template.subject_template }}</td>
+                <td>{{ template.updated_at.strftime('%Y-%m-%d %H:%M') if template.updated_at else '-' }}</td>
+                <td>
+                    {% if current_user.has_permission('notification.template.read') %}
+                    <a class="btn btn-primary btn-sm" href="{{ url_for('notification.template_detail', template_id=template.id) }}">
+                        <i class="bi bi-eye"></i> {{ _('View template') }}
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

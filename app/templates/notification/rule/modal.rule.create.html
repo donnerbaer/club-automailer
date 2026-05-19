@@ -1,0 +1,11 @@
+<div class="modal fade" id="createRuleModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="createRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="createRuleModalLabel"><i class="bi bi-plus-circle"></i> {{ _('Create rule') }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">{% include 'notification/rule/form.rule.create.html' %}</div>
+        </div>
+    </div>
+</div>

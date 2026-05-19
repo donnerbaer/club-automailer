@@ -1,0 +1,12 @@
+<button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addReceiverModal"><i class="bi bi-person-plus"></i> {{ _('Add Receiver') }}</button>
+<div class="modal fade" id="addReceiverModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addReceiverModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="addReceiverModalLabel"><i class="bi bi-person-plus"></i> {{ _('Add receiver') }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">{% include 'notification/rule/form.rule.add_receiver.html' %}</div>
+        </div>
+    </div>
+</div>

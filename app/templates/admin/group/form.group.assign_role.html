@@ -1,0 +1,11 @@
+<form action="{{ url_for('admin.assign_role_to_group', group_id=group.id) }}" method="POST">
+    {{ form_assign_role.hidden_tag() }}
+    <div class="form-group">
+        {{ form_assign_role.role.label }} <span class="text-danger">(required)</span>
+        {{ form_assign_role.role(class="form-control", id="user") }}    
+    </div>
+    <div class="form-group mt-3">
+        {{ form_assign_role.submit(class="btn btn-success") }}
+    </div>
+</form>
+    

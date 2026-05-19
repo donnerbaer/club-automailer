@@ -1,0 +1,23 @@
+<form method="POST" action="{{ url_for('auth.login') }}?next={{next}}">
+    {% if nav_login_form.errors %}
+        <ul>
+            {% for field, errors in nav_login_form.errors.items() %}
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {{ nav_login_form.hidden_tag() }}
+    <div class="form-group">
+        <label for="username">{{ nav_login_form.username.label.text }}</label>
+        {{ nav_login_form.username(class="form-control", id="username") }}
+    </div>
+    <div class="form-group">
+        <label for="password">{{ nav_login_form.password.label.text }}</label>
+        {{ nav_login_form.password(class="form-control", id="password") }}
+    </div>
+    <div class="form-group mt-3">
+        {{ nav_login_form.submit(class="form-control btn btn-primary", id="submit") }}
+    </div>
+</form>

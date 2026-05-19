@@ -1,0 +1,24 @@
+{% if current_user.has_permission('admin.group.assign_role') %}
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#assignRole">
+    <i class="bi bi-plus-circle"></i> {{ _('Assign Role') }}
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="assignRole" tabindex="-1" aria-labelledby="assignRoleLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="assignRoleLabel"><i class="bi bi-plus-fill"></i> {{ _('Assign Role to') }}: {{ group.name }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% include 'admin/group/form.group.assign_role.html' %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary align-start" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

@@ -1,0 +1,36 @@
+<form method="POST" action="{{ url_for('notification.template_post') }}">
+    {{ template_form.hidden_tag() }}
+
+    {% if template_form.errors %}
+    <div class="alert alert-danger" role="alert">
+        <strong>{{ _('There were errors in your form submission:') }}</strong>
+        <ul class="mb-0">
+            {% for field, errors in template_form.errors.items() %}
+                {% for error in errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="mb-3">
+        {{ template_form.code.label(class='form-label') }}
+        {{ template_form.code(class='form-control') }}
+    </div>
+    <div class="mb-3">
+        {{ template_form.subject_template.label(class='form-label') }}
+        {{ template_form.subject_template(class='form-control', rows='4') }}
+        <div class="form-text">{{ _('Use placeholders like {{receiver.first_name}}, {{member.first_name}}, {{member.birth_date}} or {{add_years(member.join_date, 25)}}.') }}</div>
+    </div>
+    <div class="mb-3">
+        {{ template_form.body_template.label(class='form-label') }}
+        {{ template_form.body_template(class='form-control', rows='10') }}
+        <div class="form-text">{{ _('Plain text is sent as-is; template variables are rendered before sending.') }}</div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+        {{ template_form.submit(class='btn btn-primary') }}
+    </div>
+</form>

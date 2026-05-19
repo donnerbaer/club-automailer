@@ -1,0 +1,17 @@
+<form action="{{ url_for('admin.update_role', role_id=role.id) }}" method="POST">
+    {{ form_update_role.hidden_tag() }}
+
+    <div class="mb-3">
+        <label for="name" class="form-label">{{ form_update_role.name.label }} <span class="text-danger">required</span></label>
+        {{ form_update_role.name(class="form-control", id="name") }}
+    </div>
+
+    <div class="mb-3">
+        <label for="description" class="form-label">{{ form_update_role.description.label }}</label>
+        {{ form_update_role.description(class="form-control", id="description") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form_update_role.submit(class="btn btn-success") }}
+    </div>
+</form>

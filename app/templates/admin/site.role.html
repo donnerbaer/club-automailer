@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %} {{ _('Role') }} - {{ _("Admin") }}{% endblock %}
+
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';" >
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('admin.admin_view') }}">{{ _("Admin") }}</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('admin.roles_view') }}">{{ _("Roles") }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ role.name }}
+        </li>
+    </ol>
+</nav>
+
+
+<h1 class="h1">{{ _('Role') }}: {{ role.name }}</h1>
+<p><strong>{{ _('Description') }}:</strong> {{ role.description if role.description }}</p>
+
+<div>
+    {% include 'admin/role/modal.role.update.html' %}
+    {% include 'admin/role/modal.role.add_permission.html' %}
+    {% include 'admin/role/modal.role.delete.html' %}
+</div>
+
+<table class="table table-striped table-hover mt-3">
+    <thead>
+        <tr>
+            <th scope="col">{{ _('ID') }}</th>
+            <th scope="col">{{ _('Allowed') }}</th>
+            <th scope="col">{{ _('Permission Name') }}</th>
+            <th scope="col">{{ _('Description') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for permission in permissions %}
+
+        <tr>
+            <td>{{ permission.id }}</td>
+            <td> 
+                {% if role.has_permission(permission.name) %}
+                <span class="badge text-bg-success">allowed</span>
+                {% else %}
+                <span class="badge text-bg-danger">not allowed</span>
+                {% endif %}
+            </td>
+            <td>{{ permission.name }}</td>
+            <td>{{ permission.description }}</td>
+
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

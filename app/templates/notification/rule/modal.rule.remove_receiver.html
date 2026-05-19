@@ -1,0 +1,16 @@
+<button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#removeReceiver{{ receiver.id }}Modal">{{ _('Remove') }}</button>
+<div class="modal fade" id="removeReceiver{{ receiver.id }}Modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="removeReceiver{{ receiver.id }}ModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="removeReceiver{{ receiver.id }}ModalLabel">{{ _('Remove receiver') }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"><div class="alert alert-danger mb-0" role="alert">{{ _('Are you sure you want to remove this receiver?') }}</div></div>
+            <div class="modal-footer">
+                <a class="btn btn-danger" href="{{ url_for('notification.remove_receiver_from_rule', rule_id=rule.id, receiver_id=receiver.id) }}">{{ _('Remove') }}</a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>

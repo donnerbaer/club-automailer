@@ -1,0 +1,28 @@
+{% if current_user.has_permission('admin.membership.remove') %}
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#removeUser{{ user.id }}Modal">
+    {{ _('Remove') }}
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="removeUser{{ user.id }}Modal" tabindex="-1" aria-labelledby="removeUser{{ user.id }}ModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="removeUser{{ user.id }}ModalLabel"><i class="bi bi-plus-fill"></i> {{ _('Remove user from group') }}: {{ user.username }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert">
+                    {{ _('Are you sure you want to remove this user from the group? This action cannot be undone.') }}
+            </div>
+            <div class="modal-footer">
+                <a class="btn btn-danger" href="{{ url_for('admin.remove_user_from_group', group_id=group.id, user_id=user.id) }}">
+                    <i class="bi bi-person-dash"></i> {{ _('Remove') }}
+                </a>
+                <button type="button" class="btn btn-secondary align-start" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

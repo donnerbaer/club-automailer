@@ -1,0 +1,46 @@
+<form action="{{ url_for('admin.add_permission_to_role', role_id=role.id) }}" method="POST">
+    {{ form_role_permissions.hidden_tag() }}
+
+    <div class="container">
+        <div class="row fw-bold mb-2">
+            <div class="col-md-6">{{ _('Permission') }}</div>
+            <div class="col-md-6">{{ _('Allowed') }}</div>
+        </div>
+
+        {% for perm in permissions %}
+            <!-- Dynamically generated fields for each permission -->
+            {% set field = getattr(form_role_permissions, 'perm_' ~ perm.id) %}
+            <div class="row align-items-center p-2 border-2 border-bottom">
+                <div class="col-md-6">
+                    <label class="form-label mb-0">{{ field.label.text }}</label>
+                </div>
+                <div class="col-md-6">
+                    {% for subfield in field %}
+                        <!-- Generate radio buttons for 'Allow' and 'Deny' -->
+                        {% set btn_id = field.id ~ '_' ~ subfield.data %}
+                        <input
+                            type="radio"
+                            class="btn-check"
+                            name="{{ field.name }}"
+                            id="{{ btn_id }}"
+                            value="{{ subfield.data }}"
+                            {% if subfield.checked %}checked{% endif %}
+                        >
+                        <label
+                            class="btn me-2 {% if subfield.data == 'allow' %}btn-outline-success{% else %}btn-outline-danger{% endif %}"
+                            for="{{ btn_id }}"
+                        >
+                            {{ subfield.label.text }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+
+        <div class="row mt-3">
+            <div class="col">
+                {{ form_role_permissions.submit(class="btn btn-primary w-100") }}
+            </div>
+        </div>
+    </div>
+</form>

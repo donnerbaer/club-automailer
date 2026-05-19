@@ -1,0 +1,25 @@
+{% if current_user.has_permission('admin.role.update') %}
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#updateRoleModal">
+    <i class="bi bi-pencil"></i> {{ _("Edit") }}
+</button>
+<!-- Modal -->
+<div class="modal fade" id="updateRoleModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="updateRoleModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="updateRoleModal"><i class="bi bi-plus-circle"> </i>{{ _("Update role") }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="container">
+                    {% include 'admin/role/form.role.update.html' %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

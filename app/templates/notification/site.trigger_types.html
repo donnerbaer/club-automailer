@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %} {{ _('Trigger Types') }} - {{ _('Notification') }}{% endblock %}
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ _('Trigger Types') }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="h1 mb-1">{{ _('Trigger Types') }}</h1>
+        <p class="text-muted mb-0">{{ _('Manage available trigger identifiers for notification rules.') }}</p>
+    </div>
+    {% if current_user.has_permission('notification.rule.create') %}
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTriggerTypeModal">
+        <i class="bi bi-plus-circle"></i> {{ _('Create trigger type') }}
+    </button>
+    {% include 'notification/trigger_type/modal.trigger_type.create.html' %}
+    {% if trigger_type_form.errors %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modalElement = document.getElementById('createTriggerTypeModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+        });
+    </script>
+    {% endif %}
+    {% endif %}
+</div>
+
+{% if trigger_types|length == 0 %}
+<div class="alert alert-info" role="alert">{{ _('No trigger types found.') }}</div>
+{% else %}
+<table class="table table-striped table-hover align-middle">
+    <thead>
+        <tr>
+            <th>{{ _('ID') }}</th>
+            <th>{{ _('Code') }}</th>
+            <th>{{ _('Description') }}</th>
+            <th>{{ _('Actions') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for trigger_type in trigger_types %}
+        <tr>
+            <td>{{ trigger_type.id }}</td>
+            <td><span class="badge text-bg-secondary">{{ trigger_type.code }}</span></td>
+            <td>{{ trigger_type.description or '-' }}</td>
+            <td>
+                {% if current_user.has_permission('notification.rule.read') %}
+                <a class="btn btn-primary btn-sm" href="{{ url_for('notification.trigger_type_detail', trigger_type_id=trigger_type.id) }}">
+                    <i class="bi bi-eye"></i> {{ _('View') }}
+                </a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

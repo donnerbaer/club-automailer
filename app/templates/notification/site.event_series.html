@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %} {{ _('Event Series') }} - {{ _('Notification') }}{% endblock %}
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('notification.events_view') }}">{{ _('Events') }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ _('Event Series') }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="h1 mb-1">{{ _('Event Series') }}: {{ series_events[0].rendered_title or series_events[0].title if series_events else '' }}</h1>
+        <p class="text-muted mb-0">{{ _('Manage participants for each event in the series.') }}</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('notification.events_view') }}"><i class="bi bi-arrow-left"></i> {{ _('Back to events') }}</a>
+</div>
+
+{% if series_events %}
+<div class="row g-4">
+    {% for event in series_events %}
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center">
+                <span>
+                    <strong class="d-block mb-1">{{ event.rendered_title or event.title }}</strong>
+                    <strong>{{ event.start_at.strftime('%d.%m.%Y %H:%M') }}</strong>
+                    {% if event.location %}<br><small class="text-muted">{{ event.location }}</small>{% endif %}
+                </span>
+                {% if current_user.has_permission('notification.event.read') %}
+                <a href="{{ url_for('notification.event_detail', event_id=event.id) }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-eye"></i> {{ _('View') }}
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <h5 class="card-title mb-3">{{ _('Participants') }}</h5>
+                
+                {% if event.participants|length == 0 %}
+                <div class="alert alert-info mb-3" role="alert">
+                    {{ _('No participants assigned yet.') }}
+                </div>
+                {% else %}
+                <ul class="list-group list-group-sm mb-3">
+                    {% for participant in event.participants %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            {{ participant.member.first_name }} {{ participant.member.last_name }}
+                            <br><small class="text-muted">{{ participant.member.email }}</small>
+                        </span>
+                        {% if current_user.has_permission('notification.event.update') %}
+                        <a href="{{ url_for('notification.remove_member_from_event', event_id=event.id, member_id=participant.member_id) }}" 
+                           class="btn btn-sm btn-danger">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                
+                {% if current_user.has_permission('notification.event.update') %}
+                <form method="POST" action="{{ url_for('notification.add_member_to_event', event_id=event.id) }}">
+                    {{ participant_forms[event.id].hidden_tag() }}
+                    <div class="input-group">
+                        {{ participant_forms[event.id].member(class='form-select') }}
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-plus-circle"></i> {{ _('Add') }}
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-warning" role="alert">{{ _('No events found for this series.') }}</div>
+{% endif %}
+
+{% endblock %}

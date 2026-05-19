@@ -1,0 +1,56 @@
+<form method="POST" action="{{ url_for('notification.member_post') }}">
+    {{ member_form.hidden_tag() }}
+
+    {% if member_form.errors %}
+    <div class="alert alert-danger" role="alert">
+        <strong>{{ _('There were errors in your form submission:') }}</strong>
+        <ul class="mb-0">
+            {% for field, errors in member_form.errors.items() %}
+                {% for error in errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            {{ member_form.member_number.label(class="form-label") }}
+            {{ member_form.member_number(class="form-control", id="member_number") }}
+        </div>
+        <div class="col-md-6">
+            {{ member_form.email.label(class="form-label") }}
+            {{ member_form.email(class="form-control", id="email") }}
+        </div>
+        <div class="col-md-6">
+            {{ member_form.first_name.label(class="form-label") }}
+            {{ member_form.first_name(class="form-control", id="first_name") }}
+        </div>
+        <div class="col-md-6">
+            {{ member_form.last_name.label(class="form-label") }}
+            {{ member_form.last_name(class="form-control", id="last_name") }}
+        </div>
+        <div class="col-md-6">
+            {{ member_form.phone.label(class="form-label") }}
+            {{ member_form.phone(class="form-control", id="phone") }}
+        </div>
+        <div class="col-md-6">
+            {{ member_form.birth_date.label(class="form-label") }}
+            {{ member_form.birth_date(class="form-control", id="birth_date", type="date") }}
+        </div>
+        <div class="col-md-6">
+            {{ member_form.join_date.label(class="form-label") }}
+            {{ member_form.join_date(class="form-control", id="join_date", type="date") }}
+        </div>
+        <div class="col-12 form-check mt-2 ms-2">
+            {{ member_form.active(class="form-check-input", id="active") }}
+            {{ member_form.active.label(class="form-check-label", for="active") }}
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+        {{ member_form.submit(class="btn btn-primary") }}
+    </div>
+</form>

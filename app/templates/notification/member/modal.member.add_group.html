@@ -1,0 +1,17 @@
+{% if current_user.has_permission('notification.member.update') %}
+<div class="modal fade" id="addMemberGroupModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addMemberGroupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="addMemberGroupModalLabel">
+                    <i class="bi bi-collection-plus"></i> {{ _('Add group to member') }}: {{ member.member_number or member.first_name ~ ' ' ~ member.last_name }}
+                </h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% include 'notification/member/form.member.add_group.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

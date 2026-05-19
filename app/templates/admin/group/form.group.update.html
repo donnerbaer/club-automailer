@@ -1,0 +1,15 @@
+<form action="{{ url_for('admin.group_view', group_id=group.id) }}" method="POST">
+    {{ form_update_group.hidden_tag() }}
+
+    <div class="form-group">
+        {{ form_update_group.name.label }} <span class="text-danger">(required)</span>
+        {{ form_update_group.name(class="form-control", id="name") }}
+    </div>
+    <div class="form-group">
+        {{ form_update_group.description.label }}
+        {{ form_update_group.description(class="form-control", id="description") }}
+    </div>
+    <div class="form-group mt-3">
+        {{ form_update_group.submit(class="btn btn-success") }}
+    </div>
+</form>

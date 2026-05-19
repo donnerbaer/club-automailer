@@ -1,0 +1,12 @@
+<form action="{{ url_for('admin.role_post') }}" method="POST">
+
+{{ form_create_role.hidden_tag() }}
+
+{{ form_create_role.name.label(class="form-label") }} <span class="text-danger">({{ _('required') }})</span>
+{{ form_create_role.name(class="form-control") }}
+
+{{ form_create_role.description.label(class="form-label") }}
+{{ form_create_role.description(class="form-control") }}
+{{ form_create_role.submit(class="btn btn-success mt-3") }}
+
+</form>

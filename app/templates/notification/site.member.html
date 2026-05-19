@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block title %} {{ member.first_name }} {{ member.last_name }} - {{ _('Members') }}{% endblock %}
+
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.members_view') }}">{{ _('Members') }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ member.member_number or member.first_name ~ ' ' ~ member.last_name }}
+        </li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="h1 mb-1">{{ _('Member') }}: {{ member.member_number or member.first_name ~ ' ' ~ member.last_name }}</h1>
+        <p class="text-muted mb-0">{{ member.first_name }} {{ member.last_name }}</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary" href="{{ url_for('notification.members_view') }}">
+            <i class="bi bi-arrow-left"></i> {{ _('Back to members') }}
+        </a>
+        {% include 'notification/member/modal.member.update.html' %}
+        {% include 'notification/member/modal.member.add_group.html' %}
+        {% set delete_url = url_for('notification.member_delete', member_id=member.id) %}
+        {% include 'notification/member/modal.member.delete.html' %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body-tertiary">
+                {{ _('Member details') }}
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">{{ _('ID') }}</dt>
+                    <dd class="col-sm-8">{{ member.id }}</dd>
+
+                    <dt class="col-sm-4">{{ _('Member number') }}</dt>
+                    <dd class="col-sm-8">{{ member.member_number or '-' }}</dd>
+
+                    <dt class="col-sm-4">{{ _('First name') }}</dt>
+                    <dd class="col-sm-8">{{ member.first_name }}</dd>
+
+                    <dt class="col-sm-4">{{ _('Last name') }}</dt>
+                    <dd class="col-sm-8">{{ member.last_name }}</dd>
+
+                    <dt class="col-sm-4">{{ _('Email') }}</dt>
+                    <dd class="col-sm-8">{{ member.email or '-' }}</dd>
+
+                    <dt class="col-sm-4">{{ _('Phone') }}</dt>
+                    <dd class="col-sm-8">{{ member.phone or '-' }}</dd>
+
+                    <dt class="col-sm-4">{{ _('Birth Date') }}</dt>
+                    <dd class="col-sm-8">{{ member.birth_date or '-' }}</dd>
+
+                    <dt class="col-sm-4">{{ _('Join Date') }}</dt>
+                    <dd class="col-sm-8">{{ member.join_date or '-' }}</dd>
+
+                    <dt class="col-sm-4">{{ _('Status') }}</dt>
+                    <dd class="col-sm-8">
+                        {% if member.active %}
+                        <span class="badge text-bg-success">{{ _('Active') }}</span>
+                        {% else %}
+                        <span class="badge text-bg-secondary">{{ _('Inactive') }}</span>
+                        {% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center gap-2">
+                {{ _('Groups') }}
+                {% if current_user.has_permission('notification.member.update') %}
+                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addMemberGroupModal">
+                    <i class="bi bi-plus-circle"></i> {{ _('Add group') }}
+                </button>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if member.groups|length == 0 %}
+                <div class="alert alert-info mb-0" role="alert">
+                    {{ _('No groups assigned.') }}
+                </div>
+                {% else %}
+                <ul class="list-group list-group-flush">
+                    {% for group in member.groups %}
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
+                        <div>
+                            <div class="fw-semibold">
+                                <a class="text-decoration-none" href="{{ url_for('notification.group_detail', group_id=group.id) }}">
+                                    {{ group.name }}
+                                </a>
+                            </div>
+                            {% if group.description %}
+                            <div class="text-muted small">{{ group.description }}</div>
+                            {% endif %}
+                        </div>
+                        {% if current_user.has_permission('notification.member.update') %}
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#removeMemberGroup{{ group.id }}Modal">
+                            {{ _('Remove') }}
+                        </button>
+                        {% include 'notification/member/modal.member.remove_group.html' %}
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if member_update_form is defined and member_update_form.errors %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('updateMemberModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    });
+</script>
+{% endif %}
+
+{% if member_group_form is defined and member_group_form.errors %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('addMemberGroupModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    });
+</script>
+{% endif %}
+
+{% endblock %}

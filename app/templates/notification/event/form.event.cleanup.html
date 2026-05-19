@@ -1,0 +1,36 @@
+<form method="POST" action="{{ url_for('notification.cleanup_old_events') }}">
+    {{ cleanup_form.hidden_tag() }}
+
+    {% if cleanup_form.errors %}
+    <div class="alert alert-danger" role="alert">
+        <strong>{{ _('There were errors in your form submission:') }}</strong>
+        <ul class="mb-0">
+            {% for field, errors in cleanup_form.errors.items() %}
+                {% for error in errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="alert alert-warning" role="alert">
+        {{ _('This will delete all events older than the selected age and remove their related logs and participants.') }}
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            {{ cleanup_form.age_value.label(class='form-label') }}
+            {{ cleanup_form.age_value(class='form-control', min='1') }}
+        </div>
+        <div class="col-md-6">
+            {{ cleanup_form.age_unit.label(class='form-label') }}
+            {{ cleanup_form.age_unit(class='form-select') }}
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+        {{ cleanup_form.submit(class='btn btn-danger') }}
+    </div>
+</form>

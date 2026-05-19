@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %} {{ trigger_type.code }} - {{ _('Trigger Types') }}{% endblock %}
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('notification.trigger_types_view') }}">{{ _('Trigger Types') }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ trigger_type.code }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="h1 mb-1">{{ _('Trigger Type') }}: {{ trigger_type.code }}</h1>
+        <p class="text-muted mb-0">{{ trigger_type.description or '-' }}</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary" href="{{ url_for('notification.trigger_types_view') }}"><i class="bi bi-arrow-left"></i> {{ _('Back to trigger types') }}</a>
+        {% include 'notification/trigger_type/modal.trigger_type.update.html' %}
+        {% include 'notification/trigger_type/modal.trigger_type.delete.html' %}
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-body-tertiary">{{ _('Details') }}</div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">{{ _('ID') }}</dt>
+            <dd class="col-sm-9">{{ trigger_type.id }}</dd>
+            <dt class="col-sm-3">{{ _('Code') }}</dt>
+            <dd class="col-sm-9">{{ trigger_type.code }}</dd>
+            <dt class="col-sm-3">{{ _('Description') }}</dt>
+            <dd class="col-sm-9">{{ trigger_type.description or '-' }}</dd>
+        </dl>
+    </div>
+</div>
+
+{% if trigger_type_update_form is defined and trigger_type_update_form.errors %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('updateTriggerTypeModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %} {{ template.code }} - {{ _('Templates') }}{% endblock %}
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.templates_view') }}">{{ _('Templates') }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ template.code }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="h1 mb-1">{{ _('Template') }}: {{ template.code }}</h1>
+        <p class="text-muted mb-0">{{ _('Template ID') }}: {{ template.id }}</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary" href="{{ url_for('notification.templates_view') }}">
+            <i class="bi bi-arrow-left"></i> {{ _('Back to templates') }}
+        </a>
+        {% include 'notification/template/modal.template.update.html' %}
+        {% include 'notification/template/modal.template.delete.html' %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body-tertiary">{{ _('Subject Template') }}</div>
+            <div class="card-body">
+                <pre class="mb-0" style="white-space: pre-wrap;">{{ template.subject_template }}</pre>
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body-tertiary">{{ _('Body Template') }}</div>
+            <div class="card-body">
+                <pre class="mb-0" style="white-space: pre-wrap;">{{ template.body_template }}</pre>
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="alert alert-info mb-0" role="alert">
+            {{ _('You can use placeholders like {{receiver.first_name}}, {{receiver.last_name}}, {{member.first_name}}, {{member.last_name}}, {{member.birth_date}}, {{member._birth_date}}, {{add_years(member.join_date, 25)}} and {{event.title}}.') }}
+        </div>
+    </div>
+</div>
+
+{% if template_update_form is defined and template_update_form.errors %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('updateTemplateModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    });
+</script>
+{% endif %}
+
+{% endblock %}

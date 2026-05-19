@@ -1,0 +1,24 @@
+{% if current_user.has_permission('admin.membership.assign') %}
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserGroupModal">
+    <i class="bi bi-person-plus-fill"></i> {{ _('Add User') }}
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="addUserGroupModal" tabindex="-1" aria-labelledby="addUserGroupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="addUserGroupModalLabel"><i class="bi bi-person-plus-fill"></i> {{ _('Add User to the Group') }}: {{ group.name}} </h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            {% include 'admin/group/form.group.add_user.html' %}        
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary align-start" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

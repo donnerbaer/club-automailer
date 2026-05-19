@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %} {{ _("List of all events") }}{% endblock %}
+
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';" >
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ _('Events') }}
+        </li>
+    </ol>
+</nav>
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+        <div>
+            <h1 class="h1 mb-1">{{ _('Events') }}</h1>
+            <p class="text-muted mb-0">{{ _('Events are appointments where members can participate and record work hours.') }}</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            {% if current_user.has_permission('notification.event.delete') %}
+            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cleanupEventsModal">
+                <i class="bi bi-trash"></i> {{ _('Delete old events') }}
+            </button>
+            {% endif %}
+            {% if current_user.has_permission('notification.event.create') %}
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEventModal">
+                <i class="bi bi-calendar-plus"></i> {{ _('Create event') }}
+            </button>
+            {% endif %}
+        </div>
+        {% if current_user.has_permission('notification.event.create') %}
+        {% include 'notification/event/modal.event.create.html' %}
+        {% if event_form.errors %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const modalElement = document.getElementById('createEventModal');
+                if (modalElement) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            });
+        </script>
+        {% endif %}
+        {% endif %}
+        {% if current_user.has_permission('notification.event.delete') %}
+        {% include 'notification/event/modal.event.cleanup.html' %}
+        {% if cleanup_form is defined and cleanup_form.errors %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const modalElement = document.getElementById('cleanupEventsModal');
+                if (modalElement) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            });
+        </script>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    {% if cleanup_result %}
+    <div class="alert alert-success" role="alert">
+        {{ _('Deleted %(events)s events and %(logs)s logs older than %(value)s %(unit)s.', events=cleanup_result.deleted_events or 0, logs=cleanup_result.deleted_logs or 0, value=cleanup_result.age_value or 0, unit=_(cleanup_result.age_unit or 'days')) }}
+    </div>
+    {% endif %}
+
+    {% if events|length == 0 %}
+    <div class="alert alert-info" role="alert">
+        {{ _('No events found.') }}
+    </div>
+    {% else %}
+    <div class="row g-4">
+        {% for event in events %}
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between gap-3">
+                        <div>
+                            <h2 class="h5 mb-1">
+                                {{ event.rendered_title or event.title }}
+                                {% if event.recurrence_series_link %}
+                                <a class="ms-2 text-decoration-none" href="{{ event.recurrence_series_link }}" title="{{ _('View series') }}">
+                                    <i class="bi bi-link-45deg"></i>
+                                </a>
+                                {% endif %}
+                            </h2>
+                            {% set trigger = trigger_type_map[event.event_type] if event.event_type in trigger_type_map else None %}
+                            <div class="text-muted small">
+                                {% if trigger %}
+                                <a class="text-decoration-none" href="{{ url_for('notification.trigger_type_detail', trigger_type_id=trigger.id) }}">{{ trigger.description or trigger.code }}</a>
+                                {% else %}
+                                {{ event.event_type }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span class="badge text-bg-primary align-self-start">{{ event.participants|length }} {{ _('Members') }}</span>
+                    </div>
+                    <div class="mt-3 small text-muted">
+                        <div><strong>{{ _('Start') }}:</strong> {{ event.start_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                        {% if event.end_at %}
+                        <div><strong>{{ _('End') }}:</strong> {{ event.end_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                        {% endif %}
+                        {% if event.location %}
+                        <div><strong>{{ _('Location') }}:</strong> {{ event.location }}</div>
+                        {% endif %}
+                    </div>
+                    {% if event.description %}
+                    <p class="mt-3 mb-0">
+                        {{ event.description }}
+                        {% if event.recurrence_series_link %}
+                        <a class="ms-2 text-decoration-none" href="{{ event.recurrence_series_link }}" title="{{ _('View series') }}">
+                            <i class="bi bi-link-45deg"></i>
+                        </a>
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                    <div class="mt-auto pt-3 d-flex flex-wrap gap-2">
+                        {% if current_user.has_permission('notification.event.read') %}
+                        <a class="btn btn-primary btn-sm" href="{{ url_for('notification.event_detail', event_id=event.id) }}">
+                            <i class="bi bi-eye"></i> {{ _('View event') }}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,21 @@
+{% if current_user.has_permission('notification.member.update') %}
+<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#updateMemberModal">
+    <i class="bi bi-pencil"></i> {{ _('Edit member') }}
+</button>
+
+<div class="modal fade" id="updateMemberModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="updateMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="updateMemberModalLabel">
+                    <i class="bi bi-pencil"></i> {{ _('Edit member') }}: {{ member.member_number or member.first_name ~ ' ' ~ member.last_name }}
+                </h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% include 'notification/member/form.member.update.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

@@ -1,0 +1,29 @@
+{% if current_user.has_permission('admin.group.remove_role') %}
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#removeRole{{role.id}}GroupModal">
+    {{ _('Remove') }}
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="removeRole{{role.id}}GroupModal" tabindex="-1" aria-labelledby="removeRole{{role.id}}GroupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="removeRole{{role.id}}GroupModalLabel"><i class="bi bi-person-plus-fill"></i> {{ _('Remove role from group') }}: {{ role.name}} </h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert">
+                    {{ _('Are you sure you want to remove this role from the group? This action cannot be undone.') }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="{{ url_for('admin.remove_role_from_group', group_id=group.id, role_id=role.id) }}" class="btn btn-danger">
+                    {{ _('Remove Role') }}
+                </a>
+                <button type="button" class="btn btn-secondary align-start" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

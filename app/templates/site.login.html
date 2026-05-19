@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}{{ _("Sign-in") }}{% endblock %}
+
+{% block main %}
+<h1 class="h1">{{ _("Sign-in") }}</h1>
+{% include 'auth/form.login.html' %}
+{% endblock %}

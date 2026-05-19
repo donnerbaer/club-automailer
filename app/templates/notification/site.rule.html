@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %} {{ rule.name }} - {{ _('Rules') }}{% endblock %}
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('notification.rules_view') }}">{{ _('Rules') }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ rule.name }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="h1 mb-1">{{ _('Rule') }}: {{ rule.name }}</h1>
+        <p class="text-muted mb-0">{{ _('Trigger') }}: {{ trigger.code if trigger else '-' }}</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary" href="{{ url_for('notification.rules_view') }}"><i class="bi bi-arrow-left"></i> {{ _('Back to rules') }}</a>
+        {% include 'notification/rule/modal.rule.update.html' %}
+        {% include 'notification/rule/modal.rule.delete.html' %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body-tertiary">{{ _('Rule details') }}</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">{{ _('Name') }}</dt>
+                    <dd class="col-sm-8">{{ rule.name }}</dd>
+                    <dt class="col-sm-4">{{ _('Trigger Type') }}</dt>
+                    <dd class="col-sm-8">{{ trigger.code if trigger else '-' }}</dd>
+                    <dt class="col-sm-4">{{ _('Days Before') }}</dt>
+                    <dd class="col-sm-8">{{ rule.days_before if rule.days_before is not none else '-' }}</dd>
+                    <dt class="col-sm-4">{{ _('Years') }}</dt>
+                    <dd class="col-sm-8">{{ rule.trigger_value if rule.trigger_value is not none else '-' }}</dd>
+                    <dt class="col-sm-4">{{ _('Send Time') }}</dt>
+                    <dd class="col-sm-8">{{ rule.send_time.strftime('%H:%M') if rule.send_time else '-' }}</dd>
+                    <dt class="col-sm-4">{{ _('Template') }}</dt>
+                    <dd class="col-sm-8">{{ template.code if template else '-' }}</dd>
+                    <dt class="col-sm-4">{{ _('Status') }}</dt>
+                    <dd class="col-sm-8">
+                        {% if rule.active %}<span class="badge text-bg-success">{{ _('Active') }}</span>{% else %}<span class="badge text-bg-secondary">{{ _('Inactive') }}</span>{% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center gap-2">
+                <span>{{ _('Receivers') }}</span>
+                {% if current_user.has_permission('notification.rule.update') %}
+                {% include 'notification/rule/modal.rule.add_receiver.html' %}
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if rule.receivers|length == 0 %}
+                <div class="alert alert-info mb-0" role="alert">{{ _('No receivers assigned.') }}</div>
+                {% else %}
+                <ul class="list-group list-group-flush">
+                    {% for receiver in rule.receivers %}
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
+                        <div>
+                            {% if receiver.receiver_type == 'group' %}
+                            <div class="fw-semibold">{{ _('Group') }}</div>
+                            <div class="text-muted small">{{ group_map[receiver.group_id].name if receiver.group_id in group_map else '-' }}</div>
+                            {% else %}
+                            <div class="fw-semibold">{{ _('Custom Email') }}</div>
+                            <div class="text-muted small">{{ receiver.custom_email or '-' }}</div>
+                            {% endif %}
+                        </div>
+                        {% if current_user.has_permission('notification.rule.update') %}
+                        {% include 'notification/rule/modal.rule.remove_receiver.html' %}
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if rule_update_form is defined and rule_update_form.errors %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('updateRuleModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    });
+</script>
+{% endif %}
+
+{% if receiver_form is defined and receiver_form.errors %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('addReceiverModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

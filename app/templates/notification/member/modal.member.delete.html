@@ -1,0 +1,28 @@
+{% if member is defined and delete_url is defined and delete_url %}
+<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteMemberModal-{{ member.id }}">
+	<i class="bi bi-trash"></i> {{ _('Delete member') }}
+</button>
+
+<div class="modal fade" id="deleteMemberModal-{{ member.id }}" tabindex="-1" aria-labelledby="deleteMemberModalLabel-{{ member.id }}" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h1 class="modal-title fs-5" id="deleteMemberModalLabel-{{ member.id }}">
+					{{ _('Delete member') }}: {{ member.member_number or member.first_name ~ ' ' ~ member.last_name }}
+				</h1>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div class="alert alert-danger mb-0" role="alert">
+					<i class="bi bi-exclamation-triangle-fill"></i>
+					{{ _('Are you sure you want to delete this member? This action cannot be undone.') }}
+				</div>
+			</div>
+			<div class="modal-footer">
+				<a href="{{ delete_url }}" class="btn btn-danger">{{ _('Delete member') }}</a>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% endif %}

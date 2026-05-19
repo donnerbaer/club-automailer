@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %} {{ _('Groups') }} - {{ _("Admin") }}{% endblock %}
+
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';" >
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item active">
+            <a href="{{ url_for('admin.admin_view') }}">{{ _("Admin") }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ _("Groups") }}
+        </li>
+    </ol>
+</nav>
+
+
+<h1 class="h1">{{ _('Groups') }}</h1>
+
+{% include 'admin/group/modal.group.create.html' %}
+
+{% if groups|length == 0 %}
+    <p>{{ _('No groups found.') }}</p>
+{% else %}
+    <p>{{ _('Number of Groups') }}: {{ groups|length }}</p>
+{% endif %}
+
+
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th scope="span">{{ _('ID') }}</th>
+            <th scope="span">{{ _('Name') }}</th>
+            <th scope="span">{{ _('Description') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for group in groups %}
+        <tr>
+            <td scope="row">{{ group.id }}</td>
+            <td>
+                <a class="btn btn-primary" href="{{ url_for('admin.group_view', group_id=group.id) }}">{{ group.name }}</a>
+            </td>
+            <td>{{ group.description if group.description }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="2">{{ _('No groups found.') }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+{% endblock %}

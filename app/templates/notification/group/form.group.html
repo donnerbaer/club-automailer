@@ -1,0 +1,29 @@
+<form action="{{ action_url }}" method="POST">
+	{{ group_form.hidden_tag() }}
+
+	{% if group_form.errors %}
+	<div class="alert alert-danger" role="alert">
+		<strong>{{ _('There were errors in your form submission:') }}</strong>
+		<ul class="mb-0">
+			{% for field, errors in group_form.errors.items() %}
+				{% for error in errors %}
+				<li>{{ error }}</li>
+				{% endfor %}
+			{% endfor %}
+		</ul>
+	</div>
+	{% endif %}
+
+	<div class="mb-3">
+		{{ group_form.name.label(class='form-label') }}
+		{{ group_form.name(class='form-control') }}
+	</div>
+	<div class="mb-3">
+		{{ group_form.description.label(class='form-label') }}
+		{{ group_form.description(class='form-control', rows='4') }}
+	</div>
+	<div class="d-flex justify-content-end gap-2">
+		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+		{{ group_form.submit(class='btn btn-primary') }}
+	</div>
+</form>

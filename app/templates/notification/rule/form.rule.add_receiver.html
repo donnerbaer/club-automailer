@@ -1,0 +1,19 @@
+<form method="POST" action="{{ url_for('notification.add_receiver_to_rule', rule_id=rule.id) }}">
+    {{ receiver_form.hidden_tag() }}
+    <div class="mb-3">
+        {{ receiver_form.receiver_type.label(class='form-label') }}
+        {{ receiver_form.receiver_type(class='form-select') }}
+    </div>
+    <div class="mb-3">
+        {{ receiver_form.group_id.label(class='form-label') }}
+        {{ receiver_form.group_id(class='form-select') }}
+    </div>
+    <div class="mb-3">
+        {{ receiver_form.custom_email.label(class='form-label') }}
+        {{ receiver_form.custom_email(class='form-control', placeholder='name@example.org') }}
+    </div>
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+        {{ receiver_form.submit(class='btn btn-primary') }}
+    </div>
+</form>

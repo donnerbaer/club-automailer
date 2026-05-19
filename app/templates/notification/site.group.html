@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %} {{ group.name }} - {{ _('Groups') }}{% endblock %}
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.groups_view') }}">{{ _('Groups') }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ group.name }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h1 class="h1 mb-1">{{ _('Group') }}: {{ group.name }}</h1>
+        <p class="text-muted mb-0">{{ group.description or _('No description provided for this group.') }}</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary" href="{{ url_for('notification.groups_view') }}">
+            <i class="bi bi-arrow-left"></i> {{ _('Back to groups') }}
+        </a>
+        {% include 'notification/group/modal.group.update.html' %}
+        {% include 'notification/group/modal.group.delete.html' %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body-tertiary">{{ _('Group details') }}</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">{{ _('ID') }}</dt>
+                    <dd class="col-sm-8">{{ group.id }}</dd>
+                    <dt class="col-sm-4">{{ _('Name') }}</dt>
+                    <dd class="col-sm-8">{{ group.name }}</dd>
+                    <dt class="col-sm-4">{{ _('Description') }}</dt>
+                    <dd class="col-sm-8">{{ group.description or '-' }}</dd>
+                    <dt class="col-sm-4">{{ _('Members') }}</dt>
+                    <dd class="col-sm-8">{{ group.members|length }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center gap-2">
+                <span>{{ _('Members in group') }}</span>
+                {% if current_user.has_permission('notification.group.update') %}
+                    {% include 'notification/group/modal.group.add_member.html' %}
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if group.members|length == 0 %}
+                <div class="alert alert-info mb-0" role="alert">{{ _('No members assigned.') }}</div>
+                {% else %}
+                <ul class="list-group list-group-flush">
+                    {% for member in group.members %}
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
+                        <div>
+                            <div class="fw-semibold">{{ member.first_name }} {{ member.last_name }}</div>
+                            <div class="text-muted small">{{ member.member_number or member.email or '-' }}</div>
+                        </div>
+                        <div>
+                            {% if current_user.has_permission('notification.group.update') %}
+                                {% include 'notification/group/modal.group.remove_member.html' %}
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if group_update_form is defined and group_update_form.errors %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('updateGroupModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    });
+</script>
+{% endif %}
+
+{% if group_membership_form is defined and group_membership_form.errors %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('addMemberGroupModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

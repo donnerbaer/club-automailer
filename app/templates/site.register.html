@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}{{ _("Register") }}{% endblock %}
+
+{% block main %}
+<h1 class="h1">{{ _("Register new account") }}</h1>
+{% include 'auth/form.register.html' %}
+{% endblock %}

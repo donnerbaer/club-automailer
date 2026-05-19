@@ -1,0 +1,16 @@
+<form method="POST" action="{{ url_for('notification.rule_post') }}">
+    {{ rule_form.hidden_tag() }}
+    <div class="row g-3">
+        <div class="col-md-6">{{ rule_form.name.label(class='form-label') }}{{ rule_form.name(class='form-control') }}</div>
+        <div class="col-md-6">{{ rule_form.trigger_type.label(class='form-label') }}{{ rule_form.trigger_type(class='form-select') }}</div>
+        <div class="col-md-3">{{ rule_form.trigger_value.label(class='form-label') }}{{ rule_form.trigger_value(class='form-control') }}</div>
+        <div class="col-md-6">{{ rule_form.template_id.label(class='form-label') }}{{ rule_form.template_id(class='form-select') }}</div>
+        <div class="col-md-3">{{ rule_form.days_before.label(class='form-label') }}{{ rule_form.days_before(class='form-control') }}</div>
+        <div class="col-md-3">{{ rule_form.send_time.label(class='form-label') }}{{ rule_form.send_time(class='form-control', type='time') }}</div>
+        <div class="col-12 form-check mt-2 ms-2">{{ rule_form.active(class='form-check-input', id='rule_active_create') }}{{ rule_form.active.label(class='form-check-label', for='rule_active_create') }}</div>
+    </div>
+    <div class="mt-4 d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+        {{ rule_form.submit(class='btn btn-primary') }}
+    </div>
+</form>
