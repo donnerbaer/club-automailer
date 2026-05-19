@@ -86,3 +86,9 @@ python main.py
 
 + username: `admin`
 + password' `Starten1!` 
+
+# Run the mailing service
+
+```sh
+python mail-service.py
+```
