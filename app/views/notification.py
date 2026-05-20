@@ -142,6 +142,67 @@ def index():
     return render_template('notification/site.index.html')
 
 
+@notification_bp.route('/dashboard')
+@login_required
+@check_permissions(['notification.view'])
+def dashboard():
+    """Dashboard showing notification statistics with charts."""
+    ensure_notification_log_event_title_column()
+    
+    # Gather statistics
+    total_members = Member.query.count()
+    total_events = Event.query.count()
+    total_rules = NotificationRule.query.count()
+    active_rules = NotificationRule.query.filter_by(active=True).count()
+    
+    # Log statistics by status
+    total_logs = NotificationLog.query.count()
+    sent_logs = NotificationLog.query.filter_by(status='SENT').count()
+    failed_logs = NotificationLog.query.filter_by(status='FAILED').count()
+    pending_logs = NotificationLog.query.filter_by(status='PENDING').count()
+    
+    # Logs by trigger type
+    from sqlalchemy import func
+    logs_by_trigger = db.session.query(
+        TriggerType.code,
+        func.count(NotificationLog.id).label('count')
+    ).join(
+        NotificationRule, NotificationLog.rule_id == NotificationRule.id
+    ).join(
+        TriggerType, NotificationRule.trigger_type == TriggerType.id
+    ).group_by(TriggerType.code).all()
+    
+    # Recent logs trend (last 7 days)
+    from sqlalchemy import and_
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    logs_trend = db.session.query(
+        func.date(NotificationLog.sent_at).label('date'),
+        func.count(NotificationLog.id).label('count')
+    ).filter(
+        NotificationLog.sent_at >= seven_days_ago
+    ).group_by(
+        func.date(NotificationLog.sent_at)
+    ).order_by('date').all()
+    
+    # Groups and members relationship
+    total_groups = Group.query.count()
+    
+    return render_template(
+        'notification/site.dashboard.html',
+        total_members=total_members,
+        total_events=total_events,
+        total_rules=total_rules,
+        active_rules=active_rules,
+        total_groups=total_groups,
+        total_logs=total_logs,
+        sent_logs=sent_logs,
+        failed_logs=failed_logs,
+        pending_logs=pending_logs,
+        logs_by_trigger=logs_by_trigger,
+        logs_trend=logs_trend,
+    )
+
+
 @notification_bp.route('/templates')
 @login_required
 @check_permissions(['notification.templates.view'])

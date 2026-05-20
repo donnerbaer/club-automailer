@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Notification Dashboard') }}{% endblock %}
+
+{% block main %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ _('Dashboard') }}
+        </li>
+    </ol>
+</nav>
+
+<h1 class="mb-4">{{ _('Notification Dashboard') }}</h1>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ _('Total Members') }}</h5>
+                <p class="display-4">{{ total_members }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ _('Total Events') }}</h5>
+                <p class="display-4">{{ total_events }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ _('Active Rules') }}</h5>
+                <p class="display-4">{{ active_rules }}/{{ total_rules }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ _('Total Groups') }}</h5>
+                <p class="display-4">{{ total_groups }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="row mb-4">
+    <!-- Notification Status Chart -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ _('Notification Status Distribution') }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="80"></canvas>
+            </div>
+            <div class="card-footer text-muted">
+                <small>{{ _('Total logs: %(total)d', total=total_logs) }}</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Status Summary -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ _('Log Status Summary') }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="badge bg-success">{{ _('Sent') }}</span>
+                    <span class="float-end">{{ sent_logs }}</span>
+                </div>
+                <div class="mb-3">
+                    <span class="badge bg-danger">{{ _('Failed') }}</span>
+                    <span class="float-end">{{ failed_logs }}</span>
+                </div>
+                <div class="mb-3">
+                    <span class="badge bg-warning">{{ _('Pending') }}</span>
+                    <span class="float-end">{{ pending_logs }}</span>
+                </div>
+                <hr>
+                <div>
+                    <strong>{{ _('Total') }}:</strong>
+                    <span class="float-end">{{ total_logs }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="row mb-4">
+    <!-- Logs by Trigger Type -->
+    {% if logs_by_trigger %}
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ _('Logs by Trigger Type') }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="triggerChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 7-Day Trend -->
+    {% if logs_trend %}
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ _('Notification Trend (Last 7 Days)') }}</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="trendChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Navigation Links -->
+<div class="row">
+    <div class="col-12">
+        <h5>{{ _('Quick Links') }}</h5>
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('notification.members_view') }}" class="btn btn-outline-primary">
+                <i class="bi bi-people"></i> {{ _('Members') }}
+            </a>
+            <a href="{{ url_for('notification.groups_view') }}" class="btn btn-outline-primary">
+                <i class="bi bi-diagram-3"></i> {{ _('Groups') }}
+            </a>
+            <a href="{{ url_for('notification.events_view') }}" class="btn btn-outline-primary">
+                <i class="bi bi-calendar-event"></i> {{ _('Events') }}
+            </a>
+            <a href="{{ url_for('notification.rules_view') }}" class="btn btn-outline-primary">
+                <i class="bi bi-gear"></i> {{ _('Rules') }}
+            </a>
+            <a href="{{ url_for('notification.logs_view') }}" class="btn btn-outline-primary">
+                <i class="bi bi-file-earmark-text"></i> {{ _('Logs') }}
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+<script>
+    // Chart.js configuration
+    const chartConfig = {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            },
+        },
+    };
+
+    // Status Distribution Chart (Pie/Doughnut)
+    const statusCtx = document.getElementById('statusChart');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['{{ _("Sent") }}', '{{ _("Failed") }}', '{{ _("Pending") }}'],
+                datasets: [{
+                    data: [{{ sent_logs }}, {{ failed_logs }}, {{ pending_logs }}],
+                    backgroundColor: [
+                        'rgba(75, 192, 75, 0.8)',
+                        'rgba(255, 99, 99, 0.8)',
+                        'rgba(255, 193, 7, 0.8)',
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 75, 1)',
+                        'rgba(255, 99, 99, 1)',
+                        'rgba(255, 193, 7, 1)',
+                    ],
+                    borderWidth: 2,
+                }],
+            },
+            options: chartConfig,
+        });
+    }
+
+    // Logs by Trigger Type Chart (Bar)
+    const triggerCtx = document.getElementById('triggerChart');
+    if (triggerCtx) {
+        new Chart(triggerCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for trigger in logs_by_trigger %}'{{ trigger.code }}'{{ "," if not loop.last }}{% endfor %}],
+                datasets: [{
+                    label: '{{ _("Number of Logs") }}',
+                    data: [{% for trigger in logs_by_trigger %}{{ trigger.count }}{{ "," if not loop.last }}{% endfor %}],
+                    backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                }],
+            },
+            options: {
+                ...chartConfig,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    // 7-Day Trend Chart (Line)
+    const trendCtx = document.getElementById('trendChart');
+    if (trendCtx) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: [{% for log in logs_trend %}'{{ log.date }}'{{ "," if not loop.last }}{% endfor %}],
+                datasets: [{
+                    label: '{{ _("Notifications Sent") }}',
+                    data: [{% for log in logs_trend %}{{ log.count }}{{ "," if not loop.last }}{% endfor %}],
+                    backgroundColor: 'rgba(153, 102, 255, 0.1)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                }],
+            },
+            options: {
+                ...chartConfig,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                        },
+                    },
+                },
+            },
+        });
+    }
+</script>
+{% endblock %}
