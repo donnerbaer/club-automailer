@@ -18,6 +18,9 @@
     </div>
     <div class="d-flex flex-wrap gap-2">
         <a class="btn btn-outline-secondary" href="{{ url_for('notification.rules_view') }}"><i class="bi bi-arrow-left"></i> {{ _('Back to rules') }}</a>
+        {% if current_user.has_permission('notification.rule.create') %}
+        <a class="btn btn-outline-primary" href="{{ url_for('notification.rules_view', copy_from=rule.id) }}"><i class="bi bi-files"></i> {{ _('Copy') }}</a>
+        {% endif %}
         {% include 'notification/rule/modal.rule.update.html' %}
         {% include 'notification/rule/modal.rule.delete.html' %}
     </div>

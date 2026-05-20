@@ -120,6 +120,21 @@ def _attach_rendered_event_title(event):
     return event
 
 
+def _build_copied_rule_name(source_name):
+    base_name = f'{source_name} (Copy)'
+    max_length = 255
+    candidate = base_name[:max_length]
+    suffix = 2
+
+    while NotificationRule.query.filter_by(name=candidate).first() is not None:
+        suffix_text = f' (Copy {suffix})'
+        prefix_length = max_length - len(suffix_text)
+        candidate = f'{source_name[:prefix_length]}{suffix_text}'
+        suffix += 1
+
+    return candidate
+
+
 @notification_bp.route('/')
 @login_required
 @check_permissions(['notification.view'])
@@ -302,7 +317,20 @@ def trigger_type_delete(trigger_type_id):
 def rules_view():
     rules = NotificationRule.query.order_by(
         NotificationRule.created_at.desc()).all()
+    copy_from_id = request.args.get('copy_from', type=int)
     rule_form = NotificationRuleForm()
+    copied_rule = None
+
+    if copy_from_id:
+        copied_rule = NotificationRule.query.get_or_404(copy_from_id)
+        rule_form.name.data = _build_copied_rule_name(copied_rule.name)
+        rule_form.trigger_type.data = copied_rule.trigger_type or 0
+        rule_form.days_before.data = copied_rule.days_before
+        rule_form.trigger_value.data = copied_rule.trigger_value
+        rule_form.send_time.data = copied_rule.send_time
+        rule_form.template_id.data = copied_rule.template_id or 0
+        rule_form.active.data = copied_rule.active
+
     trigger_type_map = {
         trigger.id: trigger for trigger in TriggerType.query.all()}
     template_map = {
@@ -311,6 +339,7 @@ def rules_view():
         'notification/site.rules.html',
         rules=rules,
         rule_form=rule_form,
+        copied_rule=copied_rule,
         trigger_type_map=trigger_type_map,
         template_map=template_map,
     )
