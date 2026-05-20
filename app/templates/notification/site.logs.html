@@ -17,6 +17,9 @@
         <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clearFailedLogsModal">
             <i class="bi bi-exclamation-triangle"></i> {{ _('Clear Failed Logs') }}
         </button>
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clearOldLogsModal">
+            <i class="bi bi-calendar-x"></i> {{ _('Clear Logs Older Than') }}
+        </button>
         <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clearLogsModal">
             <i class="bi bi-trash"></i> {{ _('Clear Logs') }}
         </button>
@@ -25,9 +28,16 @@
 </div>
 
 {% if cleanup_result %}
-<div class="alert alert-success" role="alert">
-    {{ _('Deleted %(count)s failed log entries.', count=cleanup_result.deleted_failed_logs or 0) }}
-</div>
+    {% if cleanup_result.deleted_failed_logs %}
+    <div class="alert alert-success" role="alert">
+        {{ _('Deleted %(count)s failed log entries.', count=cleanup_result.deleted_failed_logs or 0) }}
+    </div>
+    {% endif %}
+    {% if cleanup_result.deleted_logs %}
+    <div class="alert alert-success" role="alert">
+        {{ _('Deleted %(count)s log entries older than %(age_value)s %(age_unit)s.', count=cleanup_result.deleted_logs, age_value=cleanup_result.age_value, age_unit=cleanup_result.age_unit) }}
+    </div>
+    {% endif %}
 {% endif %}
 
 {% if clear_logs_form is defined and current_user.has_permission('notification.logs.delete') %}
@@ -48,6 +58,38 @@
                 <form method="POST" action="{{ url_for('notification.clear_logs') }}">
                     {{ clear_logs_form.hidden_tag() }}
                     {{ clear_logs_form.submit(class='btn btn-danger') }}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if cleanup_form is defined and current_user.has_permission('notification.logs.delete') %}
+<div class="modal fade" id="clearOldLogsModal" tabindex="-1" aria-labelledby="clearOldLogsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="clearOldLogsModalLabel">{{ _('Delete Logs Older Than') }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">{{ _('Age') }}</label>
+                    <div class="d-flex gap-2">
+                        {{ cleanup_form.age_value(class='form-control', placeholder=_('Amount')) }}
+                        {{ cleanup_form.age_unit(class='form-select') }}
+                    </div>
+                </div>
+                <div class="alert alert-warning mb-0" role="alert">
+                    {{ _('This will delete all notification logs older than the selected age. This action cannot be undone.') }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                <form method="POST" action="{{ url_for('notification.cleanup_old_logs') }}">
+                    {{ cleanup_form.hidden_tag() }}
+                    {{ cleanup_form.submit(class='btn btn-danger') }}
                 </form>
             </div>
         </div>

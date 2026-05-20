@@ -597,8 +597,11 @@ def logs_view():
     clear_cleanup_form = NotificationLogCleanupForm()
     cleanup_result = {
         'deleted_failed_logs': request.args.get('deleted_failed_logs', type=int),
+        'deleted_logs': request.args.get('deleted_logs', type=int),
+        'age_value': request.args.get('age_value', type=int),
+        'age_unit': request.args.get('age_unit'),
     }
-    if cleanup_result['deleted_failed_logs'] is None:
+    if cleanup_result['deleted_failed_logs'] is None and cleanup_result['deleted_logs'] is None:
         cleanup_result = None
     return render_template(
         'notification/site.logs.html',
