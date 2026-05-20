@@ -1,6 +1,10 @@
 <form action="{{ url_for('admin.add_user_to_group', group_id=group.id) }}" method="POST">
     {{ form_membership.hidden_tag() }}
     <div class="form-group">
+        <label for="userFilter" class="form-label">{{ _('Filter by Name') }}</label>
+        <input type="text" class="form-control" id="userFilter" placeholder="{{ _('Search user...') }}">
+    </div>
+    <div class="form-group mt-2">
         {{ form_membership.user.label }} <span class="text-danger">(required)</span>
         {{ form_membership.user(class="form-control", id="user") }}    
     </div>
@@ -8,3 +12,54 @@
         {{ form_membership.submit(class="btn btn-success") }}
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterInput = document.getElementById('userFilter');
+    const userSelect = document.getElementById('user');
+    
+    if (!filterInput || !userSelect) return;
+    
+    // Store all original options
+    const allOptions = Array.from(userSelect.options).map(option => ({
+        value: option.value,
+        text: option.text
+    }));
+    
+    // Filter function
+    function filterUsers() {
+        const filterValue = filterInput.value.toLowerCase();
+        
+        // Clear current options
+        userSelect.innerHTML = '';
+        
+        // Add filtered options
+        allOptions.forEach(option => {
+            if (option.text.toLowerCase().includes(filterValue)) {
+                const newOption = document.createElement('option');
+                newOption.value = option.value;
+                newOption.text = option.text;
+                userSelect.appendChild(newOption);
+            }
+        });
+    }
+    
+    // Add event listener for filter input
+    filterInput.addEventListener('input', filterUsers);
+    
+    // Clear filter when modal is closed
+    const modal = document.getElementById('addUserGroupModal');
+    if (modal) {
+        modal.addEventListener('hidden.bs.modal', function() {
+            filterInput.value = '';
+            userSelect.innerHTML = '';
+            allOptions.forEach(option => {
+                const newOption = document.createElement('option');
+                newOption.value = option.value;
+                newOption.text = option.text;
+                userSelect.appendChild(newOption);
+            });
+        });
+    }
+});
+</script>
