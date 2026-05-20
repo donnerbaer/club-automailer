@@ -13,5 +13,8 @@ with app.app_context():
 
 
 if __name__ == '__main__':
-    # app.run(debug=True, host='', port=80)
-    app.run(debug=True)
+    import os
+    # Debug mode should only be enabled for development via environment variable
+    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    # app.run(debug=debug_mode, host='', port=80)
+    app.run(debug=debug_mode)

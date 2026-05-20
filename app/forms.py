@@ -67,11 +67,17 @@ class RegistrationForm(FlaskForm):
     )
     password = PasswordField(
         _l('Password'),
-        validators=[DataRequired(), Length(min=8)]
+        validators=[
+            DataRequired(),
+            Length(min=12, message=_l(
+                'Password must be at least 12 characters long')),
+        ]
     )
     confirm_password = PasswordField(
         _l('Confirm Password'),
-        validators=[DataRequired(), EqualTo('password')]
+        validators=[DataRequired(), EqualTo(
+            'password', message=_l('Passwords must match'))
+        ]
     )
     first_name = StringField(
         _l('First Name'),
@@ -86,24 +92,61 @@ class RegistrationForm(FlaskForm):
 
 class UserUpdateForm(FlaskForm):
     """Form for updating user profile."""
-    username = StringField(_l('Username'), validators=[
-                           Optional(), Length(min=3, max=64)])
-    email = StringField(_l('Email'), validators=[
-                        Optional(), Email(), Length(min=6, max=120)])
-    first_name = StringField(_l('First Name'), validators=[
-                             Optional(), Length(max=64)])
-    last_name = StringField(_l('Last Name'), validators=[
-                            Optional(), Length(max=64)])
-    image = FileField(_l('Profile Image Filename'), validators=[
-                      Optional()])  # For user profile image
+    username = StringField(
+        _l('Username'),
+        validators=[
+            Optional(), Length(min=3, max=64)
+        ]
+    )
+    email = StringField(
+        _l('Email'),
+        validators=[
+            Optional(), Email(), Length(min=6, max=120)
+        ]
+    )
+    first_name = StringField(
+        _l('First Name'),
+        validators=[
+            Optional(), Length(max=64)
+        ]
+    )
+    last_name = StringField(
+        _l('Last Name'),
+        validators=[
+            Optional(), Length(max=64)
+        ]
+    )
+    image = FileField(
+        _l('Profile Image Filename'),
+        validators=[
+            Optional()
+        ]
+    )  # For user profile image
     delete_image = BooleanField(
-        _l('Delete Profile Image'), default=False, validators=[Optional()])
-    old_password = PasswordField(_l('Old Password'), validators=[
-                                 DataRequired(), Length(min=8)])
-    new_password = PasswordField(_l('New Password'), validators=[
-                                 Optional(), Length(min=8)])
-    confirm_password = PasswordField(_l('Confirm Password'), validators=[
-                                     Optional(), EqualTo('new_password')])
+        _l('Delete Profile Image'),
+        default=False,
+        validators=[
+            Optional()
+        ]
+    )
+    old_password = PasswordField(
+        _l('Old Password'),
+        validators=[
+            DataRequired(), Length(min=8)
+        ]
+    )
+    new_password = PasswordField(
+        _l('New Password'),
+        validators=[
+            Optional(), Length(min=8)
+        ]
+    )
+    confirm_password = PasswordField(
+        _l('Confirm Password'),
+        validators=[
+            Optional(), EqualTo('new_password')
+        ]
+    )
     submit = SubmitField(_l('Save Changes'))
 
 

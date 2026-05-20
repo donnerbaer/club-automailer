@@ -3,10 +3,27 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_babel import lazy_gettext as _l
 from flask_login import login_user, logout_user, login_required
+from werkzeug.urls import url_parse
 from app import db
 from app.forms import LoginForm, RegistrationForm
 from app.model.model import User
 from app.utils.decorators import anonymous_required
+
+
+def is_safe_url(target):
+    """Check if the target URL is safe for redirection.
+    
+    Args:
+        target (str): The target URL to validate.
+        
+    Returns:
+        bool: True if the URL is safe (same host), False otherwise.
+    """
+    ref_url = url_parse(request.host_url)
+    test_url = url_parse(target)
+    # Allow relative URLs and URLs with same scheme and netloc
+    return (test_url.scheme in ('http', 'https', '') and 
+            (test_url.netloc == '' or ref_url.netloc == test_url.netloc))
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -33,14 +50,22 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user and user.check_password(form.password.data):
             login_user(user)
-            if request.args.get('next'):
-                return redirect(request.args.get('next', "/"))
+            # Validate the next URL to prevent open redirect attacks
+            next_page = request.args.get('next')
+            if next_page and is_safe_url(next_page):
+                return redirect(next_page)
+            return redirect(url_for('main.dashboard'))
         flash(_l('Invalid username or password'))
         return redirect(url_for('main.dashboard'))
+    
+    next_page = request.args.get('next', "")
+    if next_page and not is_safe_url(next_page):
+        next_page = ""  # Don't display unsafe URLs in template
+    
     return render_template(
         'site.login.html',
         nav_login_form=form,
-        next=request.args.get('next', "/")
+        next=next_page
     )
 
 

@@ -95,7 +95,9 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
     if delete_current_user:
-        redirect(url_for('auth.logout'))
+        from flask_login import logout_user
+        logout_user()
+        return redirect(url_for('auth.login'))
 
     return redirect(url_for('user.users_view'))
 

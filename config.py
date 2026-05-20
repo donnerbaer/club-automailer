@@ -9,9 +9,14 @@ load_dotenv()
 
 class Config:
     """ Configuration class for the Flask application. """
-    # Use environment variable if provided, otherwise fall back to a development key.
+    # Use environment variable if provided, otherwise raise an error.
     # In production, set the SECRET_KEY env var to a strong unpredictable value.
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key')
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if not SECRET_KEY:
+        raise ValueError(
+            "CRITICAL: SECRET_KEY environment variable must be set. "
+            "Generate a secure key with: python -c 'import secrets; print(secrets.token_hex(32))'"
+        )
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db')
     SQLALCHEMY_BINDS = {}
