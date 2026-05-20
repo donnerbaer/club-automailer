@@ -9,6 +9,7 @@ from flask_login import login_required
 from jinja2 import Undefined
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
+from sqlalchemy import func
 
 from app import db
 from app.forms import (
@@ -148,21 +149,20 @@ def index():
 def dashboard():
     """Dashboard showing notification statistics with charts."""
     ensure_notification_log_event_title_column()
-    
+
     # Gather statistics
     total_members = Member.query.count()
     total_events = Event.query.count()
     total_rules = NotificationRule.query.count()
     active_rules = NotificationRule.query.filter_by(active=True).count()
-    
+
     # Log statistics by status
     total_logs = NotificationLog.query.count()
     sent_logs = NotificationLog.query.filter_by(status='SENT').count()
     failed_logs = NotificationLog.query.filter_by(status='FAILED').count()
     pending_logs = NotificationLog.query.filter_by(status='PENDING').count()
-    
+
     # Logs by trigger type
-    from sqlalchemy import func
     logs_by_trigger = db.session.query(
         TriggerType.code,
         func.count(NotificationLog.id).label('count')
@@ -171,9 +171,8 @@ def dashboard():
     ).join(
         TriggerType, NotificationRule.trigger_type == TriggerType.id
     ).group_by(TriggerType.code).all()
-    
+
     # Recent logs trend (last 7 days)
-    from sqlalchemy import and_
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     logs_trend = db.session.query(
         func.date(NotificationLog.sent_at).label('date'),
@@ -183,10 +182,10 @@ def dashboard():
     ).group_by(
         func.date(NotificationLog.sent_at)
     ).order_by('date').all()
-    
+
     # Groups and members relationship
     total_groups = Group.query.count()
-    
+
     return render_template(
         'notification/site.dashboard.html',
         total_members=total_members,
