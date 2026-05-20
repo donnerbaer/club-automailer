@@ -1,11 +1,66 @@
 <form action="{{ url_for('notification.add_member_to_group', group_id=group.id) }}" method="POST">
     {{ group_membership_form.hidden_tag() }}
     <div class="mb-3">
+        <label for="memberFilter" class="form-label">{{ _('Filter by Name') }}</label>
+        <input type="text" class="form-control" id="memberFilter" placeholder="{{ _('Search member...') }}">
+    </div>
+    <div class="mb-3">
         {{ group_membership_form.member.label(class='form-label') }}
-        {{ group_membership_form.member(class='form-control') }}
+        {{ group_membership_form.member(class='form-control', id='member') }}
     </div>
     <div class="d-flex justify-content-end gap-2">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
         {{ group_membership_form.submit(class='btn btn-success') }}
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterInput = document.getElementById('memberFilter');
+    const memberSelect = document.getElementById('member');
+    
+    if (!filterInput || !memberSelect) return;
+    
+    // Store all original options
+    const allOptions = Array.from(memberSelect.options).map(option => ({
+        value: option.value,
+        text: option.text
+    }));
+    
+    // Filter function
+    function filterMembers() {
+        const filterValue = filterInput.value.toLowerCase();
+        
+        // Clear current options
+        memberSelect.innerHTML = '';
+        
+        // Add filtered options
+        allOptions.forEach(option => {
+            if (option.text.toLowerCase().includes(filterValue)) {
+                const newOption = document.createElement('option');
+                newOption.value = option.value;
+                newOption.text = option.text;
+                memberSelect.appendChild(newOption);
+            }
+        });
+    }
+    
+    // Add event listener for filter input
+    filterInput.addEventListener('input', filterMembers);
+    
+    // Clear filter when modal is closed
+    const modal = document.querySelector('[id*="Modal"]');
+    if (modal) {
+        modal.addEventListener('hidden.bs.modal', function() {
+            filterInput.value = '';
+            memberSelect.innerHTML = '';
+            allOptions.forEach(option => {
+                const newOption = document.createElement('option');
+                newOption.value = option.value;
+                newOption.text = option.text;
+                memberSelect.appendChild(newOption);
+            });
+        });
+    }
+});
+</script>
