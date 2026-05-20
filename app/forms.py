@@ -288,8 +288,11 @@ class NotificationGroupMembershipForm(FlaskForm):
                 ~Member.groups.any(id=group_id)).all()
         else:
             members = Member.query.all()
-        choices += [(member.id, f'{member.first_name} {member.last_name}')
-                    for member in members]
+        choices += [(
+            member.id,
+            f"{member.first_name} {member.last_name} ({member.member_number})"
+            if member.member_number else f"{member.first_name} {member.last_name}"
+        ) for member in members]
         self.member.choices = choices
 
 
