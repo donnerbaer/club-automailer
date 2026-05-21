@@ -5,7 +5,7 @@ from datetime import datetime
 from datetime import timedelta
 from flask import Blueprint, render_template, redirect, url_for, request
 from flask_babel import gettext as _
-from flask_login import login_required
+from flask_login import login_required, current_user
 from jinja2 import Undefined
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
@@ -26,8 +26,6 @@ from app.forms import (
     NotificationMemberGroupForm,
     NotificationGroupMembershipForm,
     NotificationLogClearForm,
-    NotificationLogCleanupForm,
-    NotificationFailedLogClearForm,
 )
 from app.model.model import (
     Event,
@@ -593,15 +591,12 @@ def logs_view():
     member_map = {member.id: member for member in Member.query.all()}
     event_map = {event.id: event for event in Event.query.all()}
     clear_logs_form = NotificationLogClearForm()
-    clear_failed_logs_form = NotificationFailedLogClearForm()
-    clear_cleanup_form = NotificationLogCleanupForm()
     cleanup_result = {
-        'deleted_failed_logs': request.args.get('deleted_failed_logs', type=int),
-        'deleted_logs': request.args.get('deleted_logs', type=int),
-        'age_value': request.args.get('age_value', type=int),
-        'age_unit': request.args.get('age_unit'),
+        'count': request.args.get('count', type=int),
+        'action': request.args.get('action'),
+        'before_date': request.args.get('before_date'),
     }
-    if cleanup_result['deleted_failed_logs'] is None and cleanup_result['deleted_logs'] is None:
+    if cleanup_result['count'] is None:
         cleanup_result = None
     return render_template(
         'notification/site.logs.html',
@@ -610,8 +605,6 @@ def logs_view():
         member_map=member_map,
         event_map=event_map,
         clear_logs_form=clear_logs_form,
-        clear_failed_logs_form=clear_failed_logs_form,
-        cleanup_form=clear_cleanup_form,
         cleanup_result=cleanup_result,
     )
 
@@ -620,65 +613,67 @@ def logs_view():
 @login_required
 @check_permissions(['notification.logs.delete'])
 def clear_logs():
+    """Clear notification logs based on the selected action."""
     ensure_notification_log_event_title_column()
     clear_logs_form = NotificationLogClearForm()
-    if clear_logs_form.validate_on_submit():
-        NotificationLog.query.delete()
+
+    if not clear_logs_form.validate_on_submit():
+        return redirect(url_for('notification.logs_view'))
+
+    # Verify password
+    password = clear_logs_form.password.data
+    if not current_user.check_password(password):
+        clear_logs_form.password.errors.append(
+            _('Invalid password. Please try again.'))
+        logs = NotificationLog.query.order_by(
+            NotificationLog.sent_at.desc()).all()
+        rule_map = {rule.id: rule for rule in NotificationRule.query.all()}
+        member_map = {member.id: member for member in Member.query.all()}
+        event_map = {event.id: event for event in Event.query.all()}
+        return render_template(
+            'notification/site.logs.html',
+            logs=logs,
+            rule_map=rule_map,
+            member_map=member_map,
+            event_map=event_map,
+            clear_logs_form=clear_logs_form,
+            cleanup_result=None,
+        )
+
+    action = clear_logs_form.action.data
+    count = 0
+    before_date = None
+
+    if action == 'all':
+        # Delete all logs
+        count = db.session.query(NotificationLog).delete(
+            synchronize_session=False)
         db.session.commit()
-    return redirect(url_for('notification.logs_view'))
 
+    elif action == 'failed':
+        # Delete only failed logs
+        count = NotificationLog.query.filter_by(
+            status='FAILED').delete(synchronize_session=False)
+        db.session.commit()
 
-@notification_bp.route('/logs/clear_failed', methods=['POST'])
-@login_required
-@check_permissions(['notification.logs.delete'])
-def clear_failed_logs():
-    ensure_notification_log_event_title_column()
-    clear_failed_logs_form = NotificationFailedLogClearForm()
-    if not clear_failed_logs_form.validate_on_submit():
-        return redirect(url_for('notification.logs_view'))
+    elif action == 'before_date':
+        # Delete logs before the specified date
+        before_date = clear_logs_form.before_date.data
 
-    deleted_failed_logs = NotificationLog.query.filter_by(
-        status='FAILED').delete(synchronize_session=False)
-    db.session.commit()
-    return redirect(url_for(
-        'notification.logs_view',
-        deleted_failed_logs=deleted_failed_logs,
-    ))
+        if not before_date:
+            # Validation failed, redirect without changes
+            return redirect(url_for('notification.logs_view'))
 
-
-@notification_bp.route('/logs/cleanup', methods=['POST'])
-@login_required
-@check_permissions(['notification.logs.delete'])
-def cleanup_old_logs():
-    """Delete notification logs older than the specified age."""
-    ensure_notification_log_event_title_column()
-    cleanup_form = NotificationLogCleanupForm()
-    if not cleanup_form.validate_on_submit():
-        return redirect(url_for('notification.logs_view'))
-
-    age_value = cleanup_form.age_value.data
-    age_unit = cleanup_form.age_unit.data
-
-    cutoff = datetime.utcnow()
-    if age_unit == 'days':
-        cutoff -= timedelta(days=age_value)
-    elif age_unit == 'weeks':
-        cutoff -= timedelta(weeks=age_value)
-    elif age_unit == 'months':
-        cutoff = _add_months(cutoff, -age_value)
-    else:
-        cutoff = _add_months(cutoff, -(age_value * 12))
-
-    deleted_logs = db.session.query(NotificationLog).filter(
-        NotificationLog.sent_at < cutoff
-    ).delete(synchronize_session=False)
-    db.session.commit()
+        count = db.session.query(NotificationLog).filter(
+            NotificationLog.sent_at < before_date
+        ).delete(synchronize_session=False)
+        db.session.commit()
 
     return redirect(url_for(
         'notification.logs_view',
-        deleted_logs=deleted_logs,
-        age_value=age_value,
-        age_unit=age_unit,
+        count=count,
+        action=action,
+        before_date=before_date.isoformat() if before_date else None,
     ))
 
 

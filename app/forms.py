@@ -528,29 +528,25 @@ class MemberForm(FlaskForm):
     submit = SubmitField(_l('Save Member'))
 
 
-class NotificationLogCleanupForm(FlaskForm):
-    """Form for deleting notification logs older than a selected age."""
-    age_value = IntegerField(_l('Age'), validators=[
-        DataRequired(), NumberRange(min=1, max=10000)
-    ])
-    age_unit = SelectField(
-        _l('Unit'),
+class NotificationLogClearForm(FlaskForm):
+    """Consolidated form for clearing notification logs with multiple options."""
+    action = SelectField(
+        _l('Action'),
         choices=[
-            ('days', _l('Days')),
-            ('weeks', _l('Weeks')),
-            ('months', _l('Months')),
-            ('years', _l('Years')),
+            ('all', _l('Delete All Logs')),
+            ('failed', _l('Delete Failed Logs')),
+            ('before_date', _l('Delete All Logs Before Date')),
         ],
         validators=[DataRequired()],
+        default='all',
     )
-    submit = SubmitField(_l('Delete Old Logs'))
-
-
-class NotificationLogClearForm(FlaskForm):
-    """Form for clearing notification logs."""
+    before_date = DateField(
+        _l('Before Date'),
+        format='%Y-%m-%d',
+        validators=[Optional()]
+    )
+    password = PasswordField(
+        _l('Password'),
+        validators=[DataRequired()]
+    )
     submit = SubmitField(_l('Clear Logs'))
-
-
-class NotificationFailedLogClearForm(FlaskForm):
-    """Form for clearing failed notification logs."""
-    submit = SubmitField(_l('Clear Failed Logs'))
