@@ -17,6 +17,11 @@
 			<li class="nav-item">
 				<a class="nav-link" href="{{ url_for('main.dashboard') }}"><i class="bi bi-speedometer"></i> {{ _('Dashboard') }}</a>
 			</li>
+			<li class="nav-item">
+          		<a class="nav-link" href="{{ url_for('notification.index') }}"><i class="bi bi-house-door-fill"></i> {{ _('Notifications') }}</a>
+       		</li>
+			
+			<!--
 			<li class="nav-item dropdown">
 				<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
 					<i class="bi bi-bell"> </i>{{ _('Notifications') }}
@@ -47,7 +52,7 @@
 					{% endif %}
 				</ul>
 			</li>
-
+			-->
 
 			{% if current_user.has_permission('admin.backend.access') %}
 			<li class="nav-item dropdown">

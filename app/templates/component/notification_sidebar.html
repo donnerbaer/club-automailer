@@ -1,0 +1,109 @@
+<!-- Notification Sidebar: displays navigation links for all notification features -->
+<nav class="d-flex flex-column flex-shrink-0 px-3 bg-light" style="width: 250px; min-height: calc(100vh - 120px); overflow-y: auto; border-right: 1px solid #8b8f93;">
+    <ul class="nav nav-pills flex-column mb-auto">
+        <!-- Dashboard -->
+        <li class="nav-item">
+            <a href="{{ url_for('notification.dashboard') }}" 
+               class="nav-link {% if request.endpoint == 'notification.dashboard' %}active{% endif %}"
+               aria-current="page">
+                <i class="bi bi-graph-up"></i> {{ _('Dashboard') }}
+            </a>
+        </li>
+
+        <!-- Members Section -->
+        {% if current_user.has_permission('notification.members.read') %}
+        <li class="nav-item mt-3">
+            <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
+                <i class="bi bi-people-fill"></i> {{ _('Members') }}
+            </span>
+        </li>
+        <li class="nav-item ms-3">
+            <a href="{{ url_for('notification.members_view') }}" 
+               class="nav-link {% if request.endpoint in ['notification.members_view', 'notification.member_view', 'notification.member_update'] %}active{% endif %}">
+                <i class="bi bi-list-ul"></i> {{ _('All Members') }}
+            </a>
+        </li>
+        {% endif %}
+
+        <!-- Groups Section -->
+        {% if current_user.has_permission('notification.groups.view') %}
+        <li class="nav-item mt-3">
+            <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
+                <i class="bi bi-diagram-3-fill"></i> {{ _('Groups') }}
+            </span>
+        </li>
+        <li class="nav-item ms-3">
+            <a href="{{ url_for('notification.groups_view') }}" 
+               class="nav-link {% if request.endpoint in ['notification.groups_view', 'notification.group_view', 'notification.group_update'] %}active{% endif %}">
+                <i class="bi bi-list-ul"></i> {{ _('All Groups') }}
+            </a>
+        </li>
+        {% endif %}
+
+        <!-- Events Section -->
+        {% if current_user.has_permission('notification.events.view') %}
+        <li class="nav-item mt-3">
+            <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
+                <i class="bi bi-calendar-event"></i> {{ _('Events') }}
+            </span>
+        </li>
+        <li class="nav-item ms-3">
+            <a href="{{ url_for('notification.events_view') }}" 
+               class="nav-link {% if request.endpoint in ['notification.events_view', 'notification.event_view', 'notification.event_update'] %}active{% endif %}">
+                <i class="bi bi-list-ul"></i> {{ _('All Events') }}
+            </a>
+        </li>
+        {% endif %}
+
+        <!-- Templates Section -->
+        {% if current_user.has_permission('notification.templates.view') %}
+        <li class="nav-item mt-3">
+            <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
+                <i class="bi bi-file-earmark-text"></i> {{ _('Templates') }}
+            </span>
+        </li>
+        <li class="nav-item ms-3">
+            <a href="{{ url_for('notification.templates_view') }}" 
+               class="nav-link {% if request.endpoint in ['notification.templates_view', 'notification.template_view', 'notification.template_update'] %}active{% endif %}">
+                <i class="bi bi-list-ul"></i> {{ _('All Templates') }}
+            </a>
+        </li>
+        {% endif %}
+
+        <!-- Rules & Trigger Types Section -->
+        {% if current_user.has_permission('notification.rules.view') %}
+        <li class="nav-item mt-3">
+            <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
+                <i class="bi bi-gear-fill"></i> {{ _('Rules & Automation') }}
+            </span>
+        </li>
+        <li class="nav-item ms-3">
+            <a href="{{ url_for('notification.trigger_types_view') }}" 
+               class="nav-link {% if request.endpoint in ['notification.trigger_types_view', 'notification.trigger_type_view', 'notification.trigger_type_update'] %}active{% endif %}">
+                <i class="bi bi-list-ul"></i> {{ _('Trigger Types') }}
+            </a>
+        </li>
+        <li class="nav-item ms-3">
+            <a href="{{ url_for('notification.rules_view') }}" 
+               class="nav-link {% if request.endpoint in ['notification.rules_view', 'notification.rule_view', 'notification.rule_update'] %}active{% endif %}">
+                <i class="bi bi-list-ul"></i> {{ _('Rules') }}
+            </a>
+        </li>
+        {% endif %}
+
+        <!-- Logs Section -->
+        {% if current_user.has_permission('notification.logs.read') %}
+        <li class="nav-item mt-3">
+            <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
+                <i class="bi bi-file-earmark-check"></i> {{ _('Logs') }}
+            </span>
+        </li>
+        <li class="nav-item ms-3">
+            <a href="{{ url_for('notification.logs_view') }}" 
+               class="nav-link {% if request.endpoint == 'notification.logs_view' %}active{% endif %}">
+                <i class="bi bi-list-ul"></i> {{ _('All Logs') }}
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
