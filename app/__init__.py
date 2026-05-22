@@ -38,10 +38,11 @@ def create_app():
     app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
 
     login_manager.login_view = 'auth.login'
-    
+
     # Security configuration for session cookies
     app.config['SESSION_COOKIE_SECURE'] = True  # Only send cookie over HTTPS
-    app.config['SESSION_COOKIE_HTTPONLY'] = True  # JavaScript cannot access the cookie
+    # JavaScript cannot access the cookie
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
 
     # ! Blueprints registration

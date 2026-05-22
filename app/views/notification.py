@@ -37,7 +37,6 @@ from app.model.model import (
     NotificationRuleReceiver,
     NotificationTemplate,
     TriggerType,
-    ensure_notification_log_event_title_column,
 )
 import re
 from app.utils.decorators import check_permissions
@@ -146,7 +145,6 @@ def index():
 @check_permissions(['notification.view'])
 def dashboard():
     """Dashboard showing notification statistics with charts."""
-    ensure_notification_log_event_title_column()
 
     # Gather statistics
     total_members = Member.query.count()
@@ -585,7 +583,6 @@ def rule_delete(rule_id):
 @login_required
 @check_permissions(['notification.logs.read'])
 def logs_view():
-    ensure_notification_log_event_title_column()
     logs = NotificationLog.query.order_by(NotificationLog.sent_at.desc()).all()
     rule_map = {rule.id: rule for rule in NotificationRule.query.all()}
     member_map = {member.id: member for member in Member.query.all()}
@@ -614,7 +611,6 @@ def logs_view():
 @check_permissions(['notification.logs.delete'])
 def clear_logs():
     """Clear notification logs based on the selected action."""
-    ensure_notification_log_event_title_column()
     clear_logs_form = NotificationLogClearForm()
 
     if not clear_logs_form.validate_on_submit():
@@ -723,7 +719,6 @@ def events_view():
 @login_required
 @check_permissions(['notification.event.delete'])
 def cleanup_old_events():
-    ensure_notification_log_event_title_column()
     cleanup_form = EventCleanupForm()
     if not cleanup_form.validate_on_submit():
         events = Event.query.order_by(Event.start_at.desc()).all()
