@@ -1,7 +1,6 @@
 """ This script seeds the database with initial data for permissions, roles, groups, and users. """
 
 from app import create_app, db
-from app.model.model import ensure_notification_log_event_title_column
 from app.model.model import AuthPermission, AuthRole, AuthGroup, User, TriggerType
 
 
@@ -320,5 +319,4 @@ app = create_app()
 
 with app.app_context():
     db.create_all()
-    ensure_notification_log_event_title_column()
     run_seeding()

@@ -35,7 +35,6 @@ from app.model.model import (
     NotificationRuleReceiver,
     NotificationTemplate,
     TriggerType,
-    ensure_notification_log_event_title_column,
 )
 from config import Config
 
@@ -527,8 +526,6 @@ def run_service(now_dt: datetime = None) -> None:
 
     active_rules = NotificationRule.query.filter_by(active=True).all()
     debug_log(f"Found {len(active_rules)} active rule(s)")
-
-    ensure_notification_log_event_title_column()
 
     for rule in active_rules:
         process_rule(rule, now_dt)
