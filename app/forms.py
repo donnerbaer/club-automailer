@@ -378,6 +378,26 @@ class EventForm(FlaskForm):
         self.event_type.choices = trigger_choices
 
 
+class ICSImportForm(FlaskForm):
+    """Form for importing events from an .ics file."""
+    ics_file = FileField(_l('ICS File'), validators=[DataRequired()])
+    trigger_type = SelectField(
+        _l('Trigger Type (apply to all imported events)'),
+        choices=[],
+        validators=[Optional()],
+    )
+    submit = SubmitField(_l('Import'))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        trigger_choices = [(0, _l('-- Please Choose --'))]
+        trigger_choices += [
+            (trigger.code, trigger.description or trigger.code)
+            for trigger in TriggerType.query.order_by(TriggerType.code.asc()).all()
+        ]
+        self.trigger_type.choices = trigger_choices
+
+
 class EventCleanupForm(FlaskForm):
     """Form for deleting events older than a selected age."""
     age_value = IntegerField(_l('Age'), validators=[

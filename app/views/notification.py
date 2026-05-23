@@ -1,8 +1,7 @@
 """ This module handles the main views of the application, including the index, dashboard, and error pages."""
 
 from calendar import monthrange
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from flask import Blueprint, render_template, redirect, url_for, request
 from flask_babel import gettext as _
 from flask_login import login_required, current_user
@@ -26,6 +25,7 @@ from app.forms import (
     NotificationMemberGroupForm,
     NotificationGroupMembershipForm,
     NotificationLogClearForm,
+    ICSImportForm,
 )
 from app.model.model import (
     Event,
@@ -38,6 +38,7 @@ from app.model.model import (
     NotificationTemplate,
     TriggerType,
 )
+from icalendar import Calendar
 import re
 from app.utils.decorators import check_permissions
 
@@ -713,6 +714,83 @@ def events_view():
         trigger_type_map=trigger_type_map,
         cleanup_result=cleanup_result,
     )
+
+
+@notification_bp.route('/events/import', methods=['GET', 'POST'])
+@login_required
+@check_permissions(['notification.event.create'])
+def import_ics():
+    """Import events from an uploaded .ics file."""
+    form = ICSImportForm()
+
+    if form.validate_on_submit():
+        uploaded = request.files.get('ics_file')
+        if not uploaded:
+            form.ics_file.errors.append(_('No file uploaded.'))
+        else:
+            try:
+                data = uploaded.read()
+                cal = Calendar.from_ical(data)
+            except Exception:
+                form.ics_file.errors.append(_('Invalid ICS file.'))
+                cal = None
+
+            imported = 0
+            if cal is not None:
+                # determine trigger code to apply to all events (if selected)
+                trigger_code = form.trigger_type.data or ''
+                if trigger_code == '0' or trigger_code == 0:
+                    trigger_code = ''
+
+                for component in cal.walk():
+                    if component.name != 'VEVENT':
+                        continue
+
+                    summary = component.get('SUMMARY')
+                    dtstart = component.get('DTSTART')
+                    dtend = component.get('DTEND')
+                    description = component.get('DESCRIPTION')
+                    location = component.get('LOCATION')
+
+                    # extract python datetime/date
+                    start_dt = getattr(dtstart, 'dt', None)
+                    end_dt = getattr(dtend, 'dt', None) if dtend else None
+
+                    # normalize dates to datetimes
+                    if start_dt and not isinstance(start_dt, datetime):
+                        start_dt = datetime.combine(
+                            start_dt, datetime.min.time())
+                    if end_dt and not isinstance(end_dt, datetime):
+                        end_dt = datetime.combine(end_dt, datetime.min.time())
+
+                    # if timezone-aware, convert to UTC and drop tzinfo
+                    if isinstance(start_dt, datetime) and getattr(start_dt, 'tzinfo', None):
+                        start_dt = start_dt.astimezone(
+                            timezone.utc).replace(tzinfo=None)
+                    if isinstance(end_dt, datetime) and getattr(end_dt, 'tzinfo', None):
+                        end_dt = end_dt.astimezone(
+                            timezone.utc).replace(tzinfo=None)
+
+                    if not start_dt:
+                        continue
+
+                    event = Event(
+                        title=str(summary) if summary else _('Untitled event'),
+                        event_type=trigger_code or 'EVENT_START',
+                        description=str(description) if description else None,
+                        start_at=start_dt,
+                        end_at=end_dt,
+                        location=str(location) if location else None,
+                        is_recurring=False,
+                    )
+                    db.session.add(event)
+                    imported += 1
+
+                db.session.commit()
+
+            return redirect(url_for('notification.events_view', imported_count=imported))
+
+    return render_template('notification/site.import_ics.html', form=form)
 
 
 @notification_bp.route('/events/cleanup', methods=['POST'])

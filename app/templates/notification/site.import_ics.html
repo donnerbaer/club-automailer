@@ -1,0 +1,51 @@
+{% extends 'notification/base_notification.html' %}
+{% block title %} {{ _('Import ICS') }}{% endblock %}
+
+{% block notification_content %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';" >
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ _('Import ICS') }}
+        </li>
+    </ol>
+</nav>
+
+<div class="card">
+    <div class="card-body">
+        <h1 class="h3">{{ _('Import events from ICS') }}</h1>
+        <p class="text-muted">{{ _('Upload an .ics calendar file to import events. Optionally apply a trigger type to all imported events.') }}</p>
+
+        <form method="post" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-3">
+                <label class="form-label">{{ form.ics_file.label }}</label>
+                {{ form.ics_file(class_='form-control') }}
+                {% for err in form.ics_file.errors %}
+                <div class="text-danger small">{{ err }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">{{ form.trigger_type.label }}</label>
+                {{ form.trigger_type(class_='form-select') }}
+                {% for err in form.trigger_type.errors %}
+                <div class="text-danger small">{{ err }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.submit(class_='btn btn-primary') }}
+                <a class="btn btn-secondary" href="{{ url_for('notification.events_view') }}">{{ _('Back') }}</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

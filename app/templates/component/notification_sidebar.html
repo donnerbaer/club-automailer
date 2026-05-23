@@ -53,6 +53,12 @@
                 <i class="bi bi-list-ul"></i> {{ _('All Events') }}
             </a>
         </li>
+        <li class="nav-item ms-3">
+            <a href="{{ url_for('notification.import_ics') }}" 
+               class="nav-link {% if request.endpoint == 'notification.import_ics_view' %}active{% endif %}">
+                <i class="bi bi-file-earmark-arrow-up"></i> {{ _('Import ICS') }}
+            </a>
+        </li>
         {% endif %}
 
         <!-- Templates Section -->
