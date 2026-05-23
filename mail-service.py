@@ -17,9 +17,11 @@ import time
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from email.message import EmailMessage
+from urllib.parse import quote
 
 from dotenv import load_dotenv
 from flask import Flask
+from icalendar import Calendar, Event as ICalEvent
 from jinja2 import Undefined
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
@@ -52,6 +54,84 @@ MAIL_FROM = os.getenv("MAIL_FROM")
 TEMPLATE_ENV = SandboxedEnvironment(autoescape=False, undefined=Undefined)
 
 
+# Calendar import link generation functions
+def generate_google_calendar_link(event: Event) -> str:
+    """Generate a Google Calendar event creation link."""
+    text = quote(event.title or "Event")
+
+    # Format dates for Google Calendar: YYYYMMDDTHHMMSS
+    start_date = event.start_at.strftime("%Y%m%dT%H%M%S")
+    end_date = event.end_at.strftime(
+        "%Y%m%dT%H%M%S") if event.end_at else start_date
+    dates = f"{start_date}/{end_date}"
+
+    details = quote(event.description or "")
+    location = quote(event.location or "")
+
+    params = [
+        f"text={text}",
+        f"dates={dates}",
+    ]
+
+    if details:
+        params.append(f"details={details}")
+    if location:
+        params.append(f"location={location}")
+
+    return f"https://calendar.google.com/calendar/r/eventedit?{'&'.join(params)}"
+
+
+def generate_outlook_calendar_link(event: Event) -> str:
+    """Generate an Outlook calendar event creation link."""
+    # Format dates for Outlook: YYYY-MM-DDTHH:MM:SS
+    start_dt = event.start_at.strftime("%Y-%m-%dT%H:%M:%S")
+    end_dt = event.end_at.strftime(
+        "%Y-%m-%dT%H:%M:%S") if event.end_at else start_dt
+
+    subject = quote(event.title or "Event")
+    body = quote(event.description or "")
+    location = quote(event.location or "")
+
+    params = [
+        "rru=addevent",
+        f"startdt={start_dt}",
+        f"enddt={end_dt}",
+        f"subject={subject}",
+    ]
+
+    if body:
+        params.append(f"body={body}")
+    if location:
+        params.append(f"location={location}")
+
+    return f"https://outlook.office.com/calendar/0/deeplink/compose?{'&'.join(params)}"
+
+
+def generate_ics_file(event: Event) -> bytes:
+    """Generate ICS (iCalendar) file content as bytes."""
+    cal = Calendar()
+    cal.add('prodid', '-//ENT//EN')
+    cal.add('version', '2.0')
+    cal.add('calscale', 'GREGORIAN')
+
+    ical_event = ICalEvent()
+    ical_event.add('summary', event.title or "Event")
+    ical_event.add('dtstart', event.start_at)
+    if event.end_at:
+        ical_event.add('dtend', event.end_at)
+    if event.description:
+        ical_event.add('description', event.description)
+    if event.location:
+        ical_event.add('location', event.location)
+
+    ical_event.add('uid', f"event-{event.id}@ENT")
+    ical_event.add('dtstamp', datetime.now())
+
+    cal.add_component(ical_event)
+
+    return cal.to_ical()
+
+
 def debug_log(message: str) -> None:
     """Print debug message if DEBUG mode is enabled."""
     if DEBUG:
@@ -71,13 +151,40 @@ def build_runtime_app() -> Flask:
     return flask_app
 
 
-def send_email(recipient: str, subject: str, body: str) -> None:
-    """Send a single plain-text email via SMTP."""
+def send_email(recipient: str, subject: str, body: str, event: Event = None) -> None:
+    """Send a single plain-text email via SMTP.
+
+    If event is provided, automatically appends calendar import links to the body
+    and attaches an ICS file.
+    """
+    email_body = body
+
+    # Automatically add calendar import links if event is provided
+    if event:
+        google_link = generate_google_calendar_link(event)
+        outlook_link = generate_outlook_calendar_link(event)
+
+        calendar_section = f"\n\n{'='*70}\nAdd to Calendar:\n{'='*70}\n"
+        calendar_section += f"Google Calendar: {google_link}\n\n"
+        calendar_section += f"Outlook: {outlook_link}\n\n"
+
+        email_body = body + calendar_section
+
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = MAIL_FROM
     msg["BCC"] = recipient
-    msg.set_content(body)
+    msg.set_content(email_body)
+
+    # Attach ICS file if event is provided
+    if event:
+        ics_filename = f"{event.title or 'event'}_{event.id}.ics"
+        # Sanitize filename
+        ics_filename = "".join(
+            c for c in ics_filename if c.isalnum() or c in (' ', '-', '_', '.')).rstrip()
+        ics_content = generate_ics_file(event)
+        msg.add_attachment(ics_content, maintype='text',
+                           subtype='calendar', filename=ics_filename)
 
     debug_log(f"Sending email to {recipient} | Subject: {subject[:50]}")
     try:
@@ -208,6 +315,13 @@ def build_event_template_context(event: Event, days_before: int) -> dict:
         "end_date": format_template_value(event.end_at),
         "location": event.location or "",
     }
+
+    # Generate calendar import links
+    calendar_links = {
+        "google": generate_google_calendar_link(event),
+        "outlook": generate_outlook_calendar_link(event),
+    }
+
     return {
         "event": event_context,
         "event_title": event_context["title"],
@@ -218,6 +332,9 @@ def build_event_template_context(event: Event, days_before: int) -> dict:
         "event_end_date": event_context["end_date"],
         "event_location": event_context["location"],
         "days_before": days_before,
+        "calendar_links": calendar_links,
+        "event_calendar_google": calendar_links["google"],
+        "event_calendar_outlook": calendar_links["outlook"],
     }
 
 
@@ -378,7 +495,7 @@ def process_event_start_rule(
             body = render_text(template.body_template, context)
 
             try:
-                send_email(email, subject, body)
+                send_email(email, subject, body, event=event)
                 log_notification(
                     rule_id=rule.id,
                     event_id=event.id,
