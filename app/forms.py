@@ -548,6 +548,15 @@ class MemberForm(FlaskForm):
     submit = SubmitField(_l('Save Member'))
 
 
+class MemberImportForm(FlaskForm):
+    """Form for importing members from a CSV file."""
+    csv_file = FileField(
+        _l('CSV File'),
+        validators=[DataRequired()]
+    )
+    submit = SubmitField(_l('Import Members'))
+
+
 class NotificationLogClearForm(FlaskForm):
     """Consolidated form for clearing notification logs with multiple options."""
     action = SelectField(

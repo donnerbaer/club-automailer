@@ -1,14 +1,16 @@
 """ This module handles the main views of the application, including the index, dashboard, and error pages."""
 
+import csv
+import io
 from calendar import monthrange
 from datetime import datetime, timedelta, timezone
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for, request, Response
 from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from jinja2 import Undefined
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from app import db
 from app.forms import (
@@ -26,6 +28,7 @@ from app.forms import (
     NotificationGroupMembershipForm,
     NotificationLogClearForm,
     ICSImportForm,
+    MemberImportForm,
 )
 from app.model.model import (
     Event,
@@ -117,6 +120,68 @@ def _render_event_title(event):
 def _attach_rendered_event_title(event):
     event.rendered_title = _render_event_title(event)
     return event
+
+
+def _parse_member_import_date(value):
+    if value is None:
+        return None
+
+    value = str(value).strip()
+    if not value:
+        return None
+
+    for date_format in ('%Y-%m-%d', '%d.%m.%Y', '%d/%m/%Y', '%m/%d/%Y'):
+        try:
+            return datetime.strptime(value, date_format).date()
+        except ValueError:
+            continue
+
+    try:
+        return datetime.fromisoformat(value).date()
+    except ValueError:
+        return None
+
+
+def _parse_member_import_status(value):
+    if value is None:
+        return True
+
+    normalized_value = str(value).strip().lower()
+    if not normalized_value:
+        return True
+
+    if normalized_value in {'1', 'true', 'yes', 'y', 'active', 'enabled', 'on'}:
+        return True
+    if normalized_value in {'0', 'false', 'no', 'n', 'inactive', 'disabled', 'off'}:
+        return False
+    return True
+
+
+def _normalize_csv_header(value):
+    return str(value).strip().lower().replace(' ', '_') if value is not None else ''
+
+
+def _normalize_csv_value(value):
+    if value is None:
+        return None
+    value = str(value).strip()
+    return value if value else None
+
+
+def _build_member_import_template_csv():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'member_number',
+        'first_name',
+        'last_name',
+        'birth_date',
+        'email',
+        'phone',
+        'member_since',
+        'status',
+    ])
+    return output.getvalue()
 
 
 def _build_copied_rule_name(source_name):
@@ -791,6 +856,163 @@ def import_ics():
             return redirect(url_for('notification.events_view', imported_count=imported))
 
     return render_template('notification/site.import_ics.html', form=form)
+
+
+@notification_bp.route('/members/import', methods=['GET', 'POST'])
+@login_required
+@check_permissions([
+    'notification.member.create',
+    'notification.member.update',
+    'notification.member.delete',
+])
+def import_members():
+    """Import members from an uploaded CSV file and sync them by member number."""
+    form = MemberImportForm()
+
+    if form.validate_on_submit():
+        uploaded = request.files.get('csv_file')
+        if not uploaded:
+            form.csv_file.errors.append(_('No file uploaded.'))
+            return render_template('notification/site.import_members.html', form=form)
+
+        try:
+            raw_data = uploaded.read().decode('utf-8-sig')
+        except UnicodeDecodeError:
+            form.csv_file.errors.append(
+                _('Invalid CSV file encoding. Use UTF-8.'))
+            return render_template('notification/site.import_members.html', form=form)
+
+        if not raw_data.strip():
+            form.csv_file.errors.append(_('The CSV file is empty.'))
+            return render_template('notification/site.import_members.html', form=form)
+
+        sample = raw_data[:4096]
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=',;\t|')
+        except csv.Error:
+            dialect = csv.excel
+
+        reader = csv.DictReader(io.StringIO(raw_data), dialect=dialect)
+        expected_fields = {
+            'member_number',
+            'first_name',
+            'last_name',
+            'birth_date',
+            'email',
+            'phone',
+            'member_since',
+            'status',
+        }
+
+        if not reader.fieldnames:
+            form.csv_file.errors.append(
+                _('The CSV file is missing a header row.'))
+            return render_template('notification/site.import_members.html', form=form)
+
+        normalized_fieldnames = {
+            _normalize_csv_header(fieldname) for fieldname in reader.fieldnames
+        }
+        if not expected_fields.issubset(normalized_fieldnames):
+            form.csv_file.errors.append(_(
+                'The CSV file must contain the columns: member_number, first_name, last_name, birth_date, email, phone, member_since, status.'
+            ))
+            return render_template('notification/site.import_members.html', form=form)
+
+        rows_by_member_number = {}
+        for row_number, row in enumerate(reader, start=2):
+            normalized_row = {
+                _normalize_csv_header(key): _normalize_csv_value(value)
+                for key, value in row.items()
+            }
+            member_number = normalized_row.get('member_number')
+            if not member_number:
+                continue
+            if not normalized_row.get('first_name') or not normalized_row.get('last_name') or not normalized_row.get('email'):
+                form.csv_file.errors.append(_(
+                    f'Row {row_number}: first_name, last_name, and email are required.'
+                ))
+                return render_template('notification/site.import_members.html', form=form)
+            rows_by_member_number[member_number] = normalized_row
+
+        if not rows_by_member_number:
+            form.csv_file.errors.append(
+                _('The CSV file does not contain any valid member rows.'))
+            return render_template('notification/site.import_members.html', form=form)
+
+        existing_members = {
+            member.member_number: member
+            for member in Member.query.filter(Member.member_number.isnot(None)).all()
+        }
+
+        imported_count = 0
+        updated_count = 0
+        seen_member_numbers = set()
+
+        for member_number, row in rows_by_member_number.items():
+            seen_member_numbers.add(member_number)
+            member = existing_members.get(member_number)
+            if member is None:
+                member = Member(member_number=member_number)
+                db.session.add(member)
+                imported_count += 1
+            else:
+                updated_count += 1
+
+            member.first_name = row.get('first_name')
+            member.last_name = row.get('last_name')
+            member.birth_date = _parse_member_import_date(
+                row.get('birth_date'))
+            member.email = row.get('email')
+            member.phone = row.get('phone')
+            member.join_date = _parse_member_import_date(
+                row.get('member_since'))
+            member.active = _parse_member_import_status(row.get('status'))
+
+        if seen_member_numbers:
+            members_to_delete = Member.query.filter(
+                or_(
+                    Member.member_number.is_(None),
+                    ~Member.member_number.in_(seen_member_numbers),
+                )
+            ).all()
+        else:
+            members_to_delete = Member.query.all()
+
+        deleted_count = 0
+        for member in members_to_delete:
+            for event_participant in list(member.events):
+                db.session.delete(event_participant)
+            member.groups.clear()
+            db.session.delete(member)
+            deleted_count += 1
+
+        db.session.commit()
+
+        return redirect(url_for(
+            'notification.members_view',
+            imported_count=imported_count,
+            updated_count=updated_count,
+            deleted_count=deleted_count,
+        ))
+
+    return render_template('notification/site.import_members.html', form=form)
+
+
+@notification_bp.route('/members/import/template', methods=['GET'])
+@login_required
+@check_permissions([
+    'notification.member.create',
+    'notification.member.update',
+    'notification.member.delete',
+])
+def download_member_import_template():
+    """Download an empty member import CSV with the required headers."""
+    response = Response(
+        _build_member_import_template_csv(),
+        mimetype='text/csv; charset=utf-8',
+    )
+    response.headers['Content-Disposition'] = 'attachment; filename=member_import_template.csv'
+    return response
 
 
 @notification_bp.route('/events/cleanup', methods=['POST'])

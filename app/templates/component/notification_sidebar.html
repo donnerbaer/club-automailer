@@ -19,10 +19,18 @@
         </li>
         <li class="nav-item ms-3">
             <a href="{{ url_for('notification.members_view') }}" 
-               class="nav-link {% if request.endpoint in ['notification.members_view', 'notification.member_view', 'notification.member_update'] %}active{% endif %}">
+               class="nav-link {% if request.endpoint in ['notification.members_view', 'notification.member_view', 'notification.member_update', 'notification.import_members'] %}active{% endif %}">
                 <i class="bi bi-list-ul"></i> {{ _('All Members') }}
             </a>
         </li>
+        {% if current_user.has_permission('notification.member.create') and current_user.has_permission('notification.member.update') and current_user.has_permission('notification.member.delete') %}
+        <li class="nav-item ms-3">
+            <a href="{{ url_for('notification.import_members') }}"
+               class="nav-link {% if request.endpoint == 'notification.import_members' %}active{% endif %}">
+                <i class="bi bi-file-earmark-arrow-up"></i> {{ _('Import Members CSV') }}
+            </a>
+        </li>
+        {% endif %}
         {% endif %}
 
         <!-- Groups Section -->
