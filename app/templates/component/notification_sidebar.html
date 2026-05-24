@@ -19,7 +19,7 @@
         </li>
         <li class="nav-item ms-3">
             <a href="{{ url_for('notification.members_view') }}" 
-               class="nav-link {% if request.endpoint in ['notification.members_view', 'notification.member_view', 'notification.member_update', 'notification.import_members'] %}active{% endif %}">
+               class="nav-link {% if request.endpoint in ['notification.members_view', 'notification.member_view', 'notification.member_update'] %}active{% endif %}">
                 <i class="bi bi-list-ul"></i> {{ _('All Members') }}
             </a>
         </li>
@@ -63,7 +63,7 @@
         </li>
         <li class="nav-item ms-3">
             <a href="{{ url_for('notification.import_ics') }}" 
-               class="nav-link {% if request.endpoint == 'notification.import_ics_view' %}active{% endif %}">
+               class="nav-link {% if request.endpoint == 'notification.import_ics' %}active{% endif %}">
                 <i class="bi bi-file-earmark-arrow-up"></i> {{ _('Import ICS') }}
             </a>
         </li>
