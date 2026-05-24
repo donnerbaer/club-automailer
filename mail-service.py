@@ -170,6 +170,9 @@ def send_email(recipient: str, subject: str, body: str, event: Event = None) -> 
 
         email_body = body + calendar_section
 
+    email_body = email_body + \
+        "\n\nThis is an automated notification. Please do not reply to this email."
+
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = MAIL_FROM
