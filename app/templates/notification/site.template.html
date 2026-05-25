@@ -50,7 +50,7 @@
     </div>
     <div class="col-12">
         <div class="alert alert-info mb-0" role="alert">
-            {{ _('You can use placeholders like {{receiver.first_name}}, {{receiver.last_name}}, {{member.first_name}}, {{member.last_name}}, {{member.birth_date}}, {{member._birth_date}}, {{add_years(member.join_date, 25)}} and {{event.title}}.') }}
+            {% include 'notification/template/markdown.html' %}
         </div>
     </div>
 </div>
