@@ -483,3 +483,4 @@ class WorkingHoursLog(db.Model):
     created_by = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     member = relationship("Member", back_populates="working_hours_logs")
+    created_by_user = relationship("User")

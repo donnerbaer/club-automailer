@@ -46,7 +46,19 @@
             <td>{{ log.member.first_name }} {{ log.member.last_name }}</td>
             <td>{{ log.date }}</td>
             <td>{{ log.hours }}</td>
-            <td>{{ log.created_by }}</td>
+            <td>
+                {% if log.created_by_user %}
+                    {% if current_user.has_permission('admin.user.read') or current_user.id == log.created_by %}
+                        <a href="{{ url_for('user.user_view', user_id=log.created_by_user.id) }}">
+                            {{ log.created_by_user.first_name }} {{ log.created_by_user.last_name }}
+                        </a>
+                    {% else %}
+                        {{ log.created_by_user.first_name }} {{ log.created_by_user.last_name }}
+                    {% endif %}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
             <td>
                 {% if current_user.has_permission('notification.workinghours.update') %}
                 <a class="btn btn-sm btn-primary" href="{{ url_for('notification.working_hours_edit', log_id=log.id) }}">{{ _('Edit') }}</a>
