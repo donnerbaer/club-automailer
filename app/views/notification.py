@@ -4,7 +4,7 @@ import csv
 import io
 from calendar import monthrange
 from datetime import datetime, timedelta, timezone
-from flask import Blueprint, render_template, redirect, url_for, request, Response
+from flask import Blueprint, render_template, redirect, url_for, request, Response, flash
 from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from jinja2 import Undefined
@@ -24,6 +24,7 @@ from app.forms import (
     NotificationTemplateForm,
     TriggerTypeForm,
     MemberForm,
+    WorkingHoursForm,
     NotificationMemberGroupForm,
     NotificationGroupMembershipForm,
     NotificationLogClearForm,
@@ -35,6 +36,7 @@ from app.model.model import (
     EventParticipant,
     Group,
     Member,
+    WorkingHoursLog,
     NotificationLog,
     NotificationRule,
     NotificationRuleReceiver,
@@ -142,6 +144,20 @@ def _parse_member_import_date(value):
         return None
 
 
+def _parse_member_import_required_hours(value):
+    if value is None:
+        return None
+
+    value = str(value).strip()
+    if not value:
+        return None
+
+    try:
+        return float(value)
+    except ValueError:
+        return None
+
+
 def _parse_member_import_status(value):
     if value is None:
         return True
@@ -179,6 +195,7 @@ def _build_member_import_template_csv():
         'email',
         'phone',
         'member_since',
+        'required_hours',
         'status',
     ])
     return output.getvalue()
@@ -901,6 +918,7 @@ def import_members():
             'email',
             'phone',
             'member_since',
+            'required_hours',
             'status',
         }
 
@@ -914,7 +932,7 @@ def import_members():
         }
         if not expected_fields.issubset(normalized_fieldnames):
             form.csv_file.errors.append(_(
-                'The CSV file must contain the columns: member_number, first_name, last_name, birth_date, email, phone, member_since, status.'
+                'The CSV file must contain the columns: member_number, first_name, last_name, birth_date, email, phone, member_since, required_hours, status.'
             ))
             return render_template('notification/site.import_members.html', form=form)
 
@@ -966,6 +984,8 @@ def import_members():
             member.phone = row.get('phone')
             member.join_date = _parse_member_import_date(
                 row.get('member_since'))
+            member.required_hours = _parse_member_import_required_hours(
+                row.get('required_hours')) or 0
             member.active = _parse_member_import_status(row.get('status'))
 
         if seen_member_numbers:
@@ -1461,6 +1481,7 @@ def member_post():
             phone=member_form.phone.data,
             birth_date=member_form.birth_date.data,
             join_date=member_form.join_date.data,
+            required_hours=member_form.required_hours.data or 0,
             active=member_form.active.data,
         )
         db.session.add(member)
@@ -1501,6 +1522,7 @@ def member_update(member_id):
         member.phone = member_update_form.phone.data
         member.birth_date = member_update_form.birth_date.data
         member.join_date = member_update_form.join_date.data
+        member.required_hours = member_update_form.required_hours.data or 0
         member.active = member_update_form.active.data
         db.session.add(member)
         db.session.commit()
@@ -1572,3 +1594,70 @@ def member_delete(member_id):
     db.session.delete(member)
     db.session.commit()
     return redirect(url_for('notification.members_view'))
+
+
+@notification_bp.route('/working-hours')
+@login_required
+@check_permissions(['notification.workinghours.view'])
+def working_hours_view():
+    logs = WorkingHoursLog.query.order_by(WorkingHoursLog.date.desc()).all()
+    form = WorkingHoursForm()
+    return render_template('notification/site.working_hours.html', logs=logs, form=form)
+
+
+@notification_bp.route('/working-hours/create', methods=['GET', 'POST'])
+@login_required
+@check_permissions(['notification.workinghours.create'])
+def working_hours_create():
+    form = WorkingHoursForm()
+    if form.validate_on_submit():
+        if form.member.data == 0:
+            form.member.errors.append(_('Please select a member'))
+        else:
+            log = WorkingHoursLog(
+                member_id=form.member.data,
+                date=form.date.data,
+                hours=form.hours.data,
+                created_by=current_user.id,
+            )
+            db.session.add(log)
+            db.session.commit()
+            flash(_('Working hours entry created.'), 'success')
+            return redirect(url_for('notification.working_hours_view'))
+
+    return render_template('notification/site.working_hours.form.html', form=form)
+
+
+@notification_bp.route('/working-hours/<int:log_id>/edit', methods=['GET', 'POST'])
+@login_required
+@check_permissions(['notification.workinghours.update'])
+def working_hours_edit(log_id):
+    log = WorkingHoursLog.query.get_or_404(log_id)
+    form = WorkingHoursForm(obj=log)
+    # set member field explicitly
+    form.member.data = log.member_id
+
+    if form.validate_on_submit():
+        if form.member.data == 0:
+            form.member.errors.append(_('Please select a member'))
+        else:
+            log.member_id = form.member.data
+            log.date = form.date.data
+            log.hours = form.hours.data
+            db.session.add(log)
+            db.session.commit()
+            flash(_('Working hours entry updated.'), 'success')
+            return redirect(url_for('notification.working_hours_view'))
+
+    return render_template('notification/site.working_hours.form.html', form=form, log=log)
+
+
+@notification_bp.route('/working-hours/<int:log_id>/delete', methods=['GET'])
+@login_required
+@check_permissions(['notification.workinghours.delete'])
+def working_hours_delete(log_id):
+    log = WorkingHoursLog.query.get_or_404(log_id)
+    db.session.delete(log)
+    db.session.commit()
+    flash(_('Working hours entry deleted.'), 'success')
+    return redirect(url_for('notification.working_hours_view'))

@@ -8,6 +8,7 @@ from wtforms import (
     SubmitField,
     FileField,
     BooleanField,
+    FloatField,
     IntegerField,
     SelectField,
     RadioField,
@@ -544,8 +545,31 @@ class MemberForm(FlaskForm):
         format='%Y-%m-%d',
         validators=[Optional()]
     )
+    required_hours = FloatField(
+        _l('Required Hours'),
+        validators=[Optional(), NumberRange(min=0)]
+    )
     active = BooleanField(_l('Active'), default=True)
     submit = SubmitField(_l('Save Member'))
+
+
+class WorkingHoursForm(FlaskForm):
+    """Form for creating or updating a working hours log entry."""
+    member = SelectField(_l('Member'), choices=[], coerce=int,
+                         validators=[DataRequired()])
+    date = DateField(_l('Date'), format='%Y-%m-%d',
+                     validators=[DataRequired()])
+    hours = FloatField(_l('Hours'), validators=[
+                       DataRequired(), NumberRange(min=0)])
+    submit = SubmitField(_l('Save'))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        choices = [(0, _l('-- Please Choose --'))]
+        members = Member.query.order_by(
+            Member.first_name.asc(), Member.last_name.asc()).all()
+        choices += [(m.id, f"{m.first_name} {m.last_name}") for m in members]
+        self.member.choices = choices
 
 
 class MemberImportForm(FlaskForm):

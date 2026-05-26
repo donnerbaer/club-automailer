@@ -119,5 +119,19 @@
             </a>
         </li>
         {% endif %}
+        {% if current_user.has_permission('notification.workinghours.view') %}
+        <li class="nav-item mt-3">
+            <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
+                <i class="bi bi-clock"></i> {{ _('Working Hours') }}
+            </span>
+        </li>
+        <li class="nav-item ms-3">
+            <a href="{{ url_for('notification.working_hours_view') }}" 
+               class="nav-link {% if request.endpoint == 'notification.working_hours_view' %}active{% endif %}">
+                <i class="bi bi-list-ul"></i> {{ _('All Working Hours') }}
+            </a>
+        </li>
+        {% endif %}
+
     </ul>
 </nav>

@@ -68,6 +68,9 @@
                     <dt class="col-sm-4">{{ _('Join Date') }}</dt>
                     <dd class="col-sm-8">{{ member.join_date or '-' }}</dd>
 
+                    <dt class="col-sm-4">{{ _('Required Hours') }}</dt>
+                    <dd class="col-sm-8">{{ member.required_hours if member.required_hours is not none else '-' }}</dd>
+
                     <dt class="col-sm-4">{{ _('Status') }}</dt>
                     <dd class="col-sm-8">
                         {% if member.active %}

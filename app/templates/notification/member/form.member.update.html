@@ -43,6 +43,10 @@
             {{ member_update_form.join_date.label(class="form-label") }}
             {{ member_update_form.join_date(class="form-control", id="join_date", type="date") }}
         </div>
+        <div class="col-md-6">
+            {{ member_update_form.required_hours.label(class="form-label") }}
+            {{ member_update_form.required_hours(class="form-control", id="required_hours", type="number", step="0.1", min="0") }}
+        </div>
         <div class="col-12 form-check mt-2 ms-2">
             {{ member_update_form.active(class="form-check-input", id="active") }}
             {{ member_update_form.active.label(class="form-check-label", for="active") }}

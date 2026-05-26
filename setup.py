@@ -89,6 +89,14 @@ PERMISSIONS = [
     {"name": "notification.rule.update", "description": "Update notification rule"},
     {"name": "notification.rule.delete", "description": "Delete notification rule"},
 
+    {"name": "notification.workinghours.view",
+        "description": "View working hours"},
+    {"name": "notification.workinghours.update",
+        "description": "Update working hours"},
+    {"name": "notification.workinghours.delete",
+        "description": "Delete working hours"},
+    {"name": "notification.workinghours.create",
+        "description": "Create working hours"},
 ]
 
 
@@ -160,6 +168,12 @@ ROLES = [
             "notification.rule.create",
             "notification.rule.update",
             "notification.rule.delete",
+
+            "notification.workinghours.view",
+            "notification.workinghours.update",
+            "notification.workinghours.delete",
+            "notification.workinghours.create",
+
         ]
     },
     {

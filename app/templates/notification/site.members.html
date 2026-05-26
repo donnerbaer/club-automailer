@@ -71,6 +71,7 @@
             <th scope="col">{{ _('Email') }}</th>
             <th scope="col">{{ _('Phone') }}</th>
             <th scope="col">{{ _('Join Date') }}</th>
+            <th scope="col">{{ _('Required Hours') }}</th>
             <th scope="col">{{ _('Active') }}</th>
             <th scope="col">{{ _('Actions') }}</th>
         </tr>
@@ -85,6 +86,7 @@
             <td>{{ member.email or '-' }}</td>
             <td>{{ member.phone or '-' }}</td>
             <td>{{ member.join_date or '-' }}</td>
+            <td>{{ member.required_hours if member.required_hours is not none else '-' }}</td>
             <td>
                 {% if member.active %}
                 <span class="badge text-bg-success">{{ _('Active') }}</span>
@@ -102,7 +104,7 @@
         </tr>
         {% else %}
         <tr>
-            <td colspan="9">{{ _('No members found.') }}</td>
+            <td colspan="10">{{ _('No members found.') }}</td>
         </tr>
         {% endfor %}
     </tbody>
