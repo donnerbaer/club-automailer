@@ -32,7 +32,6 @@ from app.forms import (
     NotificationLogClearForm,
     ICSImportForm,
     MemberImportForm,
-    EventImportForm,
 )
 from app.model.model import (
     Event,
