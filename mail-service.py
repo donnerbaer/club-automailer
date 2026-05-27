@@ -7,6 +7,7 @@ targets (events or members), sends emails, and writes audit logs.
 Usage:
   python mail-service.py          # Normal cron mode (silent unless errors)
   python mail-service.py --debug  # Verbose diagnostic output
+    python mail-service.py --force-working-hours-monthly  # Force monthly working-hours mail
 """
 
 import os
@@ -25,7 +26,7 @@ from icalendar import Calendar, Event as ICalEvent
 from jinja2 import Undefined
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
-from sqlalchemy import extract
+from sqlalchemy import extract, func
 
 from app import db
 from app.model.model import (
@@ -38,6 +39,7 @@ from app.model.model import (
     NotificationTemplate,
     TriggerType,
 )
+from app.model.model import WorkingHoursLog
 from config import Config
 
 
@@ -45,6 +47,10 @@ load_dotenv()
 
 # Global debug flag
 DEBUG = "--debug" in sys.argv
+FORCE_WORKING_HOURS_MONTHLY = (
+    "--force-working-hours-monthly" in sys.argv
+    or os.getenv("FORCE_WORKING_HOURS_MONTHLY", "") == "1"
+)
 
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
@@ -296,7 +302,47 @@ def build_named_template_context(name: str, person_context: dict) -> dict:
 
 def build_member_template_context(member: Member) -> dict:
     """Build a nested and flat template context for a member."""
-    return build_named_template_context("member", build_person_template_context(member))
+    # Base person context
+    person_ctx = build_person_template_context(member)
+
+    # Compute working hours aggregates
+    try:
+        required_hours = float(member.required_hours or 0)
+    except Exception:
+        required_hours = 0.0
+
+    all_hours = 0.0
+    hours_this_year = 0.0
+    current_year = date.today().year
+    for log in getattr(member, "working_hours_logs", []) or []:
+        try:
+            h = float(getattr(log, "hours", 0) or 0)
+        except Exception:
+            h = 0.0
+        all_hours += h
+        if getattr(log, "date", None) and getattr(log, "date").year == current_year:
+            hours_this_year += h
+
+    # Add aggregated fields to the nested person context
+    person_ctx.update(
+        {
+            "required_hours": required_hours,
+            "all_hours": all_hours,
+            "hours_this_year": hours_this_year,
+        }
+    )
+
+    # Build named context and also expose flat aliases for the new fields
+    ctx = build_named_template_context("member", person_ctx)
+    ctx.update(
+        {
+            "member_required_hours": required_hours,
+            "member_all_hours": all_hours,
+            "member_hours_this_year": hours_this_year,
+        }
+    )
+
+    return ctx
 
 
 def build_receiver_template_context(recipient_email: str, receiver_member: Member = None) -> dict:
@@ -494,6 +540,28 @@ def process_event_start_rule(
                 email, receiver_member))
             context.update(build_event_template_context(
                 event, rule.days_before or 0))
+            # Global working hours placeholders
+            try:
+                total_hours = db.session.query(
+                    func.sum(WorkingHoursLog.hours)).scalar() or 0
+            except Exception:
+                total_hours = 0
+            try:
+                year = date.today().year
+                total_hours_year = (
+                    db.session.query(func.sum(WorkingHoursLog.hours))
+                    .filter(extract('year', WorkingHoursLog.date) == year)
+                    .scalar()
+                    or 0
+                )
+            except Exception:
+                total_hours_year = 0
+            context.update(
+                {
+                    "all_working_hours": float(total_hours),
+                    "all_working_hours_this_year": float(total_hours_year),
+                }
+            )
             subject = render_text(template.subject_template, context)
             body = render_text(template.body_template, context)
 
@@ -564,6 +632,28 @@ def process_member_date_rule(
             context.update(build_receiver_template_context(
                 email, receiver_member))
             context.update(build_member_template_context(member))
+            # Global working hours placeholders
+            try:
+                total_hours = db.session.query(
+                    func.sum(WorkingHoursLog.hours)).scalar() or 0
+            except Exception:
+                total_hours = 0
+            try:
+                year = date.today().year
+                total_hours_year = (
+                    db.session.query(func.sum(WorkingHoursLog.hours))
+                    .filter(extract('year', WorkingHoursLog.date) == year)
+                    .scalar()
+                    or 0
+                )
+            except Exception:
+                total_hours_year = 0
+            context.update(
+                {
+                    "all_working_hours": float(total_hours),
+                    "all_working_hours_this_year": float(total_hours_year),
+                }
+            )
             subject = render_text(template.subject_template, context)
             body = render_text(template.body_template, context)
 
@@ -593,6 +683,97 @@ def process_member_date_rule(
                 sleep_between_emails()
 
 
+def process_working_hours_monthly_rule(
+    rule: NotificationRule,
+    template: NotificationTemplate,
+    now_dt: datetime,
+    trigger_code: str,
+) -> None:
+    """Send a monthly working-hours summary to every member on the 1st of the month."""
+    # Only run on the 1st day of the month
+    if now_dt.date().day != 1 and not (DEBUG or FORCE_WORKING_HOURS_MONTHLY):
+        debug_log("  └─ SKIPPED: Working hours monthly trigger runs on day 1 only")
+        return
+
+    members = Member.query.filter(Member.active.is_(True)).all()
+    debug_log(
+        f"  └─ WORKING_HOURS_MONTHLY: {len(members)} member(s) to process")
+
+    # Precompute global aggregates
+    try:
+        total_hours = db.session.query(
+            func.sum(WorkingHoursLog.hours)).scalar() or 0
+    except Exception:
+        total_hours = 0
+    try:
+        year = date.today().year
+        total_hours_year = (
+            db.session.query(func.sum(WorkingHoursLog.hours))
+            .filter(extract('year', WorkingHoursLog.date) == year)
+            .scalar()
+            or 0
+        )
+    except Exception:
+        total_hours_year = 0
+
+    for index, member in enumerate(members):
+        if not member.email:
+            continue
+
+        recipient = member.email.strip()
+
+        # Avoid duplicate sends within the same month/year
+        recent = (
+            NotificationLog.query.filter_by(
+                rule_id=rule.id, member_id=member.id, recipient_email=recipient, status="SENT"
+            )
+            .filter(extract('year', NotificationLog.sent_at) == now_dt.year)
+            .filter(extract('month', NotificationLog.sent_at) == now_dt.month)
+            .first()
+        )
+        if recent:
+            continue
+
+        context = {"recipient_email": recipient}
+        context.update(build_receiver_template_context(
+            recipient, receiver_member=member))
+        context.update(build_member_template_context(member))
+        context.update(
+            {
+                "all_working_hours": float(total_hours),
+                "all_working_hours_this_year": float(total_hours_year),
+            }
+        )
+
+        subject = render_text(template.subject_template, context)
+        body = render_text(template.body_template, context)
+
+        try:
+            send_email(recipient, subject, body)
+            log_notification(
+                rule_id=rule.id,
+                member_id=member.id,
+                recipient_email=recipient,
+                subject=subject,
+                body=body,
+                status="SENT",
+            )
+        except (smtplib.SMTPException, OSError, ValueError) as exc:
+            db.session.rollback()
+            log_notification(
+                rule_id=rule.id,
+                member_id=member.id,
+                recipient_email=recipient,
+                subject=subject,
+                body=body,
+                status="FAILED",
+                error_message=str(exc),
+            )
+
+        if index < len(members) - 1:
+            sleep_between_emails()
+
+
 def process_rule(rule: NotificationRule, now_dt: datetime) -> None:
     """Process one rule if it is due at the configured send time."""
     debug_log(f"Processing rule: {rule.id} ({rule.name})")
@@ -616,6 +797,9 @@ def process_rule(rule: NotificationRule, now_dt: datetime) -> None:
     #    process_event_start_rule(rule, template, now_dt)
     if trigger_code in ("BIRTHDAY", "MEMBER_ANNIVERSARY"):
         process_member_date_rule(rule, template, now_dt, trigger_code)
+    elif trigger_code == "WORKING_HOURS_MONTHLY":
+        process_working_hours_monthly_rule(
+            rule, template, now_dt, trigger_code)
     else:
         process_event_start_rule(rule, template, now_dt, trigger_code)
 
