@@ -1,12 +1,10 @@
-# EMail Notification Tool
-
+# Club Automailer
 Python tool for sending Email notifications for Clubs
 
 ## Supported Languages
 
 The following languages are currently supported.
 
-+ de german
 + en english
 
 ## Setup
