@@ -68,8 +68,6 @@
             <th scope="col">{{ _('Member number') }}</th>
             <th scope="col">{{ _('First name') }}</th>
             <th scope="col">{{ _('Last name') }}</th>
-            <th scope="col">{{ _('Email') }}</th>
-            <th scope="col">{{ _('Phone') }}</th>
             <th scope="col">{{ _('Join Date') }}</th>
             <th scope="col">{{ _('Required Hours') }}</th>
             <th scope="col">{{ _('Active') }}</th>
@@ -83,8 +81,6 @@
             <td>{{ member.member_number or '-' }}</td>
             <td>{{ member.first_name }}</td>
             <td>{{ member.last_name }}</td>
-            <td>{{ member.email or '-' }}</td>
-            <td>{{ member.phone or '-' }}</td>
             <td>{{ member.join_date or '-' }}</td>
             <td>{{ member.required_hours if member.required_hours is not none else '-' }}</td>
             <td>
