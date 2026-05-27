@@ -19,6 +19,7 @@ class Config:
         )
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db')
+    EVENT_DOMAIN = os.getenv('EVENT_DOMAIN', 'example.com')
     SQLALCHEMY_BINDS = {}
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     LANGUAGES = ['de', 'en']
