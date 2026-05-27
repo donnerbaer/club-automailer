@@ -590,6 +590,29 @@ class MemberImportForm(FlaskForm):
     submit = SubmitField(_l('Import Members'))
 
 
+class EventImportForm(FlaskForm):
+    """Form for importing events from a CSV/TSV file."""
+    csv_file = FileField(
+        _l('CSV/TSV File'),
+        validators=[DataRequired()]
+    )
+    trigger_type = SelectField(
+        _l('Trigger Type (apply to all imported events)'),
+        choices=[],
+        validators=[Optional()],
+    )
+    submit = SubmitField(_l('Import Events'))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        trigger_choices = [(0, _l('-- Please Choose --'))]
+        trigger_choices += [
+            (trigger.code, trigger.description or trigger.code)
+            for trigger in TriggerType.query.order_by(TriggerType.code.asc()).all()
+        ]
+        self.trigger_type.choices = trigger_choices
+
+
 class NotificationLogClearForm(FlaskForm):
     """Consolidated form for clearing notification logs with multiple options."""
     action = SelectField(

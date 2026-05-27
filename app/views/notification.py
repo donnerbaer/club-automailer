@@ -32,6 +32,7 @@ from app.forms import (
     NotificationLogClearForm,
     ICSImportForm,
     MemberImportForm,
+    EventImportForm,
 )
 from app.model.model import (
     Event,
@@ -184,6 +185,85 @@ def _normalize_csv_value(value):
         return None
     value = str(value).strip()
     return value if value else None
+
+
+def _parse_event_import_datetime(value):
+    """Parse a datetime value with multiple format support."""
+    if value is None:
+        return None
+
+    value = str(value).strip()
+    if not value:
+        return None
+
+    # Try common formats
+    for date_format in ('%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M', '%Y-%m-%dT%H:%M:%S',
+                        '%d.%m.%Y %H:%M', '%d.%m.%Y %H:%M:%S',
+                        '%d/%m/%Y %H:%M', '%d/%m/%Y %H:%M:%S',
+                        '%m/%d/%Y %H:%M', '%m/%d/%Y %H:%M:%S'):
+        try:
+            return datetime.strptime(value, date_format)
+        except ValueError:
+            continue
+
+    # Try ISO format
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _parse_event_import_participants(value):
+    """Parse participant member numbers from a separated string."""
+    if value is None:
+        return []
+
+    value = str(value).strip()
+    if not value:
+        return []
+
+    participant_values = []
+    for item in re.split(r'[\s,;|]+', value):
+        item = item.strip()
+        if item:
+            participant_values.append(item)
+
+    return participant_values
+
+
+def _decode_event_import_data(uploaded_file):
+    """Decode uploaded event import text with common spreadsheet encodings."""
+    raw_bytes = uploaded_file.read()
+    for encoding in ('utf-8-sig', 'utf-16', 'cp1252', 'latin-1', 'utf-8'):
+        try:
+            return raw_bytes.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    raise UnicodeDecodeError('utf-8', raw_bytes, 0, 1,
+                             'Unable to decode uploaded event import file')
+
+
+def _build_event_import_template_csv():
+    """Build a template CSV for event import."""
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter='\t')
+    writer.writerow([
+        'title',
+        'description',
+        'start_at',
+        'end_at',
+        'location',
+        'participants',
+    ])
+    writer.writerow([
+        "Mother's day",
+        'Beschreibung..',
+        '2027-05-01 11:00:00',
+        '2027-05-01 16:00:00',
+        'Clubhouse',
+        '311,312,411',
+    ])
+    return output.getvalue()
 
 
 def _build_member_import_template_csv():
@@ -811,7 +891,7 @@ def events_view():
     )
 
 
-@notification_bp.route('/events/import', methods=['GET', 'POST'])
+@notification_bp.route('/events/import-ics', methods=['GET', 'POST'])
 @login_required
 @check_permissions(['notification.event.create'])
 def import_ics():
@@ -1045,6 +1125,161 @@ def download_member_import_template():
         mimetype='text/csv; charset=utf-8',
     )
     response.headers['Content-Disposition'] = 'attachment; filename=member_import_template.csv'
+    return response
+
+
+@notification_bp.route('/events/import', methods=['GET', 'POST'])
+@login_required
+@check_permissions(['notification.event.create'])
+def import_events():
+    """Import events from an uploaded CSV/TSV file."""
+    form = EventImportForm()
+
+    if form.validate_on_submit():
+        uploaded = request.files.get('csv_file')
+        if not uploaded:
+            form.csv_file.errors.append(_('No file uploaded.'))
+            return render_template('notification/site.import_events.html', form=form)
+
+        try:
+            raw_data = _decode_event_import_data(uploaded)
+        except UnicodeDecodeError:
+            form.csv_file.errors.append(
+                _('Invalid file encoding. Use UTF-8 or UTF-16.'))
+            return render_template('notification/site.import_events.html', form=form)
+
+        if not raw_data.strip():
+            form.csv_file.errors.append(_('The file is empty.'))
+            return render_template('notification/site.import_events.html', form=form)
+
+        sample = raw_data[:4096]
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=',;\t|')
+        except csv.Error:
+            dialect = csv.excel_tab
+
+        reader = csv.DictReader(io.StringIO(raw_data), dialect=dialect)
+        expected_fields = {
+            'title',
+            'description',
+            'start_at',
+            'end_at',
+            'location',
+            'participants',
+        }
+
+        if not reader.fieldnames:
+            form.csv_file.errors.append(
+                _('The file is missing a header row.'))
+            return render_template('notification/site.import_events.html', form=form)
+
+        normalized_fieldnames = {
+            _normalize_csv_header(fieldname) for fieldname in reader.fieldnames
+        }
+        if not expected_fields.issubset(normalized_fieldnames):
+            form.csv_file.errors.append(_(
+                'The file must contain the columns: title, description, start_at, end_at, location, participants.'
+            ))
+            return render_template('notification/site.import_events.html', form=form)
+
+        trigger_type = form.trigger_type.data or 'EVENT'
+
+        rows = []
+        for row_number, row in enumerate(reader, start=2):
+            normalized_row = {
+                _normalize_csv_header(key): _normalize_csv_value(value)
+                for key, value in row.items()
+            }
+
+            title = normalized_row.get('title')
+            if not title:
+                form.csv_file.errors.append(_(
+                    f'Row {row_number}: title is required.'
+                ))
+                return render_template('notification/site.import_events.html', form=form)
+
+            start_at = _parse_event_import_datetime(
+                normalized_row.get('start_at'))
+            if not start_at:
+                form.csv_file.errors.append(_(
+                    f'Row {row_number}: start_at must be a valid datetime (e.g., 2026-01-01 14:00).'
+                ))
+                return render_template('notification/site.import_events.html', form=form)
+
+            end_at = _parse_event_import_datetime(normalized_row.get('end_at'))
+            participants = _parse_event_import_participants(
+                normalized_row.get('participants'))
+
+            rows.append({
+                'title': title,
+                'description': normalized_row.get('description'),
+                'start_at': start_at,
+                'end_at': end_at,
+                'location': normalized_row.get('location'),
+                'participants': participants,
+            })
+
+        if not rows:
+            form.csv_file.errors.append(
+                _('The file does not contain any valid event rows.'))
+            return render_template('notification/site.import_events.html', form=form)
+
+        # Get all members for validation
+        all_members_by_number = {
+            member.member_number: member
+            for member in Member.query.filter(Member.member_number.isnot(None)).all()
+        }
+        all_members_by_id = {
+            member.id: member for member in Member.query.all()}
+
+        imported_count = 0
+        for row in rows:
+            event = Event(
+                title=row['title'],
+                description=row['description'],
+                event_type=trigger_type,
+                start_at=row['start_at'],
+                end_at=row['end_at'],
+                location=row['location'],
+                is_recurring=False,
+            )
+            db.session.add(event)
+            db.session.flush()  # Get the ID
+
+            # Add participants
+            for participant_value in row['participants']:
+                member = all_members_by_number.get(participant_value)
+                if member is None and participant_value.isdigit():
+                    member = all_members_by_id.get(int(participant_value))
+
+                if member is not None:
+                    participant = EventParticipant(
+                        event_id=event.id,
+                        member_id=member.id,
+                        status='confirmed',
+                    )
+                    db.session.add(participant)
+
+            imported_count += 1
+
+        db.session.commit()
+
+        flash(_(f'{imported_count} events imported successfully.'), 'success')
+        return redirect(url_for('notification.events_view'))
+
+    return render_template('notification/site.import_events.html', form=form)
+
+
+@notification_bp.route('/events/import/template', methods=['GET'])
+@login_required
+@check_permissions(['notification.event.create'])
+def download_event_import_template():
+    """Download an empty event import TSV with the required headers."""
+    response = Response(
+        _build_event_import_template_csv(),
+        mimetype='text/tab-separated-values; charset=utf-8',
+    )
+    response.headers['Content-Disposition'] = 'attachment; filename=event_import_template.tsv'
     return response
 
 
