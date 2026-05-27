@@ -223,16 +223,20 @@ CATEGORIES = [
 
 TRIGGER_TYPES = [
     {
-        "code": "EVENT_START",
-        "description": "Zeit vor dem Termin",
+        "code": "DEFAULT",
+        "description": "Default",
     },
     {
         "code": "BIRTHDAY",
-        "description": "Geburtstag",
+        "description": "Member Birthday",
     },
     {
         "code": "MEMBER_ANNIVERSARY",
-        "description": "Mitgliedszeit",
+        "description": "Member Anniversary",
+    },
+    {
+        "code": "WORKING_HOURS_MONTHLY",
+        "description": "Monthly working hours report",
     },
 ]
 
