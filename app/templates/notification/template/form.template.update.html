@@ -21,8 +21,8 @@
     <div class="mb-3">
         {{ template_update_form.subject_template.label(class='form-label') }}
         {{ template_update_form.subject_template(class='form-control', rows='4') }}
-        <div class="form-text">{{ _('Use placeholders like {{receiver.first_name}}, {{member.first_name}}, {{member.birth_date}} or {{add_years(member.join_date, 25)}}.') }}</div>
     </div>
+    {% include 'notification/template/markdown.html' %}
     <div class="mb-3">
         {{ template_update_form.body_template.label(class='form-label') }}
         {{ template_update_form.body_template(class='form-control', rows='10') }}

@@ -1,14 +1,17 @@
 """ This module handles the main views of the application, including the index, dashboard, and error pages."""
 
+import csv
+import io
+from collections import defaultdict
 from calendar import monthrange
-from datetime import datetime
-from datetime import timedelta
-from flask import Blueprint, render_template, redirect, url_for, request
+from datetime import datetime, timedelta, timezone
+from flask import Blueprint, render_template, redirect, url_for, request, Response, flash
 from flask_babel import gettext as _
-from flask_login import login_required
+from flask_login import login_required, current_user
 from jinja2 import Undefined
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
+from sqlalchemy import func, or_
 
 from app import db
 from app.forms import (
@@ -22,24 +25,27 @@ from app.forms import (
     NotificationTemplateForm,
     TriggerTypeForm,
     MemberForm,
+    WorkingHoursForm,
+    WorkingHoursImportForm,
     NotificationMemberGroupForm,
     NotificationGroupMembershipForm,
     NotificationLogClearForm,
-    NotificationLogCleanupForm,
-    NotificationFailedLogClearForm,
+    ICSImportForm,
+    MemberImportForm,
 )
 from app.model.model import (
     Event,
     EventParticipant,
     Group,
     Member,
+    WorkingHoursLog,
     NotificationLog,
     NotificationRule,
     NotificationRuleReceiver,
     NotificationTemplate,
     TriggerType,
-    ensure_notification_log_event_title_column,
 )
+from icalendar import Calendar
 import re
 from app.utils.decorators import check_permissions
 
@@ -120,11 +126,172 @@ def _attach_rendered_event_title(event):
     return event
 
 
+def _parse_member_import_date(value):
+    if value is None:
+        return None
+
+    value = str(value).strip()
+    if not value:
+        return None
+
+    for date_format in ('%Y-%m-%d', '%d.%m.%Y', '%d/%m/%Y', '%m/%d/%Y'):
+        try:
+            return datetime.strptime(value, date_format).date()
+        except ValueError:
+            continue
+
+    try:
+        return datetime.fromisoformat(value).date()
+    except ValueError:
+        return None
+
+
+def _parse_member_import_required_hours(value):
+    if value is None:
+        return None
+
+    value = str(value).strip()
+    if not value:
+        return None
+
+    try:
+        return float(value)
+    except ValueError:
+        return None
+
+
+def _parse_member_import_status(value):
+    if value is None:
+        return True
+
+    normalized_value = str(value).strip().lower()
+    if not normalized_value:
+        return True
+
+    if normalized_value in {'1', 'true', 'yes', 'y', 'active', 'enabled', 'on'}:
+        return True
+    if normalized_value in {'0', 'false', 'no', 'n', 'inactive', 'disabled', 'off'}:
+        return False
+    return True
+
+
+def _normalize_csv_header(value):
+    return str(value).strip().lower().replace(' ', '_') if value is not None else ''
+
+
+def _normalize_csv_value(value):
+    if value is None:
+        return None
+    value = str(value).strip()
+    return value if value else None
+
+
+def _build_member_import_template_csv():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'member_number',
+        'first_name',
+        'last_name',
+        'birth_date',
+        'email',
+        'phone',
+        'member_since',
+        'required_hours',
+        'status',
+    ])
+    return output.getvalue()
+
+
+def _build_working_hours_import_template_csv():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'member_number',
+        'date',
+        'hours',
+    ])
+    return output.getvalue()
+
+
+def _build_copied_rule_name(source_name):
+    base_name = f'{source_name} (Copy)'
+    max_length = 255
+    candidate = base_name[:max_length]
+    suffix = 2
+
+    while NotificationRule.query.filter_by(name=candidate).first() is not None:
+        suffix_text = f' (Copy {suffix})'
+        prefix_length = max_length - len(suffix_text)
+        candidate = f'{source_name[:prefix_length]}{suffix_text}'
+        suffix += 1
+
+    return candidate
+
+
 @notification_bp.route('/')
 @login_required
 @check_permissions(['notification.view'])
 def index():
     return render_template('notification/site.index.html')
+
+
+@notification_bp.route('/dashboard')
+@login_required
+@check_permissions(['notification.view'])
+def dashboard():
+    """Dashboard showing notification statistics with charts."""
+
+    # Gather statistics
+    total_members = Member.query.count()
+    total_events = Event.query.count()
+    total_rules = NotificationRule.query.count()
+    active_rules = NotificationRule.query.filter_by(active=True).count()
+
+    # Log statistics by status
+    total_logs = NotificationLog.query.count()
+    sent_logs = NotificationLog.query.filter_by(status='SENT').count()
+    failed_logs = NotificationLog.query.filter_by(status='FAILED').count()
+    pending_logs = NotificationLog.query.filter_by(status='PENDING').count()
+
+    # Logs by trigger type
+    logs_by_trigger = db.session.query(
+        TriggerType.code,
+        func.count(NotificationLog.id).label('count')
+    ).join(
+        NotificationRule, NotificationLog.rule_id == NotificationRule.id
+    ).join(
+        TriggerType, NotificationRule.trigger_type == TriggerType.id
+    ).group_by(TriggerType.code).all()
+
+    # Recent logs trend (last 7 days)
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    logs_trend = db.session.query(
+        func.date(NotificationLog.sent_at).label('date'),
+        func.count(NotificationLog.id).label('count')
+    ).filter(
+        NotificationLog.sent_at >= seven_days_ago
+    ).group_by(
+        func.date(NotificationLog.sent_at)
+    ).order_by('date').all()
+
+    # Groups and members relationship
+    total_groups = Group.query.count()
+
+    return render_template(
+        'notification/site.dashboard.html',
+        total_members=total_members,
+        total_events=total_events,
+        total_rules=total_rules,
+        active_rules=active_rules,
+        total_groups=total_groups,
+        total_logs=total_logs,
+        sent_logs=sent_logs,
+        failed_logs=failed_logs,
+        pending_logs=pending_logs,
+        logs_by_trigger=logs_by_trigger,
+        logs_trend=logs_trend,
+    )
 
 
 @notification_bp.route('/templates')
@@ -302,7 +469,20 @@ def trigger_type_delete(trigger_type_id):
 def rules_view():
     rules = NotificationRule.query.order_by(
         NotificationRule.created_at.desc()).all()
+    copy_from_id = request.args.get('copy_from', type=int)
     rule_form = NotificationRuleForm()
+    copied_rule = None
+
+    if copy_from_id:
+        copied_rule = NotificationRule.query.get_or_404(copy_from_id)
+        rule_form.name.data = _build_copied_rule_name(copied_rule.name)
+        rule_form.trigger_type.data = copied_rule.trigger_type or 0
+        rule_form.days_before.data = copied_rule.days_before
+        rule_form.trigger_value.data = copied_rule.trigger_value
+        rule_form.send_time.data = copied_rule.send_time
+        rule_form.template_id.data = copied_rule.template_id or 0
+        rule_form.active.data = copied_rule.active
+
     trigger_type_map = {
         trigger.id: trigger for trigger in TriggerType.query.all()}
     template_map = {
@@ -311,6 +491,7 @@ def rules_view():
         'notification/site.rules.html',
         rules=rules,
         rule_form=rule_form,
+        copied_rule=copied_rule,
         trigger_type_map=trigger_type_map,
         template_map=template_map,
     )
@@ -498,18 +679,17 @@ def rule_delete(rule_id):
 @login_required
 @check_permissions(['notification.logs.read'])
 def logs_view():
-    ensure_notification_log_event_title_column()
     logs = NotificationLog.query.order_by(NotificationLog.sent_at.desc()).all()
     rule_map = {rule.id: rule for rule in NotificationRule.query.all()}
     member_map = {member.id: member for member in Member.query.all()}
     event_map = {event.id: event for event in Event.query.all()}
     clear_logs_form = NotificationLogClearForm()
-    clear_failed_logs_form = NotificationFailedLogClearForm()
-    clear_cleanup_form = NotificationLogCleanupForm()
     cleanup_result = {
-        'deleted_failed_logs': request.args.get('deleted_failed_logs', type=int),
+        'count': request.args.get('count', type=int),
+        'action': request.args.get('action'),
+        'before_date': request.args.get('before_date'),
     }
-    if cleanup_result['deleted_failed_logs'] is None:
+    if cleanup_result['count'] is None:
         cleanup_result = None
     return render_template(
         'notification/site.logs.html',
@@ -518,8 +698,6 @@ def logs_view():
         member_map=member_map,
         event_map=event_map,
         clear_logs_form=clear_logs_form,
-        clear_failed_logs_form=clear_failed_logs_form,
-        cleanup_form=clear_cleanup_form,
         cleanup_result=cleanup_result,
     )
 
@@ -528,65 +706,66 @@ def logs_view():
 @login_required
 @check_permissions(['notification.logs.delete'])
 def clear_logs():
-    ensure_notification_log_event_title_column()
+    """Clear notification logs based on the selected action."""
     clear_logs_form = NotificationLogClearForm()
-    if clear_logs_form.validate_on_submit():
-        NotificationLog.query.delete()
+
+    if not clear_logs_form.validate_on_submit():
+        return redirect(url_for('notification.logs_view'))
+
+    # Verify password
+    password = clear_logs_form.password.data
+    if not current_user.check_password(password):
+        clear_logs_form.password.errors.append(
+            _('Invalid password. Please try again.'))
+        logs = NotificationLog.query.order_by(
+            NotificationLog.sent_at.desc()).all()
+        rule_map = {rule.id: rule for rule in NotificationRule.query.all()}
+        member_map = {member.id: member for member in Member.query.all()}
+        event_map = {event.id: event for event in Event.query.all()}
+        return render_template(
+            'notification/site.logs.html',
+            logs=logs,
+            rule_map=rule_map,
+            member_map=member_map,
+            event_map=event_map,
+            clear_logs_form=clear_logs_form,
+            cleanup_result=None,
+        )
+
+    action = clear_logs_form.action.data
+    count = 0
+    before_date = None
+
+    if action == 'all':
+        # Delete all logs
+        count = db.session.query(NotificationLog).delete(
+            synchronize_session=False)
         db.session.commit()
-    return redirect(url_for('notification.logs_view'))
 
+    elif action == 'failed':
+        # Delete only failed logs
+        count = NotificationLog.query.filter_by(
+            status='FAILED').delete(synchronize_session=False)
+        db.session.commit()
 
-@notification_bp.route('/logs/clear_failed', methods=['POST'])
-@login_required
-@check_permissions(['notification.logs.delete'])
-def clear_failed_logs():
-    ensure_notification_log_event_title_column()
-    clear_failed_logs_form = NotificationFailedLogClearForm()
-    if not clear_failed_logs_form.validate_on_submit():
-        return redirect(url_for('notification.logs_view'))
+    elif action == 'before_date':
+        # Delete logs before the specified date
+        before_date = clear_logs_form.before_date.data
 
-    deleted_failed_logs = NotificationLog.query.filter_by(
-        status='FAILED').delete(synchronize_session=False)
-    db.session.commit()
-    return redirect(url_for(
-        'notification.logs_view',
-        deleted_failed_logs=deleted_failed_logs,
-    ))
+        if not before_date:
+            # Validation failed, redirect without changes
+            return redirect(url_for('notification.logs_view'))
 
-
-@notification_bp.route('/logs/cleanup', methods=['POST'])
-@login_required
-@check_permissions(['notification.logs.delete'])
-def cleanup_old_logs():
-    """Delete notification logs older than the specified age."""
-    ensure_notification_log_event_title_column()
-    cleanup_form = NotificationLogCleanupForm()
-    if not cleanup_form.validate_on_submit():
-        return redirect(url_for('notification.logs_view'))
-
-    age_value = cleanup_form.age_value.data
-    age_unit = cleanup_form.age_unit.data
-
-    cutoff = datetime.utcnow()
-    if age_unit == 'days':
-        cutoff -= timedelta(days=age_value)
-    elif age_unit == 'weeks':
-        cutoff -= timedelta(weeks=age_value)
-    elif age_unit == 'months':
-        cutoff = _add_months(cutoff, -age_value)
-    else:
-        cutoff = _add_months(cutoff, -(age_value * 12))
-
-    deleted_logs = db.session.query(NotificationLog).filter(
-        NotificationLog.sent_at < cutoff
-    ).delete(synchronize_session=False)
-    db.session.commit()
+        count = db.session.query(NotificationLog).filter(
+            NotificationLog.sent_at < before_date
+        ).delete(synchronize_session=False)
+        db.session.commit()
 
     return redirect(url_for(
         'notification.logs_view',
-        deleted_logs=deleted_logs,
-        age_value=age_value,
-        age_unit=age_unit,
+        count=count,
+        action=action,
+        before_date=before_date.isoformat() if before_date else None,
     ))
 
 
@@ -632,11 +811,247 @@ def events_view():
     )
 
 
+@notification_bp.route('/events/import', methods=['GET', 'POST'])
+@login_required
+@check_permissions(['notification.event.create'])
+def import_ics():
+    """Import events from an uploaded .ics file."""
+    form = ICSImportForm()
+
+    if form.validate_on_submit():
+        uploaded = request.files.get('ics_file')
+        if not uploaded:
+            form.ics_file.errors.append(_('No file uploaded.'))
+        else:
+            try:
+                data = uploaded.read()
+                cal = Calendar.from_ical(data)
+            except Exception:
+                form.ics_file.errors.append(_('Invalid ICS file.'))
+                cal = None
+
+            imported = 0
+            if cal is not None:
+                # determine trigger code to apply to all events (if selected)
+                trigger_code = form.trigger_type.data or ''
+                if trigger_code == '0' or trigger_code == 0:
+                    trigger_code = ''
+
+                for component in cal.walk():
+                    if component.name != 'VEVENT':
+                        continue
+
+                    summary = component.get('SUMMARY')
+                    dtstart = component.get('DTSTART')
+                    dtend = component.get('DTEND')
+                    description = component.get('DESCRIPTION')
+                    location = component.get('LOCATION')
+
+                    # extract python datetime/date
+                    start_dt = getattr(dtstart, 'dt', None)
+                    end_dt = getattr(dtend, 'dt', None) if dtend else None
+
+                    # normalize dates to datetimes
+                    if start_dt and not isinstance(start_dt, datetime):
+                        start_dt = datetime.combine(
+                            start_dt, datetime.min.time())
+                    if end_dt and not isinstance(end_dt, datetime):
+                        end_dt = datetime.combine(end_dt, datetime.min.time())
+
+                    # if timezone-aware, convert to UTC and drop tzinfo
+                    if isinstance(start_dt, datetime) and getattr(start_dt, 'tzinfo', None):
+                        start_dt = start_dt.astimezone(
+                            timezone.utc).replace(tzinfo=None)
+                    if isinstance(end_dt, datetime) and getattr(end_dt, 'tzinfo', None):
+                        end_dt = end_dt.astimezone(
+                            timezone.utc).replace(tzinfo=None)
+
+                    if not start_dt:
+                        continue
+
+                    event = Event(
+                        title=str(summary) if summary else _('Untitled event'),
+                        event_type=trigger_code or 'EVENT_START',
+                        description=str(description) if description else None,
+                        start_at=start_dt,
+                        end_at=end_dt,
+                        location=str(location) if location else None,
+                        is_recurring=False,
+                    )
+                    db.session.add(event)
+                    imported += 1
+
+                db.session.commit()
+
+            return redirect(url_for('notification.events_view', imported_count=imported))
+
+    return render_template('notification/site.import_ics.html', form=form)
+
+
+@notification_bp.route('/members/import', methods=['GET', 'POST'])
+@login_required
+@check_permissions([
+    'notification.member.create',
+    'notification.member.update',
+    'notification.member.delete',
+])
+def import_members():
+    """Import members from an uploaded CSV file and sync them by member number."""
+    form = MemberImportForm()
+
+    if form.validate_on_submit():
+        uploaded = request.files.get('csv_file')
+        if not uploaded:
+            form.csv_file.errors.append(_('No file uploaded.'))
+            return render_template('notification/site.import_members.html', form=form)
+
+        try:
+            raw_data = uploaded.read().decode('utf-8-sig')
+        except UnicodeDecodeError:
+            form.csv_file.errors.append(
+                _('Invalid CSV file encoding. Use UTF-8.'))
+            return render_template('notification/site.import_members.html', form=form)
+
+        if not raw_data.strip():
+            form.csv_file.errors.append(_('The CSV file is empty.'))
+            return render_template('notification/site.import_members.html', form=form)
+
+        sample = raw_data[:4096]
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=',;\t|')
+        except csv.Error:
+            dialect = csv.excel
+
+        reader = csv.DictReader(io.StringIO(raw_data), dialect=dialect)
+        expected_fields = {
+            'member_number',
+            'first_name',
+            'last_name',
+            'birth_date',
+            'email',
+            'phone',
+            'member_since',
+            'required_hours',
+            'status',
+        }
+
+        if not reader.fieldnames:
+            form.csv_file.errors.append(
+                _('The CSV file is missing a header row.'))
+            return render_template('notification/site.import_members.html', form=form)
+
+        normalized_fieldnames = {
+            _normalize_csv_header(fieldname) for fieldname in reader.fieldnames
+        }
+        if not expected_fields.issubset(normalized_fieldnames):
+            form.csv_file.errors.append(_(
+                'The CSV file must contain the columns: member_number, first_name, last_name, birth_date, email, phone, member_since, required_hours, status.'
+            ))
+            return render_template('notification/site.import_members.html', form=form)
+
+        rows_by_member_number = {}
+        for row_number, row in enumerate(reader, start=2):
+            normalized_row = {
+                _normalize_csv_header(key): _normalize_csv_value(value)
+                for key, value in row.items()
+            }
+            member_number = normalized_row.get('member_number')
+            if not member_number:
+                continue
+            if not normalized_row.get('first_name') or not normalized_row.get('last_name') or not normalized_row.get('email'):
+                form.csv_file.errors.append(_(
+                    f'Row {row_number}: first_name, last_name, and email are required.'
+                ))
+                return render_template('notification/site.import_members.html', form=form)
+            rows_by_member_number[member_number] = normalized_row
+
+        if not rows_by_member_number:
+            form.csv_file.errors.append(
+                _('The CSV file does not contain any valid member rows.'))
+            return render_template('notification/site.import_members.html', form=form)
+
+        existing_members = {
+            member.member_number: member
+            for member in Member.query.filter(Member.member_number.isnot(None)).all()
+        }
+
+        imported_count = 0
+        updated_count = 0
+        seen_member_numbers = set()
+
+        for member_number, row in rows_by_member_number.items():
+            seen_member_numbers.add(member_number)
+            member = existing_members.get(member_number)
+            if member is None:
+                member = Member(member_number=member_number)
+                db.session.add(member)
+                imported_count += 1
+            else:
+                updated_count += 1
+
+            member.first_name = row.get('first_name')
+            member.last_name = row.get('last_name')
+            member.birth_date = _parse_member_import_date(
+                row.get('birth_date'))
+            member.email = row.get('email')
+            member.phone = row.get('phone')
+            member.join_date = _parse_member_import_date(
+                row.get('member_since'))
+            member.required_hours = _parse_member_import_required_hours(
+                row.get('required_hours')) or 0
+            member.active = _parse_member_import_status(row.get('status'))
+
+        if seen_member_numbers:
+            members_to_delete = Member.query.filter(
+                or_(
+                    Member.member_number.is_(None),
+                    ~Member.member_number.in_(seen_member_numbers),
+                )
+            ).all()
+        else:
+            members_to_delete = Member.query.all()
+
+        deleted_count = 0
+        for member in members_to_delete:
+            for event_participant in list(member.events):
+                db.session.delete(event_participant)
+            member.groups.clear()
+            db.session.delete(member)
+            deleted_count += 1
+
+        db.session.commit()
+
+        return redirect(url_for(
+            'notification.members_view',
+            imported_count=imported_count,
+            updated_count=updated_count,
+            deleted_count=deleted_count,
+        ))
+
+    return render_template('notification/site.import_members.html', form=form)
+
+
+@notification_bp.route('/members/import/template', methods=['GET'])
+@login_required
+@check_permissions([
+    'notification.member.create',
+    'notification.member.update',
+    'notification.member.delete',
+])
+def download_member_import_template():
+    """Download an empty member import CSV with the required headers."""
+    response = Response(
+        _build_member_import_template_csv(),
+        mimetype='text/csv; charset=utf-8',
+    )
+    response.headers['Content-Disposition'] = 'attachment; filename=member_import_template.csv'
+    return response
+
+
 @notification_bp.route('/events/cleanup', methods=['POST'])
 @login_required
 @check_permissions(['notification.event.delete'])
 def cleanup_old_events():
-    ensure_notification_log_event_title_column()
     cleanup_form = EventCleanupForm()
     if not cleanup_form.validate_on_submit():
         events = Event.query.order_by(Event.start_at.desc()).all()
@@ -1079,6 +1494,7 @@ def member_post():
             phone=member_form.phone.data,
             birth_date=member_form.birth_date.data,
             join_date=member_form.join_date.data,
+            required_hours=member_form.required_hours.data or 0,
             active=member_form.active.data,
         )
         db.session.add(member)
@@ -1119,6 +1535,7 @@ def member_update(member_id):
         member.phone = member_update_form.phone.data
         member.birth_date = member_update_form.birth_date.data
         member.join_date = member_update_form.join_date.data
+        member.required_hours = member_update_form.required_hours.data or 0
         member.active = member_update_form.active.data
         db.session.add(member)
         db.session.commit()
@@ -1190,3 +1607,267 @@ def member_delete(member_id):
     db.session.delete(member)
     db.session.commit()
     return redirect(url_for('notification.members_view'))
+
+
+@notification_bp.route('/working-hours')
+@login_required
+@check_permissions(['notification.workinghours.view'])
+def working_hours_view():
+    logs = WorkingHoursLog.query.order_by(WorkingHoursLog.date.desc()).all()
+    form = WorkingHoursForm()
+    return render_template('notification/site.working_hours.html', logs=logs, form=form)
+
+
+@notification_bp.route('/working-hours/dashboard')
+@login_required
+@check_permissions(['notification.workinghours.view'])
+def working_hours_dashboard():
+    """Dashboard with working-hours statistics and trends."""
+    now = datetime.utcnow()
+    current_year = now.year
+    current_month = now.month
+
+    logs = WorkingHoursLog.query.order_by(WorkingHoursLog.date.desc()).all()
+
+    total_entries = len(logs)
+    total_hours = float(sum((log.hours or 0) for log in logs))
+    total_hours_this_month = float(sum(
+        (log.hours or 0)
+        for log in logs
+        if log.date.year == current_year and log.date.month == current_month
+    ))
+    total_hours_this_year = float(sum(
+        (log.hours or 0)
+        for log in logs
+        if log.date.year == current_year
+    ))
+    average_hours_per_entry = float(
+        total_hours / total_entries) if total_entries else 0.0
+    unique_members = len(
+        {log.member_id for log in logs if log.member_id is not None})
+
+    hours_by_member = defaultdict(float)
+    entries_by_member = defaultdict(int)
+    for log in logs:
+        if log.member:
+            member_label = f'{log.member.first_name} {log.member.last_name}'
+        else:
+            member_label = _('Unknown member')
+        hours_by_member[member_label] += float(log.hours or 0)
+        entries_by_member[member_label] += 1
+
+    top_members = sorted(
+        hours_by_member.items(),
+        key=lambda item: item[1],
+        reverse=True,
+    )[:5]
+
+    monthly_hours_map = {month: 0.0 for month in range(1, 13)}
+    for log in logs:
+        if log.date.year == current_year:
+            monthly_hours_map[log.date.month] += float(log.hours or 0)
+
+    month_labels = [
+        datetime(current_year, month, 1).strftime('%b')
+        for month in range(1, 13)
+    ]
+    monthly_hours = [float(monthly_hours_map[month]) for month in range(1, 13)]
+
+    recent_logs = logs[:10]
+
+    return render_template(
+        'notification/site.working_hours.dashboard.html',
+        total_entries=total_entries,
+        total_hours=total_hours,
+        total_hours_this_month=total_hours_this_month,
+        total_hours_this_year=total_hours_this_year,
+        average_hours_per_entry=average_hours_per_entry,
+        unique_members=unique_members,
+        top_members=top_members,
+        month_labels=month_labels,
+        monthly_hours=monthly_hours,
+        recent_logs=recent_logs,
+    )
+
+
+@notification_bp.route('/working-hours/create', methods=['GET', 'POST'])
+@login_required
+@check_permissions(['notification.workinghours.create'])
+def working_hours_create():
+    form = WorkingHoursForm()
+    if form.validate_on_submit():
+        if form.member.data == 0:
+            form.member.errors.append(_('Please select a member'))
+        else:
+            log = WorkingHoursLog(
+                member_id=form.member.data,
+                date=form.date.data,
+                hours=form.hours.data,
+                created_by=current_user.id,
+            )
+            db.session.add(log)
+            db.session.commit()
+            flash(_('Working hours entry created.'), 'success')
+            return redirect(url_for('notification.working_hours_view'))
+
+    return render_template('notification/site.working_hours.form.html', form=form)
+
+
+@notification_bp.route('/working-hours/<int:log_id>/edit', methods=['GET', 'POST'])
+@login_required
+@check_permissions(['notification.workinghours.update'])
+def working_hours_edit(log_id):
+    log = WorkingHoursLog.query.get_or_404(log_id)
+    form = WorkingHoursForm(obj=log)
+    # set member field explicitly
+    form.member.data = log.member_id
+
+    if form.validate_on_submit():
+        if form.member.data == 0:
+            form.member.errors.append(_('Please select a member'))
+        else:
+            log.member_id = form.member.data
+            log.date = form.date.data
+            log.hours = form.hours.data
+            db.session.add(log)
+            db.session.commit()
+            flash(_('Working hours entry updated.'), 'success')
+            return redirect(url_for('notification.working_hours_view'))
+
+    return render_template('notification/site.working_hours.form.html', form=form, log=log)
+
+
+@notification_bp.route('/working-hours/<int:log_id>/delete', methods=['GET'])
+@login_required
+@check_permissions(['notification.workinghours.delete'])
+def working_hours_delete(log_id):
+    log = WorkingHoursLog.query.get_or_404(log_id)
+    db.session.delete(log)
+    db.session.commit()
+    flash(_('Working hours entry deleted.'), 'success')
+    return redirect(url_for('notification.working_hours_view'))
+
+
+@notification_bp.route('/working-hours/import', methods=['GET', 'POST'])
+@login_required
+@check_permissions(['notification.workinghours.create'])
+def import_working_hours():
+    """Import working hours from an uploaded CSV file."""
+    form = WorkingHoursImportForm()
+
+    if form.validate_on_submit():
+        uploaded = request.files.get('csv_file')
+        if not uploaded:
+            form.csv_file.errors.append(_('No file uploaded.'))
+            return render_template('notification/site.import_working_hours.html', form=form)
+
+        try:
+            raw_data = uploaded.read().decode('utf-8-sig')
+        except UnicodeDecodeError:
+            form.csv_file.errors.append(
+                _('Invalid CSV file encoding. Use UTF-8.'))
+            return render_template('notification/site.import_working_hours.html', form=form)
+
+        if not raw_data.strip():
+            form.csv_file.errors.append(_('The CSV file is empty.'))
+            return render_template('notification/site.import_working_hours.html', form=form)
+
+        sample = raw_data[:4096]
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=',;\t|')
+        except csv.Error:
+            dialect = csv.excel
+
+        reader = csv.DictReader(io.StringIO(raw_data), dialect=dialect)
+        expected_fields = {
+            'member_number',
+            'date',
+            'hours',
+        }
+
+        if not reader.fieldnames:
+            form.csv_file.errors.append(
+                _('The CSV file is missing a header row.'))
+            return render_template('notification/site.import_working_hours.html', form=form)
+
+        normalized_fieldnames = {
+            _normalize_csv_header(fieldname) for fieldname in reader.fieldnames
+        }
+        if not expected_fields.issubset(normalized_fieldnames):
+            form.csv_file.errors.append(_(
+                'The CSV file must contain the columns: member_number, date, and hours.'
+            ))
+            return render_template('notification/site.import_working_hours.html', form=form)
+
+        members_by_number = {
+            member.member_number: member
+            for member in Member.query.filter(Member.member_number.isnot(None)).all()
+        }
+
+        imported_count = 0
+        for row_number, row in enumerate(reader, start=2):
+            normalized_row = {
+                _normalize_csv_header(key): _normalize_csv_value(value)
+                for key, value in row.items()
+            }
+
+            member_number = normalized_row.get('member_number')
+            if not member_number:
+                continue
+
+            member = members_by_number.get(member_number)
+            if member is None:
+                form.csv_file.errors.append(_(
+                    f'Row {row_number}: unknown member_number "{member_number}".'
+                ))
+                return render_template('notification/site.import_working_hours.html', form=form)
+
+            date_value = _parse_member_import_date(normalized_row.get('date'))
+            if date_value is None:
+                form.csv_file.errors.append(_(
+                    f'Row {row_number}: invalid date value.'
+                ))
+                return render_template('notification/site.import_working_hours.html', form=form)
+
+            hours_value = _parse_member_import_required_hours(
+                normalized_row.get('hours'))
+            if hours_value is None:
+                form.csv_file.errors.append(_(
+                    f'Row {row_number}: invalid hours value.'
+                ))
+                return render_template('notification/site.import_working_hours.html', form=form)
+
+            db.session.add(WorkingHoursLog(
+                member_id=member.id,
+                date=date_value,
+                hours=hours_value,
+                created_by=current_user.id,
+            ))
+            imported_count += 1
+
+        if imported_count == 0:
+            form.csv_file.errors.append(
+                _('The CSV file does not contain any valid working hours rows.'))
+            return render_template('notification/site.import_working_hours.html', form=form)
+
+        db.session.commit()
+
+        return redirect(url_for(
+            'notification.working_hours_view',
+            imported_count=imported_count,
+        ))
+
+    return render_template('notification/site.import_working_hours.html', form=form)
+
+
+@notification_bp.route('/working-hours/import/template', methods=['GET'])
+@login_required
+@check_permissions(['notification.workinghours.create'])
+def download_working_hours_import_template():
+    """Download an empty working-hours import CSV with the required headers."""
+    response = Response(
+        _build_working_hours_import_template_csv(),
+        mimetype='text/csv; charset=utf-8',
+    )
+    response.headers['Content-Disposition'] = 'attachment; filename=working_hours_import_template.csv'
+    return response

@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends 'notification/base_notification.html' %}
 {% block title %} {{ _('Notification') }}{% endblock %}
 
-{% block main %}
+{% block notification_content %}
 <nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
     <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
         <li class="breadcrumb-item">
@@ -15,11 +15,5 @@
 
 <h1>{{ _('Notification') }}</h1>
 
-<a href="{{ url_for('notification.members_view') }}" class="btn btn-primary">View Members</a>
-<a href="{{ url_for('notification.groups_view') }}" class="btn btn-secondary">View Groups</a>
-<a href="{{ url_for('notification.events_view') }}" class="btn btn-success">View Events</a>
-<a href="{{ url_for('notification.templates_view') }}" class="btn btn-dark">View Templates</a>
-<a href="{{ url_for('notification.trigger_types_view') }}" class="btn btn-warning">View Trigger Types</a>
-<a href="{{ url_for('notification.rules_view') }}" class="btn btn-info">View Rules</a>
-<a href="{{ url_for('notification.logs_view') }}" class="btn btn-outline-dark">View Logs</a>
+
 {% endblock %}

@@ -1,7 +1,6 @@
 """ This script seeds the database with initial data for permissions, roles, groups, and users. """
 
 from app import create_app, db
-from app.model.model import ensure_notification_log_event_title_column
 from app.model.model import AuthPermission, AuthRole, AuthGroup, User, TriggerType
 
 
@@ -90,6 +89,14 @@ PERMISSIONS = [
     {"name": "notification.rule.update", "description": "Update notification rule"},
     {"name": "notification.rule.delete", "description": "Delete notification rule"},
 
+    {"name": "notification.workinghours.view",
+        "description": "View working hours"},
+    {"name": "notification.workinghours.update",
+        "description": "Update working hours"},
+    {"name": "notification.workinghours.delete",
+        "description": "Delete working hours"},
+    {"name": "notification.workinghours.create",
+        "description": "Create working hours"},
 ]
 
 
@@ -161,6 +168,12 @@ ROLES = [
             "notification.rule.create",
             "notification.rule.update",
             "notification.rule.delete",
+
+            "notification.workinghours.view",
+            "notification.workinghours.update",
+            "notification.workinghours.delete",
+            "notification.workinghours.create",
+
         ]
     },
     {
@@ -210,16 +223,20 @@ CATEGORIES = [
 
 TRIGGER_TYPES = [
     {
-        "code": "EVENT_START",
-        "description": "Zeit vor dem Termin",
+        "code": "DEFAULT",
+        "description": "Default",
     },
     {
         "code": "BIRTHDAY",
-        "description": "Geburtstag",
+        "description": "Member Birthday",
     },
     {
         "code": "MEMBER_ANNIVERSARY",
-        "description": "Mitgliedszeit",
+        "description": "Member Anniversary",
+    },
+    {
+        "code": "WORKING_HOURS_MONTHLY",
+        "description": "Monthly working hours report",
     },
 ]
 
@@ -320,5 +337,4 @@ app = create_app()
 
 with app.app_context():
     db.create_all()
-    ensure_notification_log_event_title_column()
     run_seeding()

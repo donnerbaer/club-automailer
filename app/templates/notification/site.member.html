@@ -1,8 +1,8 @@
-{% extends 'base.html' %}
+{% extends 'notification/base_notification.html' %}
 {% block title %} {{ member.first_name }} {{ member.last_name }} - {{ _('Members') }}{% endblock %}
 
 
-{% block main %}
+{% block notification_content %}
 <nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
     <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
         <li class="breadcrumb-item">
@@ -67,6 +67,9 @@
 
                     <dt class="col-sm-4">{{ _('Join Date') }}</dt>
                     <dd class="col-sm-8">{{ member.join_date or '-' }}</dd>
+
+                    <dt class="col-sm-4">{{ _('Required Hours') }}</dt>
+                    <dd class="col-sm-8">{{ member.required_hours if member.required_hours is not none else '-' }}</dd>
 
                     <dt class="col-sm-4">{{ _('Status') }}</dt>
                     <dd class="col-sm-8">

@@ -39,6 +39,12 @@ def create_app():
 
     login_manager.login_view = 'auth.login'
 
+    # Security configuration for session cookies
+    app.config['SESSION_COOKIE_SECURE'] = True  # Only send cookie over HTTPS
+    # JavaScript cannot access the cookie
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
+
     # ! Blueprints registration
     from app.views.main import main_bp
     app.register_blueprint(main_bp)
@@ -52,6 +58,23 @@ def create_app():
     app.register_blueprint(admin_bp)
     from app.views.notification import notification_bp
     app.register_blueprint(notification_bp)
+
+    # Set security headers
+    @app.after_request
+    def set_security_headers(response):
+        # Prevent MIME type sniffing
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        # Prevent clickjacking
+        response.headers['X-Frame-Options'] = 'DENY'
+        # XSS protection for older browsers
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        # HSTS - force HTTPS
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
+        # CSP - Content Security Policy
+        response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' https://cdn.jsdelivr.net data:"
+        # Referrer Policy
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        return response
 
     return app
 

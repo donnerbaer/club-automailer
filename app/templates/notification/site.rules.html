@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends 'notification/base_notification.html' %}
 {% block title %} {{ _('Rules') }} - {{ _('Notification') }}{% endblock %}
 
-{% block main %}
+{% block notification_content %}
 <nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
     <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
         <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a></li>
@@ -20,7 +20,7 @@
         <i class="bi bi-plus-circle"></i> {{ _('Create rule') }}
     </button>
     {% include 'notification/rule/modal.rule.create.html' %}
-    {% if rule_form.errors %}
+    {% if rule_form.errors or copied_rule %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const modalElement = document.getElementById('createRuleModal');

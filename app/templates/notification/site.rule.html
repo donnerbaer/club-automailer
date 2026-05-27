@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends 'notification/base_notification.html' %}
 {% block title %} {{ rule.name }} - {{ _('Rules') }}{% endblock %}
 
-{% block main %}
+{% block notification_content %}
 <nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
     <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
         <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a></li>
@@ -18,6 +18,9 @@
     </div>
     <div class="d-flex flex-wrap gap-2">
         <a class="btn btn-outline-secondary" href="{{ url_for('notification.rules_view') }}"><i class="bi bi-arrow-left"></i> {{ _('Back to rules') }}</a>
+        {% if current_user.has_permission('notification.rule.create') %}
+        <a class="btn btn-outline-primary" href="{{ url_for('notification.rules_view', copy_from=rule.id) }}"><i class="bi bi-files"></i> {{ _('Copy') }}</a>
+        {% endif %}
         {% include 'notification/rule/modal.rule.update.html' %}
         {% include 'notification/rule/modal.rule.delete.html' %}
     </div>

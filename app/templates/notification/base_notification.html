@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<div class="d-flex gap-0" style="margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); min-height: calc(100vh - 140px);">
+    {% include 'component/notification_sidebar.html' %}
+    <div style="flex: 1; overflow-y: auto; width: 100%;">
+        <div class="container-fluid" style="padding: 1.5rem;">
+            {% block notification_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+
+<style>    
+    @media (max-width: 768px) {
+        .d-flex {
+            flex-direction: column;
+        }
+        
+        .d-flex > nav {
+            width: 100% !important;
+            min-height: auto !important;
+            max-height: 150px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            flex-wrap: wrap;
+        }
+        
+        .d-flex > nav ul {
+            flex-direction: row !important;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        
+        .d-flex > nav .nav-item.mt-3 {
+            margin-top: 0 !important;
+        }
+    }
+</style>
+{% endblock %}

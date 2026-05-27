@@ -1,15 +1,11 @@
-<!DOCTYPE html>
-<!-- Base template: Implements a simple sticky-footer layout using CSS
-    flexbox. The `main` area is flexible and expands to fill available
-    vertical space so the footer stays at the bottom on short pages. The
-    navbar is included from 'component/navbar.html'. -->
- 
+<!DOCTYPE html> 
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="robots" content="noindex,nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{ url_for('static', filename='css/bootstrap.css') }}" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
     <!-- Fix to local hosting of bootstrap icons

@@ -17,37 +17,9 @@
 			<li class="nav-item">
 				<a class="nav-link" href="{{ url_for('main.dashboard') }}"><i class="bi bi-speedometer"></i> {{ _('Dashboard') }}</a>
 			</li>
-			<li class="nav-item dropdown">
-				<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-					<i class="bi bi-bell"> </i>{{ _('Notifications') }}
-				</a>
-				<ul class="dropdown-menu">
-					{% if current_user.has_permission('notification.view') %}
-					<li><a class="dropdown-item" href="{{ url_for('notification.index') }}">{{ _('Dashboard') }}</a></li>
-					{% endif %}
-					<li><hr class="dropdown-divider"></li>
-					{% if current_user.has_permission('notification.members.read') %}
-					<li><a class="dropdown-item" href="{{ url_for('notification.members_view') }}">{{ _('Members') }}</a></li>
-					{% endif %}
-					{% if current_user.has_permission('notification.groups.view') %}
-					<li><a class="dropdown-item" href="{{ url_for('notification.groups_view') }}">{{ _('Groups') }}</a></li>
-					{% endif %}
-					{% if current_user.has_permission('notification.events.view') %}
-					<li><a class="dropdown-item" href="{{ url_for('notification.events_view') }}">{{ _('Events') }}</a></li>
-					{% endif %}
-					{% if current_user.has_permission('notification.templates.view') %}
-					<li><a class="dropdown-item" href="{{ url_for('notification.templates_view') }}">{{ _('Templates') }}</a></li>
-					{% endif %}
-					{% if current_user.has_permission('notification.rules.view') %}
-					<li><a class="dropdown-item" href="{{ url_for('notification.trigger_types_view') }}">{{ _('Trigger Types') }}</a></li>
-					<li><a class="dropdown-item" href="{{ url_for('notification.rules_view') }}">{{ _('Rules') }}</a></li>
-					{% endif %}
-					{% if current_user.has_permission('notification.logs.read') %}
-					<li><a class="dropdown-item" href="{{ url_for('notification.logs_view') }}">{{ _('Logs') }}</a></li>
-					{% endif %}
-				</ul>
-			</li>
-
+			<li class="nav-item">
+          		<a class="nav-link" href="{{ url_for('notification.index') }}"><i class="bi bi-house-door-fill"></i> {{ _('Notifications') }}</a>
+       		</li>
 
 			{% if current_user.has_permission('admin.backend.access') %}
 			<li class="nav-item dropdown">
@@ -103,14 +75,7 @@
 				{{ _("Sign-in") }}
 			</button>
 		</div>
-		<!-- Sign-up button -->
-		<!--
-		<div>
-			<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registrateModal">
-				{{ _("Sign-up") }}
-			</button>
-		</div>
-		-->
+
 	</div>
 	{% endif %}
     </div>

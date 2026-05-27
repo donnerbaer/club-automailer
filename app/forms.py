@@ -8,6 +8,7 @@ from wtforms import (
     SubmitField,
     FileField,
     BooleanField,
+    FloatField,
     IntegerField,
     SelectField,
     RadioField,
@@ -67,11 +68,17 @@ class RegistrationForm(FlaskForm):
     )
     password = PasswordField(
         _l('Password'),
-        validators=[DataRequired(), Length(min=8)]
+        validators=[
+            DataRequired(),
+            Length(min=12, message=_l(
+                'Password must be at least 12 characters long')),
+        ]
     )
     confirm_password = PasswordField(
         _l('Confirm Password'),
-        validators=[DataRequired(), EqualTo('password')]
+        validators=[DataRequired(), EqualTo(
+            'password', message=_l('Passwords must match'))
+        ]
     )
     first_name = StringField(
         _l('First Name'),
@@ -86,24 +93,61 @@ class RegistrationForm(FlaskForm):
 
 class UserUpdateForm(FlaskForm):
     """Form for updating user profile."""
-    username = StringField(_l('Username'), validators=[
-                           Optional(), Length(min=3, max=64)])
-    email = StringField(_l('Email'), validators=[
-                        Optional(), Email(), Length(min=6, max=120)])
-    first_name = StringField(_l('First Name'), validators=[
-                             Optional(), Length(max=64)])
-    last_name = StringField(_l('Last Name'), validators=[
-                            Optional(), Length(max=64)])
-    image = FileField(_l('Profile Image Filename'), validators=[
-                      Optional()])  # For user profile image
+    username = StringField(
+        _l('Username'),
+        validators=[
+            Optional(), Length(min=3, max=64)
+        ]
+    )
+    email = StringField(
+        _l('Email'),
+        validators=[
+            Optional(), Email(), Length(min=6, max=120)
+        ]
+    )
+    first_name = StringField(
+        _l('First Name'),
+        validators=[
+            Optional(), Length(max=64)
+        ]
+    )
+    last_name = StringField(
+        _l('Last Name'),
+        validators=[
+            Optional(), Length(max=64)
+        ]
+    )
+    image = FileField(
+        _l('Profile Image Filename'),
+        validators=[
+            Optional()
+        ]
+    )  # For user profile image
     delete_image = BooleanField(
-        _l('Delete Profile Image'), default=False, validators=[Optional()])
-    old_password = PasswordField(_l('Old Password'), validators=[
-                                 DataRequired(), Length(min=8)])
-    new_password = PasswordField(_l('New Password'), validators=[
-                                 Optional(), Length(min=8)])
-    confirm_password = PasswordField(_l('Confirm Password'), validators=[
-                                     Optional(), EqualTo('new_password')])
+        _l('Delete Profile Image'),
+        default=False,
+        validators=[
+            Optional()
+        ]
+    )
+    old_password = PasswordField(
+        _l('Old Password'),
+        validators=[
+            DataRequired(), Length(min=8)
+        ]
+    )
+    new_password = PasswordField(
+        _l('New Password'),
+        validators=[
+            Optional(), Length(min=8)
+        ]
+    )
+    confirm_password = PasswordField(
+        _l('Confirm Password'),
+        validators=[
+            Optional(), EqualTo('new_password')
+        ]
+    )
     submit = SubmitField(_l('Save Changes'))
 
 
@@ -245,8 +289,11 @@ class NotificationGroupMembershipForm(FlaskForm):
                 ~Member.groups.any(id=group_id)).all()
         else:
             members = Member.query.all()
-        choices += [(member.id, f'{member.first_name} {member.last_name}')
-                    for member in members]
+        choices += [(
+            member.id,
+            f"{member.first_name} {member.last_name} ({member.member_number})"
+            if member.member_number else f"{member.first_name} {member.last_name}"
+        ) for member in members]
         self.member.choices = choices
 
 
@@ -330,6 +377,26 @@ class EventForm(FlaskForm):
             for trigger in TriggerType.query.order_by(TriggerType.code.asc()).all()
         ]
         self.event_type.choices = trigger_choices
+
+
+class ICSImportForm(FlaskForm):
+    """Form for importing events from an .ics file."""
+    ics_file = FileField(_l('ICS File'), validators=[DataRequired()])
+    trigger_type = SelectField(
+        _l('Trigger Type (apply to all imported events)'),
+        choices=[],
+        validators=[Optional()],
+    )
+    submit = SubmitField(_l('Import'))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        trigger_choices = [(0, _l('-- Please Choose --'))]
+        trigger_choices += [
+            (trigger.code, trigger.description or trigger.code)
+            for trigger in TriggerType.query.order_by(TriggerType.code.asc()).all()
+        ]
+        self.trigger_type.choices = trigger_choices
 
 
 class EventCleanupForm(FlaskForm):
@@ -478,33 +545,70 @@ class MemberForm(FlaskForm):
         format='%Y-%m-%d',
         validators=[Optional()]
     )
+    required_hours = FloatField(
+        _l('Required Hours'),
+        validators=[Optional(), NumberRange(min=0)]
+    )
     active = BooleanField(_l('Active'), default=True)
     submit = SubmitField(_l('Save Member'))
 
 
-class NotificationLogCleanupForm(FlaskForm):
-    """Form for deleting notification logs older than a selected age."""
-    age_value = IntegerField(_l('Age'), validators=[
-        DataRequired(), NumberRange(min=1, max=10000)
-    ])
-    age_unit = SelectField(
-        _l('Unit'),
-        choices=[
-            ('days', _l('Days')),
-            ('weeks', _l('Weeks')),
-            ('months', _l('Months')),
-            ('years', _l('Years')),
-        ],
-        validators=[DataRequired()],
+class WorkingHoursForm(FlaskForm):
+    """Form for creating or updating a working hours log entry."""
+    member = SelectField(_l('Member'), choices=[], coerce=int,
+                         validators=[DataRequired()])
+    date = DateField(_l('Date'), format='%Y-%m-%d',
+                     validators=[DataRequired()])
+    hours = FloatField(_l('Hours'), validators=[
+                       DataRequired(), NumberRange(min=0)])
+    submit = SubmitField(_l('Save'))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        choices = [(0, _l('-- Please Choose --'))]
+        members = Member.query.order_by(
+            Member.first_name.asc(), Member.last_name.asc()).all()
+        choices += [(m.id, f"{m.first_name} {m.last_name}") for m in members]
+        self.member.choices = choices
+
+
+class WorkingHoursImportForm(FlaskForm):
+    """Form for importing working hours from a CSV file."""
+    csv_file = FileField(
+        _l('CSV File'),
+        validators=[DataRequired()]
     )
-    submit = SubmitField(_l('Delete Old Logs'))
+    submit = SubmitField(_l('Import Working Hours'))
+
+
+class MemberImportForm(FlaskForm):
+    """Form for importing members from a CSV file."""
+    csv_file = FileField(
+        _l('CSV File'),
+        validators=[DataRequired()]
+    )
+    submit = SubmitField(_l('Import Members'))
 
 
 class NotificationLogClearForm(FlaskForm):
-    """Form for clearing notification logs."""
+    """Consolidated form for clearing notification logs with multiple options."""
+    action = SelectField(
+        _l('Action'),
+        choices=[
+            ('all', _l('Delete All Logs')),
+            ('failed', _l('Delete Failed Logs')),
+            ('before_date', _l('Delete All Logs Before Date')),
+        ],
+        validators=[DataRequired()],
+        default='all',
+    )
+    before_date = DateField(
+        _l('Before Date'),
+        format='%Y-%m-%d',
+        validators=[Optional()]
+    )
+    password = PasswordField(
+        _l('Password'),
+        validators=[DataRequired()]
+    )
     submit = SubmitField(_l('Clear Logs'))
-
-
-class NotificationFailedLogClearForm(FlaskForm):
-    """Form for clearing failed notification logs."""
-    submit = SubmitField(_l('Clear Failed Logs'))

@@ -5,5 +5,12 @@
 <h1 class="h1">EMail Notificator Tool</h1>
 
 
+{% if not current_user.is_authenticated %}
+
+{% include 'auth/form.login.html' %}
+
+{% endif %}
+
+
 
 {% endblock %}

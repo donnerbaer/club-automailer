@@ -1,8 +1,8 @@
-{% extends 'base.html' %}
+{% extends 'notification/base_notification.html' %}
 {% block title %} {{ _('Members') }} - {{ _('Notification') }}{% endblock %}
 
 
-{% block main %}
+{% block notification_content %}
 <nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
     <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
         <li class="breadcrumb-item">
@@ -37,7 +37,21 @@
     </script>
     {% endif %}
     {% endif %}
+    {% if current_user.has_permission('notification.member.create') and current_user.has_permission('notification.member.update') and current_user.has_permission('notification.member.delete') %}
+    <a class="btn btn-outline-primary ms-2" href="{{ url_for('notification.import_members') }}">
+        <i class="bi bi-file-earmark-arrow-up"></i> {{ _('Import members CSV') }}
+    </a>
+    {% endif %}
 </div>
+
+{% if request.args.get('imported_count') is not none %}
+    <div class="alert alert-success" role="alert">
+        {{ _('Import finished.') }}
+        {{ _('Created') }}: {{ request.args.get('imported_count', 0) | int }},
+        {{ _('updated') }}: {{ request.args.get('updated_count', 0) | int }},
+        {{ _('deleted') }}: {{ request.args.get('deleted_count', 0) | int }}.
+    </div>
+{% endif %}
 
 {% if members|length == 0 %}
     <div class="alert alert-info" role="alert">
@@ -54,9 +68,8 @@
             <th scope="col">{{ _('Member number') }}</th>
             <th scope="col">{{ _('First name') }}</th>
             <th scope="col">{{ _('Last name') }}</th>
-            <th scope="col">{{ _('Email') }}</th>
-            <th scope="col">{{ _('Phone') }}</th>
             <th scope="col">{{ _('Join Date') }}</th>
+            <th scope="col">{{ _('Required Hours') }}</th>
             <th scope="col">{{ _('Active') }}</th>
             <th scope="col">{{ _('Actions') }}</th>
         </tr>
@@ -68,9 +81,8 @@
             <td>{{ member.member_number or '-' }}</td>
             <td>{{ member.first_name }}</td>
             <td>{{ member.last_name }}</td>
-            <td>{{ member.email or '-' }}</td>
-            <td>{{ member.phone or '-' }}</td>
             <td>{{ member.join_date or '-' }}</td>
+            <td>{{ member.required_hours if member.required_hours is not none else '-' }}</td>
             <td>
                 {% if member.active %}
                 <span class="badge text-bg-success">{{ _('Active') }}</span>
@@ -88,7 +100,7 @@
         </tr>
         {% else %}
         <tr>
-            <td colspan="9">{{ _('No members found.') }}</td>
+            <td colspan="10">{{ _('No members found.') }}</td>
         </tr>
         {% endfor %}
     </tbody>

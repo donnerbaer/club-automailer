@@ -20,7 +20,7 @@ print(f"Configuration from .env:")
 print(f"  SMTP_HOST: {SMTP_HOST}")
 print(f"  SMTP_USER: {SMTP_USER}")
 print(
-    f"  SMTP_PASSWORD: {'*' * (len(SMTP_PASSWORD) - 4) + SMTP_PASSWORD[-4:]}")
+    f"  SMTP_PASSWORD: {'*' * len(SMTP_PASSWORD)}")
 print()
 
 # Step 1: Connection test

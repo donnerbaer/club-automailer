@@ -1,0 +1,42 @@
+<div class="container text-left">
+    <div class="row">
+        <div class="col">
+            <b>Common:</b>
+            <ul>
+                <li>{{ _('Receiver First Name') }} <code>{{ '{{receiver.first_name}}' }}</code></li>
+                <li>{{ _('Receiver Last Name') }} <code>{{ '{{receiver.last_name}}' }}</code></li>
+                <li>{{ _('Days Before (Trigger)') }} <code>{{ '{{days_before}}' }}</code></li>
+
+                <li>{{ _('All Working Hours in DB') }} <code>{{ '{{all_working_hours}}'}}</code></li>
+                <li>{{ _('All Working Hours in DB This Year') }} <code>{{ '{{all_working_hours_this_year}}'}}</code></li>
+                <li>{{ _('Required Hours') }} <code>{{ '{{member.required_hours}}' }}</code></li>
+                <li>{{ _('Total Hours') }} <code>{{ '{{member.all_hours}}' }}</code></li>
+                <li>{{ _('Hours This Year') }} <code>{{ '{{member.hours_this_year}}' }}</code></li>
+            </ul>
+        </div>
+        <div class="col">
+            <b>Event:</b>
+            <ul>
+                <li>{{ _('Title') }}: <code>{{ '{{event.title}}' }}</code></li>
+                <li>{{ _('Start time') }}: <code>{{ '{{event.start_at}}' }}</code></li>
+                <li>{{ _('End time') }}: <code>{{ '{{event.end_at}}' }}</code></li>
+                <li>{{ _('Description') }}: <code>{{ '{{event.description}}' }}</code></li>
+                <li>{{ _('Location') }}: <code>{{ '{{event.location}}' }}</code></li>
+            </ul>
+        </div>
+        <div class="col">
+            <b>Person:</b>
+            <ul>
+                <li>{{ _('Member number') }}: <code>{{ '{{member.member_number}}' }}</code></li>
+                <li>{{ _('First name') }}: <code>{{ '{{member.first_name}}' }}</code></li>
+                <li>{{ _('Last name') }}: <code>{{ '{{member.last_name}}' }}</code></li>
+                <li>{{ _('Email') }}: <code>{{ '{{member.email}}' }}</code></li>
+                <li>{{ _('Phone') }}: <code>{{ '{{member.phone}}' }}</code></li>
+                <li>{{ _('Birth date') }}: <code>{{ '{{member.birth_date}}' }}</code></li>
+                <li>{{ _('Join date') }}: <code>{{ '{{member.join_date}}' }}</code></li>
+                <li>{{ _('Date of 25th membership anniversary') }}: <code>{{ '{{add_years(member.join_date, 25)}}' }}</code></li>
+                <li>{{ _('Date of 18th birthday') }}: <code>{{ '{{add_years(member.birth_date, 18)}}' }}</code></li>
+            </ul>
+        </div>
+    </div>
+</div>

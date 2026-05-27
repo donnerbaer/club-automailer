@@ -1,0 +1,93 @@
+{% extends 'notification/base_notification.html' %}
+{% block title %} {{ _('Import Working Hours CSV') }}{% endblock %}
+
+{% block notification_content %}
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.working_hours_view') }}">{{ _('Working Hours') }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ _('Import Working Hours CSV') }}
+        </li>
+    </ol>
+</nav>
+
+<h1 class="h1">{{ _('Import Working Hours CSV') }}</h1>
+<p class="text-muted">
+    {{ _('Upload a CSV file with member_number, date, and hours. Each row will be added as a new working-hours entry for the matching member.') }}
+</p>
+
+<div class="mb-3">
+    <a href="{{ url_for('notification.download_working_hours_import_template') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-download"></i> {{ _('Download empty CSV template') }}
+    </a>
+</div>
+
+<form method="POST" enctype="multipart/form-data" class="card card-body" id="importWorkingHoursForm">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+        {{ form.csv_file.label(class="form-label") }}
+        {{ form.csv_file(class="form-control", accept=".csv,text/csv") }}
+        {% if form.csv_file.errors %}
+        <div class="invalid-feedback d-block">
+            {% for error in form.csv_file.errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importWorkingHoursModal">
+            {{ _('Import working hours') }}
+        </button>
+        <a href="{{ url_for('notification.working_hours_view') }}" class="btn btn-outline-secondary">{{ _('Back') }}</a>
+    </div>
+</form>
+
+<div class="modal fade" id="importWorkingHoursModal" tabindex="-1" aria-labelledby="importWorkingHoursModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="importWorkingHoursModalLabel">{{ _('Import working hours') }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger mb-0" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    {{ _('Are you sure? Each CSV row will create a new working-hours entry.') }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                <button type="button" id="confirmImportWorkingHoursButton" class="btn btn-danger">{{ _('Import working hours') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const confirmButton = document.getElementById('confirmImportWorkingHoursButton');
+        const importForm = document.getElementById('importWorkingHoursForm');
+
+        if (confirmButton && importForm) {
+            confirmButton.addEventListener('click', function () {
+                if (typeof importForm.requestSubmit === 'function') {
+                    importForm.requestSubmit();
+                } else {
+                    importForm.submit();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

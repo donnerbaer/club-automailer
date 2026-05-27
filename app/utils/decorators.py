@@ -1,11 +1,13 @@
 """ Decorators for Flask routes to manage user access and permissions. """
 # app/utils/decorators.py
 
+import logging
 from typing import List
 from flask import redirect, url_for, abort
 from flask_login import current_user
 from functools import wraps
-from app.model.model import AuthGroup, AuthRole, AuthPermission
+
+logger = logging.getLogger(__name__)
 
 
 def anonymous_required(f) -> callable:
@@ -37,13 +39,13 @@ def check_permissions(required_permissions: List[str]) -> callable:
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
-                print("User is not authenticated.")
+                logger.warning(f"Authentication required. User ID: {current_user.id if current_user.is_authenticated else 'anonymous'}")
                 return redirect(url_for('auth.login'))
 
             for required_permission in required_permissions:
                 if not current_user.has_permission(required_permission):
-                    print(
-                        f"User {current_user.username} does not have permission: {required_permission}")
+                    logger.warning(
+                        f"Permission denied for user ID {current_user.id}: {required_permission}")
                     abort(403)
 
             return f(*args, **kwargs)
@@ -74,8 +76,8 @@ def check_own_or_has_permissions(required_permissions: List[str]) -> callable:
 
             for required_permission in required_permissions:
                 if not current_user.has_permission(required_permission):
-                    print(
-                        f"User {current_user.username} does not have permission: {required_permission}")
+                    logger.warning(
+                        f"Permission denied for user ID {current_user.id}: {required_permission}")
                     abort(403)
             return f(*args, **kwargs)
         return decorated_function

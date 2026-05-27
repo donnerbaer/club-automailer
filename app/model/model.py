@@ -10,6 +10,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import (
     Column,
     Integer,
+    Float,
     String,
     Boolean,
     Date,
@@ -37,7 +38,7 @@ class User(UserMixin, db.Model):
     image_filename = db.Column(db.String(256), nullable=True)
 
     def set_password(self, password) -> None:
-        """ Set the user's password by hashing it. 
+        """ Set the user's password by hashing it.
 
         Args:
             password (str): The plaintext password to be hashed and stored.
@@ -213,14 +214,14 @@ class AuthGroup(db.Model):
             role (AuthRole): The role to be added to the group.
 
         Returns:
-            None    
+            None
         """
         if not self.has_role(role.name):
             self.roles.append(role)
             db.session.commit()
 
     def remove_role(self, role: AuthRole) -> None:
-        """ Remove a role from the group. 
+        """ Remove a role from the group.
         This method checks if the role is associated with the group before removing it.
 
         Args:
@@ -309,10 +310,16 @@ class Member(db.Model):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow,
                         onupdate=datetime.utcnow)
+    required_hours = Column(Float, default=0)
 
     groups = relationship("Group", secondary=group_members,
                           back_populates="members")
     events = relationship("EventParticipant", back_populates="member")
+    working_hours_logs = relationship(
+        "WorkingHoursLog",
+        back_populates="member",
+        cascade="all, delete-orphan",
+    )
 
 
 class Group(db.Model):
@@ -462,20 +469,18 @@ class NotificationLog(db.Model):
     event = relationship("Event", back_populates="logs")
 
 
-def ensure_notification_log_event_title_column() -> None:
-    """Add the notification_log.event_title column when it is missing."""
-    from sqlalchemy import inspect, text
+class WorkingHoursLog(db.Model):
+    """ Model representing a working hours entry for a member.
+    Each entry represents one shift/assignment.
+    """
+    __tablename__ = "working_hours_log"
 
-    inspector = inspect(db.engine)
-    if "notification_log" not in inspector.get_table_names():
-        return
+    id = Column(Integer, primary_key=True)
+    member_id = Column(Integer, ForeignKey("members.id"))
+    date = Column(Date, nullable=False)
+    hours = Column(Float, default=0)
 
-    column_names = {column["name"]
-                    for column in inspector.get_columns("notification_log")}
-    if "event_title" in column_names:
-        return
-
-    with db.engine.begin() as connection:
-        connection.execute(text(
-            "ALTER TABLE notification_log ADD COLUMN event_title VARCHAR(255)"
-        ))
+    created_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    member = relationship("Member", back_populates="working_hours_logs")
+    created_by_user = relationship("User")

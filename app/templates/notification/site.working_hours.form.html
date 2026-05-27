@@ -1,0 +1,39 @@
+{% extends 'notification/base_notification.html' %}
+{% block title %} {{ _('Working Hours') }} - {{ _('Notification') }}{% endblock %}
+
+{% block notification_content %}
+<h1 class="h1">{{ _('Working Hours Entry') }}</h1>
+
+<form method="post">
+    {{ form.hidden_tag() }}
+
+    <div class="mb-3">
+        {{ form.member.label(class_='form-label') }}
+        {{ form.member(class_='form-select') }}
+        {% for err in form.member.errors %}
+            <div class="text-danger">{{ err }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.date.label(class_='form-label') }}
+        {{ form.date(class_='form-control', placeholder='YYYY-MM-DD') }}
+        {% for err in form.date.errors %}
+            <div class="text-danger">{{ err }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.hours.label(class_='form-label') }}
+        {{ form.hours(class_='form-control') }}
+        {% for err in form.hours.errors %}
+            <div class="text-danger">{{ err }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.submit(class_='btn btn-primary') }}
+    </div>
+</form>
+
+{% endblock %}

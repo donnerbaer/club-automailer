@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends 'notification/base_notification.html' %}
 {% block title %} {{ _('Notification Logs') }} - {{ _('Notification') }}{% endblock %}
 
-{% block main %}
+{% block notification_content %}
 <nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
     <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
         <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a></li>
@@ -14,9 +14,6 @@
     <h1 class="h1 mb-0">{{ _('Notification Logs') }}</h1>
     {% if current_user.has_permission('notification.logs.delete') %}
     <div class="d-flex flex-wrap gap-2">
-        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clearFailedLogsModal">
-            <i class="bi bi-exclamation-triangle"></i> {{ _('Clear Failed Logs') }}
-        </button>
         <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clearLogsModal">
             <i class="bi bi-trash"></i> {{ _('Clear Logs') }}
         </button>
@@ -25,9 +22,19 @@
 </div>
 
 {% if cleanup_result %}
-<div class="alert alert-success" role="alert">
-    {{ _('Deleted %(count)s failed log entries.', count=cleanup_result.deleted_failed_logs or 0) }}
-</div>
+    {% if cleanup_result.action == 'all' %}
+    <div class="alert alert-success" role="alert">
+        {{ _('Deleted %(count)s log entries.', count=cleanup_result.count or 0) }}
+    </div>
+    {% elif cleanup_result.action == 'failed' %}
+    <div class="alert alert-success" role="alert">
+        {{ _('Deleted %(count)s failed log entries.', count=cleanup_result.count or 0) }}
+    </div>
+    {% elif cleanup_result.action == 'before_date' %}
+    <div class="alert alert-success" role="alert">
+        {{ _('Deleted %(count)s log entries before %(date)s.', count=cleanup_result.count or 0, date=cleanup_result.before_date) }}
+    </div>
+    {% endif %}
 {% endif %}
 
 {% if clear_logs_form is defined and current_user.has_permission('notification.logs.delete') %}
@@ -39,45 +46,124 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-danger mb-0" role="alert">
-                    {{ _('Are you sure you want to delete all notification logs? This action cannot be undone.') }}
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                <form method="POST" action="{{ url_for('notification.clear_logs') }}">
+                <form method="POST" action="{{ url_for('notification.clear_logs') }}" id="clearLogsForm">
                     {{ clear_logs_form.hidden_tag() }}
-                    {{ clear_logs_form.submit(class='btn btn-danger') }}
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
+                    
+                    <div class="mb-3">
+                        {{ clear_logs_form.action.label(class='form-label fw-bold') }}
+                        {{ clear_logs_form.action(class='form-select', id='clearAction') }}
+                    </div>
 
-{% if clear_failed_logs_form is defined and current_user.has_permission('notification.logs.delete') %}
-<div class="modal fade" id="clearFailedLogsModal" tabindex="-1" aria-labelledby="clearFailedLogsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="clearFailedLogsModalLabel">{{ _('Clear Failed Logs') }}</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning mb-0" role="alert">
-                    {{ _('This will delete all notification logs with status FAILED. This action cannot be undone.') }}
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
-                <form method="POST" action="{{ url_for('notification.clear_failed_logs') }}">
-                    {{ clear_failed_logs_form.hidden_tag() }}
-                    {{ clear_failed_logs_form.submit(class='btn btn-danger') }}
+                    <!-- Date field - only shown for 'before_date' action -->
+                    <div id="dateFieldContainer" class="mb-3" style="display: none;">
+                        {{ clear_logs_form.before_date.label(class='form-label fw-bold') }}
+                        {{ clear_logs_form.before_date(class='form-control', type='date', id='beforeDate') }}
+                    </div>
+
+                    <!-- Password field -->
+                    <div class="mb-3">
+                        {{ clear_logs_form.password.label(class='form-label fw-bold') }}
+                        {{ clear_logs_form.password(class='form-control', id='clearPassword') }}
+                        {% if clear_logs_form.password.errors %}
+                        <div class="alert alert-danger mt-2 mb-0" role="alert">
+                            {% for error in clear_logs_form.password.errors %}
+                            <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Warning messages -->
+                    <div id="warningAllLogs" class="alert alert-danger mb-3" role="alert" style="display: none;">
+                        {{ _('Are you sure you want to delete all notification logs? This action cannot be undone.') }}
+                    </div>
+
+                    <div id="warningFailedLogs" class="alert alert-warning mb-3" role="alert" style="display: none;">
+                        {{ _('This will delete all notification logs with status FAILED. This action cannot be undone.') }}
+                    </div>
+
+                    <div id="warningOldLogs" class="alert alert-warning mb-3" role="alert" style="display: none;">
+                        {{ _('This will delete all notification logs before the selected date. This action cannot be undone.') }}
+                    </div>
+
+                    <div class="modal-footer mt-3">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                        {{ clear_logs_form.submit(class='btn btn-danger') }}
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const actionSelect = document.getElementById('clearAction');
+    const dateFieldContainer = document.getElementById('dateFieldContainer');
+    const warningAllLogs = document.getElementById('warningAllLogs');
+    const warningFailedLogs = document.getElementById('warningFailedLogs');
+    const warningOldLogs = document.getElementById('warningOldLogs');
+    const beforeDate = document.getElementById('beforeDate');
+    
+    function updateFormDisplay() {
+        const action = actionSelect.value;
+        
+        // Hide all warnings first
+        warningAllLogs.style.display = 'none';
+        warningFailedLogs.style.display = 'none';
+        warningOldLogs.style.display = 'none';
+        dateFieldContainer.style.display = 'none';
+        
+        // Clear validation for date field when not needed
+        beforeDate.removeAttribute('required');
+        
+        // Show relevant fields based on action
+        if (action === 'all') {
+            warningAllLogs.style.display = 'block';
+        } else if (action === 'failed') {
+            warningFailedLogs.style.display = 'block';
+        } else if (action === 'before_date') {
+            dateFieldContainer.style.display = 'block';
+            warningOldLogs.style.display = 'block';
+            beforeDate.setAttribute('required', 'required');
+        }
+    }
+    
+    // Update on page load
+    updateFormDisplay();
+    
+    // Update on change
+    actionSelect.addEventListener('change', updateFormDisplay);
+    
+    // Form submission validation
+    const clearLogsForm = document.getElementById('clearLogsForm');
+    if (clearLogsForm) {
+        clearLogsForm.addEventListener('submit', function (e) {
+            const action = actionSelect.value;
+            if (action === 'before_date') {
+                const dateVal = beforeDate.value;
+                if (!dateVal) {
+                    e.preventDefault();
+                    alert('{{ _("Please select a date.") }}');
+                }
+            }
+        });
+    }
+});
+</script>
+
+<!-- Auto-open modal if there are form errors -->
+{% if clear_logs_form.password.errors %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modalElement = document.getElementById('clearLogsModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+});
+</script>
+{% endif %}
 {% endif %}
 
 {% if logs|length == 0 %}

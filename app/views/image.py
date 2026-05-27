@@ -4,12 +4,34 @@ It also includes checks to ensure that the current user is logged in before acce
 """
 
 import os
-from flask import Blueprint, send_from_directory
+import re
+from flask import Blueprint, send_from_directory, abort
 from flask import redirect
 from flask_login import login_required, current_user
 from app import db
 from app.model.model import User
 from app.utils.image import is_image_name_valid, get_default_user_image
+
+
+def validate_filename(filename):
+    """Validate filename to prevent path traversal attacks.
+    
+    Args:
+        filename (str): The filename to validate.
+        
+    Raises:
+        ValueError: If the filename contains path traversal attempts.
+        
+    Returns:
+        bool: True if the filename is valid.
+    """
+    # Only allow alphanumeric, dots, underscores, and hyphens
+    if not re.match(r'^[a-zA-Z0-9._-]+$', filename):
+        return False
+    # Prevent path traversal
+    if '..' in filename or '/' in filename or '\\' in filename:
+        return False
+    return True
 
 
 image_bp = Blueprint('image', __name__)
@@ -25,7 +47,13 @@ def serve_item_image(filename):
 
     Returns:
         Response: The image file served from the specified directory.
+        
+    Raises:
+        400: If filename contains invalid characters or path traversal attempts.
     """
+    # Validate filename to prevent path traversal attacks
+    if not validate_filename(filename):
+        abort(400)  # Bad request
     image_dir = os.path.join(os.getcwd(), 'img', 'item')
     return send_from_directory(image_dir, filename)
 
