@@ -572,6 +572,15 @@ class WorkingHoursForm(FlaskForm):
         self.member.choices = choices
 
 
+class WorkingHoursImportForm(FlaskForm):
+    """Form for importing working hours from a CSV file."""
+    csv_file = FileField(
+        _l('CSV File'),
+        validators=[DataRequired()]
+    )
+    submit = SubmitField(_l('Import Working Hours'))
+
+
 class MemberImportForm(FlaskForm):
     """Form for importing members from a CSV file."""
     csv_file = FileField(

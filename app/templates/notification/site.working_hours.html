@@ -21,8 +21,18 @@
 <div class="mb-3">
     {% if current_user.has_permission('notification.workinghours.create') %}
     <a class="btn btn-primary" href="{{ url_for('notification.working_hours_create') }}">{{ _('Create entry') }}</a>
+    <a class="btn btn-outline-primary ms-2" href="{{ url_for('notification.import_working_hours') }}">
+        <i class="bi bi-file-earmark-arrow-up"></i> {{ _('Import working hours CSV') }}
+    </a>
     {% endif %}
 </div>
+
+{% if request.args.get('imported_count') is not none %}
+    <div class="alert alert-success" role="alert">
+        {{ _('Import finished.') }}
+        {{ _('Created') }}: {{ request.args.get('imported_count', 0) | int }}.
+    </div>
+{% endif %}
 
 {% if logs|length == 0 %}
     <div class="alert alert-info">{{ _('No working hours entries found.') }}</div>

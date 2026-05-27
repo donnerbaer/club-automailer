@@ -2,6 +2,7 @@
 
 import csv
 import io
+from collections import defaultdict
 from calendar import monthrange
 from datetime import datetime, timedelta, timezone
 from flask import Blueprint, render_template, redirect, url_for, request, Response, flash
@@ -25,6 +26,7 @@ from app.forms import (
     TriggerTypeForm,
     MemberForm,
     WorkingHoursForm,
+    WorkingHoursImportForm,
     NotificationMemberGroupForm,
     NotificationGroupMembershipForm,
     NotificationLogClearForm,
@@ -197,6 +199,17 @@ def _build_member_import_template_csv():
         'member_since',
         'required_hours',
         'status',
+    ])
+    return output.getvalue()
+
+
+def _build_working_hours_import_template_csv():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'member_number',
+        'date',
+        'hours',
     ])
     return output.getvalue()
 
@@ -1605,6 +1618,78 @@ def working_hours_view():
     return render_template('notification/site.working_hours.html', logs=logs, form=form)
 
 
+@notification_bp.route('/working-hours/dashboard')
+@login_required
+@check_permissions(['notification.workinghours.view'])
+def working_hours_dashboard():
+    """Dashboard with working-hours statistics and trends."""
+    now = datetime.utcnow()
+    current_year = now.year
+    current_month = now.month
+
+    logs = WorkingHoursLog.query.order_by(WorkingHoursLog.date.desc()).all()
+
+    total_entries = len(logs)
+    total_hours = float(sum((log.hours or 0) for log in logs))
+    total_hours_this_month = float(sum(
+        (log.hours or 0)
+        for log in logs
+        if log.date.year == current_year and log.date.month == current_month
+    ))
+    total_hours_this_year = float(sum(
+        (log.hours or 0)
+        for log in logs
+        if log.date.year == current_year
+    ))
+    average_hours_per_entry = float(
+        total_hours / total_entries) if total_entries else 0.0
+    unique_members = len(
+        {log.member_id for log in logs if log.member_id is not None})
+
+    hours_by_member = defaultdict(float)
+    entries_by_member = defaultdict(int)
+    for log in logs:
+        if log.member:
+            member_label = f'{log.member.first_name} {log.member.last_name}'
+        else:
+            member_label = _('Unknown member')
+        hours_by_member[member_label] += float(log.hours or 0)
+        entries_by_member[member_label] += 1
+
+    top_members = sorted(
+        hours_by_member.items(),
+        key=lambda item: item[1],
+        reverse=True,
+    )[:5]
+
+    monthly_hours_map = {month: 0.0 for month in range(1, 13)}
+    for log in logs:
+        if log.date.year == current_year:
+            monthly_hours_map[log.date.month] += float(log.hours or 0)
+
+    month_labels = [
+        datetime(current_year, month, 1).strftime('%b')
+        for month in range(1, 13)
+    ]
+    monthly_hours = [float(monthly_hours_map[month]) for month in range(1, 13)]
+
+    recent_logs = logs[:10]
+
+    return render_template(
+        'notification/site.working_hours.dashboard.html',
+        total_entries=total_entries,
+        total_hours=total_hours,
+        total_hours_this_month=total_hours_this_month,
+        total_hours_this_year=total_hours_this_year,
+        average_hours_per_entry=average_hours_per_entry,
+        unique_members=unique_members,
+        top_members=top_members,
+        month_labels=month_labels,
+        monthly_hours=monthly_hours,
+        recent_logs=recent_logs,
+    )
+
+
 @notification_bp.route('/working-hours/create', methods=['GET', 'POST'])
 @login_required
 @check_permissions(['notification.workinghours.create'])
@@ -1661,3 +1746,128 @@ def working_hours_delete(log_id):
     db.session.commit()
     flash(_('Working hours entry deleted.'), 'success')
     return redirect(url_for('notification.working_hours_view'))
+
+
+@notification_bp.route('/working-hours/import', methods=['GET', 'POST'])
+@login_required
+@check_permissions(['notification.workinghours.create'])
+def import_working_hours():
+    """Import working hours from an uploaded CSV file."""
+    form = WorkingHoursImportForm()
+
+    if form.validate_on_submit():
+        uploaded = request.files.get('csv_file')
+        if not uploaded:
+            form.csv_file.errors.append(_('No file uploaded.'))
+            return render_template('notification/site.import_working_hours.html', form=form)
+
+        try:
+            raw_data = uploaded.read().decode('utf-8-sig')
+        except UnicodeDecodeError:
+            form.csv_file.errors.append(
+                _('Invalid CSV file encoding. Use UTF-8.'))
+            return render_template('notification/site.import_working_hours.html', form=form)
+
+        if not raw_data.strip():
+            form.csv_file.errors.append(_('The CSV file is empty.'))
+            return render_template('notification/site.import_working_hours.html', form=form)
+
+        sample = raw_data[:4096]
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=',;\t|')
+        except csv.Error:
+            dialect = csv.excel
+
+        reader = csv.DictReader(io.StringIO(raw_data), dialect=dialect)
+        expected_fields = {
+            'member_number',
+            'date',
+            'hours',
+        }
+
+        if not reader.fieldnames:
+            form.csv_file.errors.append(
+                _('The CSV file is missing a header row.'))
+            return render_template('notification/site.import_working_hours.html', form=form)
+
+        normalized_fieldnames = {
+            _normalize_csv_header(fieldname) for fieldname in reader.fieldnames
+        }
+        if not expected_fields.issubset(normalized_fieldnames):
+            form.csv_file.errors.append(_(
+                'The CSV file must contain the columns: member_number, date, and hours.'
+            ))
+            return render_template('notification/site.import_working_hours.html', form=form)
+
+        members_by_number = {
+            member.member_number: member
+            for member in Member.query.filter(Member.member_number.isnot(None)).all()
+        }
+
+        imported_count = 0
+        for row_number, row in enumerate(reader, start=2):
+            normalized_row = {
+                _normalize_csv_header(key): _normalize_csv_value(value)
+                for key, value in row.items()
+            }
+
+            member_number = normalized_row.get('member_number')
+            if not member_number:
+                continue
+
+            member = members_by_number.get(member_number)
+            if member is None:
+                form.csv_file.errors.append(_(
+                    f'Row {row_number}: unknown member_number "{member_number}".'
+                ))
+                return render_template('notification/site.import_working_hours.html', form=form)
+
+            date_value = _parse_member_import_date(normalized_row.get('date'))
+            if date_value is None:
+                form.csv_file.errors.append(_(
+                    f'Row {row_number}: invalid date value.'
+                ))
+                return render_template('notification/site.import_working_hours.html', form=form)
+
+            hours_value = _parse_member_import_required_hours(
+                normalized_row.get('hours'))
+            if hours_value is None:
+                form.csv_file.errors.append(_(
+                    f'Row {row_number}: invalid hours value.'
+                ))
+                return render_template('notification/site.import_working_hours.html', form=form)
+
+            db.session.add(WorkingHoursLog(
+                member_id=member.id,
+                date=date_value,
+                hours=hours_value,
+                created_by=current_user.id,
+            ))
+            imported_count += 1
+
+        if imported_count == 0:
+            form.csv_file.errors.append(
+                _('The CSV file does not contain any valid working hours rows.'))
+            return render_template('notification/site.import_working_hours.html', form=form)
+
+        db.session.commit()
+
+        return redirect(url_for(
+            'notification.working_hours_view',
+            imported_count=imported_count,
+        ))
+
+    return render_template('notification/site.import_working_hours.html', form=form)
+
+
+@notification_bp.route('/working-hours/import/template', methods=['GET'])
+@login_required
+@check_permissions(['notification.workinghours.create'])
+def download_working_hours_import_template():
+    """Download an empty working-hours import CSV with the required headers."""
+    response = Response(
+        _build_working_hours_import_template_csv(),
+        mimetype='text/csv; charset=utf-8',
+    )
+    response.headers['Content-Disposition'] = 'attachment; filename=working_hours_import_template.csv'
+    return response
