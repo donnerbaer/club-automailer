@@ -299,7 +299,7 @@ class Member(db.Model):
     __tablename__ = "members"
 
     id = Column(Integer, primary_key=True)
-    member_number = Column(String(50))
+    member_number = Column(String(50), unique=True, nullable=False)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     email = Column(String(255))
