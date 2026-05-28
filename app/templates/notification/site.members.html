@@ -69,7 +69,8 @@
             <th scope="col">{{ _('First name') }}</th>
             <th scope="col">{{ _('Last name') }}</th>
             <th scope="col">{{ _('Join Date') }}</th>
-            <th scope="col">{{ _('Required Hours') }}</th>
+            <th scope="col">{{ _('Hours') }} / {{ _('Required Hours') }}</th>
+            <th scope="col">{{ _('Hours Status') }}</th>
             <th scope="col">{{ _('Active') }}</th>
             <th scope="col">{{ _('Actions') }}</th>
         </tr>
@@ -82,7 +83,25 @@
             <td>{{ member.first_name }}</td>
             <td>{{ member.last_name }}</td>
             <td>{{ member.join_date or '-' }}</td>
-            <td>{{ member.required_hours if member.required_hours is not none else '-' }}</td>
+            <td>{{ "%.2f"|format(member.sum_hours_this_year) if member.sum_hours_this_year is not none else '-' }} / {{ member.required_hours if member.required_hours is not none else '-' }}</td>
+            <td>{% if member.required_hours != 0 %}
+                {% if member.sum_hours_this_year == member.required_hours %}
+                        <span class="badge text-bg-success"><i class="bi bi-hand-thumbs-up-fill"></i></span>
+                    {% elif member.sum_hours_this_year / member.required_hours == 0.0 %}
+                        <span class="badge text-bg-danger"><i class="bi bi-emoji-tear-fill"></i> {{ _('disappoining') }}</span>
+                    {% elif member.sum_hours_this_year / member.required_hours < 0.5 %}
+                        <span class="badge text-bg-danger">&lt;50%</span>
+                    {% elif member.sum_hours_this_year / member.required_hours < 1%}
+                        <span class="badge text-bg-warning">&gt;=50%</span>
+                    {% elif member.sum_hours_this_year == member.required_hours %}
+                        <span class="badge text-bg-success"><i class="bi bi-hand-thumbs-up-fill"></i></span>
+                    {% else %}
+                        <span class="badge text-bg-success"><i class="bi bi-emoji-heart-eyes-fill"></i> {{ "%.0f"|format(member.sum_hours_this_year / member.required_hours) }}x 100%</span>
+                    {% endif %}
+                {% elif member.sum_hours_this_year > 0 and member.required_hours == 0 %}
+                    <span class="badge text-bg-success"><i class="bi bi-hand-thumbs-up-fill"></i></span>
+                {% endif %}
+            </td>
             <td>
                 {% if member.active %}
                 <span class="badge text-bg-success">{{ _('Active') }}</span>

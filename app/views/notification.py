@@ -11,7 +11,7 @@ from flask_login import login_required, current_user
 from jinja2 import Undefined
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, extract
 
 from app import db
 from app.forms import (
@@ -1718,6 +1718,16 @@ def group_delete(group_id):
 @check_permissions(['notification.members.read'])
 def members_view():
     members = Member.query.all()
+    
+    # Calculate sum of working hours for this year
+    current_year = datetime.utcnow().year
+    for member in members:
+        sum_hours = db.session.query(func.sum(WorkingHoursLog.hours)).filter(
+            WorkingHoursLog.member_id == member.id,
+            extract('year', WorkingHoursLog.date) == current_year
+        ).scalar() or 0
+        member.sum_hours_this_year = sum_hours
+    
     member_form = MemberForm()
     return render_template('notification/site.members.html', members=members, member_form=member_form)
 
