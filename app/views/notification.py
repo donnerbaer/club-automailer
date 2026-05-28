@@ -315,7 +315,7 @@ def show_manuel():
     """ Show the manual page with instructions on how to use the club automailer."""
     return render_template('notification/site.manuel.html')
 
-  
+
 @notification_bp.route('/')
 @login_required
 @check_permissions(['notification.view'])
@@ -1855,9 +1855,51 @@ def member_delete(member_id):
 @login_required
 @check_permissions(['notification.workinghours.view'])
 def working_hours_view():
-    logs = WorkingHoursLog.query.order_by(WorkingHoursLog.date.desc()).all()
+    # Pagination parameters
+    try:
+        page = int(request.args.get('page', 1))
+    except Exception:
+        page = 1
+    try:
+        per_page = int(request.args.get('per_page', 25))
+    except Exception:
+        per_page = 25
+
+    # Filters
+    member_id = request.args.get('member_id', type=int)
+    date_str = request.args.get('date')
+
+    query = WorkingHoursLog.query
+    if member_id:
+        query = query.filter(WorkingHoursLog.member_id == member_id)
+    if date_str:
+        try:
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+            query = query.filter(func.date(WorkingHoursLog.date) == date_obj)
+        except Exception:
+            # ignore invalid date filter
+            pass
+
+    pagination = query.order_by(WorkingHoursLog.date.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    logs = pagination.items
+
     form = WorkingHoursForm()
-    return render_template('notification/site.working_hours.html', logs=logs, form=form)
+    members = Member.query.order_by(Member.last_name, Member.first_name).all()
+
+    return render_template(
+        'notification/site.working_hours.html',
+        logs=logs,
+        form=form,
+        pagination=pagination,
+        members=members,
+        filters={
+            'member_id': member_id,
+            'date': date_str,
+            'per_page': per_page,
+        },
+    )
 
 
 @notification_bp.route('/working-hours/dashboard')
