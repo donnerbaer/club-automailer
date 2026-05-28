@@ -468,7 +468,7 @@ def check_version():
     from version import get_version
 
     response = requests.get(
-        "https://api.github.com/repos/donnerbaer/email-notificator-tool/releases/latest"
+        "https://api.github.com/repos/donnerbaer/club-automailer/releases/latest"
     )
     current_version = version.parse(get_version())
     latest_version = version.parse(response.json().get("tag_name"))

@@ -11,12 +11,13 @@ load_dotenv()
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.web.de")
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_PORT = os.getenv("SMTP_PORT", "587")
 
 print(f"{'='*70}")
 print(f"Extended SMTP Diagnostics for {SMTP_HOST}")
 print(f"{'='*70}\n")
 
-print(f"Configuration from .env:")
+print("Configuration from .env:")
 print(f"  SMTP_HOST: {SMTP_HOST}")
 print(f"  SMTP_USER: {SMTP_USER}")
 print(
@@ -49,7 +50,7 @@ print(f"  Password length: {len(SMTP_PASSWORD)} chars")
 
 # Check for potential issues
 if "@" not in SMTP_USER:
-    print(f"  ⚠ WARNING: Username might be missing domain (@web.de)")
+    print(f"  ⚠ WARNING: Username might be missing domain")
 
 # Try login with extended error capture
 try:
@@ -58,14 +59,13 @@ try:
 except smtplib.SMTPAuthenticationError as e:
     print(f"  ✗ Authentication failed: {e}")
     print()
-    print(f"Troubleshooting:")
-    print(f"  1. Check that SMTP is enabled in web.de account:")
-    print(f"     → https://mein.web.de → Sicherheit")
-    print(f"  2. If using 2FA, you may need an App-Passwort instead")
-    print(f"  3. Try resetting your password at https://mein.web.de")
-    print(f"  4. Check for special characters in password that need escaping")
-    print(f"  5. Wait 15-30 minutes if you just changed the password")
-    print(f"  6. Account might be locked after too many login attempts")
+    print("Troubleshooting:")
+    print("  1. Check that SMTP is enabled in your account:")
+    print("  2. If using 2FA, you may need an App-Passwort instead")
+    print("  3. Try resetting your password")
+    print("  4. Check for special characters in password that need escaping")
+    print("  5. Wait 15-30 minutes if you just changed the password")
+    print("  6. Account might be locked after too many login attempts")
     smtp.quit()
     sys.exit(1)
 except smtplib.SMTPException as e:

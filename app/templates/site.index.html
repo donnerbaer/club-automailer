@@ -2,15 +2,17 @@
 {% block title %} {{ _("Home") }}{% endblock %}
 
 {% block main %}
-<h1 class="h1">EMail Notificator Tool</h1>
+<h1 class="h1">Club Automailer</h1>
 
 
 {% if not current_user.is_authenticated %}
 
 {% include 'auth/form.login.html' %}
 
-{% endif %}
+{% else %}
+<a href="{{ url_for('notification.show_manuel') }}" class="btn btn-primary">{{ _('Manuel') }}</a>
 
+{% endif %}
 
 
 {% endblock %}

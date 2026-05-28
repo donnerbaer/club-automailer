@@ -1,0 +1,443 @@
+{% extends 'notification/base_notification.html' %}
+{% block title %} {{ _('Manual') }} - {{ _('Notification') }}{% endblock %}
+
+{% block notification_content %}
+
+
+
+<div class="mb-5">
+    <h1 class="mb-3">Notification System</h1>
+    <p class="lead">
+        This documentation explains how to configure groups, members, trigger types,
+        templates, rules, events, and working hours.
+    </p>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="card-title">1. Navigate to Notifications</h2>
+
+        <p>
+            Open:
+        </p>
+
+        <code>./notification/</code>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+
+        <h2 class="card-title mb-4">2. Create Groups, Members and Trigger Types</h2>
+
+        <h4>Create Groups</h4>
+        <p>
+            Navigate to:
+        </p>
+
+        <code>../notification/members → Create Group</code>
+
+        <hr>
+
+        <h4>Create or Import Members</h4>
+
+        <p>
+            A CSV template can be downloaded.
+        </p>
+
+        <p>
+            Navigate to:
+        </p>
+
+        <code>Create Member</code>
+
+        <div class="mt-3">
+            <h5>Fields</h5>
+
+            <ul>
+                <li>
+                    <strong>Required Hours</strong><br>
+                    Defines how many working hours the member must complete during the current calendar year.
+                    This value must be configured individually for each member.<br>
+                    Default: <code>0</code>
+                </li>
+
+                <li class="mt-2">
+                    <strong>Active</strong><br>
+                    If set to <code>No</code>, the member will not receive emails.
+                </li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <h4>Assign Members to Groups</h4>
+
+        <code>../notification/members/&lt;id&gt; → Add Group</code>
+
+        <hr>
+
+        <h4>Create Trigger Types</h4>
+
+        <code>../notification/trigger-types → Create Trigger Type</code>
+
+        <div class="alert alert-warning mt-3">
+            Do not modify the codes:
+            <strong>BIRTHDAY</strong>,
+            <strong>MEMBER_ANNIVERSARY</strong>,
+            <strong>WORKING_HOURS_MONTHLY</strong>
+        </div>
+
+        <p>
+            Trigger Types define events that Rules can react to later.
+        </p>
+
+        <div class="mt-4">
+
+            <h5>BIRTHDAY</h5>
+
+            <p>
+                Triggered on a member's birthday.
+            </p>
+
+            <div class="alert alert-secondary">
+                This trigger is only executed exactly at the configured number of days before the event.
+                If the trigger is not processed within that exact 24-hour window,
+                no notification will be sent later.
+            </div>
+
+            <h5 class="mt-4">MEMBER_ANNIVERSARY</h5>
+
+            <p>
+                Triggered on a member's join date anniversary.
+            </p>
+
+            <div class="alert alert-secondary">
+                This trigger is only executed exactly at the configured number of days before the event.
+                If the trigger is not processed within that exact 24-hour window,
+                no notification will be sent later.
+            </div>
+
+            <h5 class="mt-4">WORKING_HOURS_MONTHLY</h5>
+
+            <p>
+                Sends the member's completed working hours monthly.
+                Delivery occurs on the 1st day of each month.
+            </p>
+
+            <div class="alert alert-secondary">
+                This trigger only executes on the scheduled day.
+                If processing fails on that day, the notification will not be sent later.
+            </div>
+
+            <div class="alert alert-info mt-3">
+                Other Trigger Types may still trigger later,
+                as long as the related event has not already ended.
+            </div>
+
+            <div class="alert alert-warning mt-3">
+                You can bypass the 24h processing window for BIRTHDAY, MEMBER_ANNIVERSARY and WORKING_HOURS_MONTHLY
+triggers by running the <code>python mail-service.py --debug</code> script.
+But be careful: This may result in duplicate emails if the notification log is cleared too early.
+
+There is no 100% gurantee this will work in every situation, but it can be helpful for setup, testing and debugging purposes.
+
+            </div>
+
+            <p class="mt-3">
+                These Trigger Types require both:
+            </p>
+
+            <ul>
+                <li>a Template</li>
+                <li>at least one Rule</li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h2 class="card-title">3. Create Templates</h2>
+
+            <p>
+                Navigate to:
+            </p>
+
+            <code>../notification/templates → Create Template</code>
+
+            <p class="mt-3">
+                Templates are later sent as emails.
+                Placeholders can be used in both the subject and body and are automatically replaced during delivery.
+            </p>
+
+            <h4 class="mt-4">Example 1 — Event Reminder</h4>
+
+            <div class="card bg-light mb-3">
+                <div class="card-body">
+                    <h6>Subject</h6>
+
+<pre class="mb-3"><code>Reminder: {{ '{{event.title}}' }} on {{ '{{event.start_at}}' }}</code></pre>
+
+                    <h6>Body</h6>
+
+<pre><code>Hello {{ '{{receiver.first_name}}' }},
+
+you have an upcoming kitchen duty.
+
+When: {{ '{{event.start_at}}' }} - {{ '{{event.end_at}}' }}
+Where: {{ '{{event.location}}' }}</code></pre>
+                </div>
+            </div>
+
+            <h4>Example 2 — Membership Anniversary</h4>
+
+            <div class="card bg-light">
+                <div class="card-body">
+
+                    <h6>Subject</h6>
+
+<pre class="mb-3"><code>REMINDER: 25 Years Membership of {{ '{{member.first_name}}' }} {{ '{{member.last_name}}' }}</code></pre>
+
+                    <h6>Body</h6>
+
+<pre><code>Hello {{ '{{receiver.first_name}}' }},
+
+member {{ '{{member.first_name}}' }} {{ '{{member.last_name}}' }}
+has their 25-year membership anniversary on
+{{ '{{add_years(member.join_date, 25)}}' }}.</code></pre>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h2 class="card-title">4. Create Rules</h2>
+
+            <p>
+                Rules define when notifications are sent.
+            </p>
+
+            <p>
+                Recommended naming format:
+            </p>
+
+            <ul>
+                <li><code>KitchenDuty_7d</code></li>
+                <li><code>KitchenDuty_1d</code></li>
+            </ul>
+
+            <p>
+                This allows multiple reminders for the same event.
+            </p>
+
+            <div class="alert alert-info">
+                You can assign:
+                <ul class="mb-0 mt-2">
+                    <li>single email addresses</li>
+                    <li>or entire groups</li>
+                </ul>
+
+                <div class="mt-2">
+                    Every assigned recipient will receive a notification whenever the Rule is triggered.
+                </div>
+            </div>
+
+            <h4 class="mt-4">Example 1 — Kitchen Duty</h4>
+
+            <table class="table table-bordered">
+                <tbody>
+                <tr>
+                    <th>Name</th>
+                    <td>KitchenDuty_7d</td>
+                </tr>
+                <tr>
+                    <th>Trigger Type</th>
+                    <td>KitchenDuty</td>
+                </tr>
+                <tr>
+                    <th>Template</th>
+                    <td>KitchenDuty</td>
+                </tr>
+                <tr>
+                    <th>Days Before</th>
+                    <td>7</td>
+                </tr>
+                <tr>
+                    <th>Send Time</th>
+                    <td>08:00</td>
+                </tr>
+                <tr>
+                    <th>Active</th>
+                    <td>Yes</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <h4 class="mt-4">Example 2 — 25-Year Anniversary</h4>
+
+            <table class="table table-bordered">
+                <tbody>
+                <tr>
+                    <th>Name</th>
+                    <td>25_MEMBERSHIP_7d</td>
+                </tr>
+                <tr>
+                    <th>Trigger Type</th>
+                    <td>MEMBER_ANNIVERSARY</td>
+                </tr>
+                <tr>
+                    <th>Years</th>
+                    <td>25</td>
+                </tr>
+                <tr>
+                    <th>Template</th>
+                    <td>25_Years_Membership</td>
+                </tr>
+                <tr>
+                    <th>Days Before</th>
+                    <td>7</td>
+                </tr>
+                <tr>
+                    <th>Active</th>
+                    <td>Yes</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="alert alert-info">
+            If a Rule is active, all assigned recipients will receive a notification whenever the Rule is triggered.
+        </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h2 class="card-title">5. Create Events</h2>
+
+            <p>
+                Events can be created in three different ways:
+            </p>
+
+            <ol>
+                <li>Import an <code>.ics</code> file (template available)</li>
+                <li>Import a <code>.csv</code> or <code>.tsv</code> file (template available)</li>
+                <li>Create events manually using the web form</li>
+            </ol>
+
+            <h4 class="mt-4">Example — Kitchen Duty</h4>
+
+            <table class="table table-bordered">
+                <tbody>
+                <tr>
+                    <th>Title</th>
+                    <td>Kitchen Duty</td>
+                </tr>
+
+                <tr>
+                    <th>Trigger Type</th>
+                    <td>KitchenDuty</td>
+                </tr>
+
+                <tr>
+                    <th>Start At</th>
+                    <td>13.12.2026 19:00:00</td>
+                </tr>
+
+                <tr>
+                    <th>End At</th>
+                    <td>Optional</td>
+                </tr>
+
+                <tr>
+                    <th>Location</th>
+                    <td>Clubhouse or address</td>
+                </tr>
+
+                <tr>
+                    <th>Recurring</th>
+                    <td>
+                        No<br>
+                        Supported recurrence:
+                        <ul class="mt-2 mb-0">
+                            <li>Daily</li>
+                            <li>Weekly (weekday selection currently unsupported)</li>
+                            <li>Monthly</li>
+                        </ul>
+                    </td>
+                </tr>
+
+                </tbody>
+            </table>
+
+            <div class="alert alert-info">
+                After creating an event, members can be added as Participants.
+                All Participants receive notifications whenever a matching trigger is executed for that event.
+            </div>
+
+            <div class="alert alert-secondary">
+                No events are required for:
+                <strong>BIRTHDAY</strong>,
+                <strong>MEMBER_ANNIVERSARY</strong>,
+                or
+                <strong>WORKING_HOURS_MONTHLY</strong>.
+            </div>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <h2 class="card-title">6. Trigger Behavior</h2>
+
+            <ul>
+                <li>
+                    Triggers are only executed while the related event has not yet ended.
+                </li>
+
+                <li class="mt-2">
+                    No notifications are sent for past events.
+                </li>
+
+                <li class="mt-2">
+                    Duplicate emails are automatically prevented.
+                </li>
+
+                <li class="mt-2">
+                    Exception:
+                    If the notification log is deleted or cleared too early,
+                    duplicate emails may be sent again.
+                </li>
+            </ul>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <h2 class="card-title">7. Create Working Hours</h2>
+
+            <p>
+                Navigate to:
+            </p>
+
+            <code>../notification/working-hours → Create Entry</code>
+
+            <p class="mt-3">
+                Used to record completed working hours for members.
+            </p>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

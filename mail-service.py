@@ -130,7 +130,9 @@ def generate_ics_file(event: Event) -> bytes:
     if event.location:
         ical_event.add('location', event.location)
 
-    ical_event.add('uid', f"event-{event.id}@ENT")
+    ical_event.add(
+        'uid', f"event-{event.id}@{Config.EVENT_DOMAIN}")
+
     ical_event.add('dtstamp', datetime.now())
 
     cal.add_component(ical_event)
