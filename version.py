@@ -1,6 +1,6 @@
 """ This module contains the version information for the club automailer. """
 
-__version__ = "v0.1.1"
+__version__ = "v0.2"
 
 
 def get_version():
