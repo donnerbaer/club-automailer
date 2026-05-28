@@ -9,8 +9,9 @@
 
 {% include 'auth/form.login.html' %}
 
+{% else %}
+<a href="{{ url_for('notification.show_manuel') }}" class="btn btn-primary">{{ _('Manuel') }}</a>
+
 {% endif %}
-
-
 
 {% endblock %}

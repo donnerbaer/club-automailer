@@ -309,6 +309,13 @@ def _build_copied_rule_name(source_name):
     return candidate
 
 
+@notification_bp.route('/manuel', methods=['GET'])
+@login_required
+def show_manuel():
+    """ Show the manual page with instructions on how to use the club automailer."""
+    return render_template('notification/site.manuel.html')
+
+
 @notification_bp.route('/')
 @login_required
 @check_permissions(['notification.view'])
