@@ -11,7 +11,7 @@ from flask_login import login_required, current_user
 from jinja2 import Undefined
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
-from sqlalchemy import func, or_, extract
+from sqlalchemy import func, or_, extract, case, and_
 
 from app import db
 from app.forms import (
@@ -1717,19 +1717,124 @@ def group_delete(group_id):
 @login_required
 @check_permissions(['notification.members.read'])
 def members_view():
-    members = Member.query.all()
-    
-    # Calculate sum of working hours for this year
+    # Get query parameters
+    page = request.args.get('page', 1, type=int)
+    sort_by = request.args.get('sort', 'id', type=str)
+    sort_dir = request.args.get('dir', 'asc', type=str)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    # Filter parameters
+    search_name = request.args.get('search_name', '', type=str)
+    search_number = request.args.get('search_number', '', type=str)
+    filter_active = request.args.get('filter_active', '', type=str)
+    filter_hours = request.args.get('filter_hours', '', type=str)
+    filter_hours = request.args.get('filter_hours', '', type=str)
+
+    # Build query and a subquery that contains the sum of hours per member for the current year
     current_year = datetime.utcnow().year
+    hours_subq = db.session.query(
+        WorkingHoursLog.member_id.label('member_id'),
+        func.coalesce(func.sum(WorkingHoursLog.hours), 0).label('sum_hours'),
+    ).filter(
+        extract('year', WorkingHoursLog.date) == current_year
+    ).group_by(WorkingHoursLog.member_id).subquery()
+
+    query = db.session.query(Member).outerjoin(
+        hours_subq, Member.id == hours_subq.c.member_id)
+
+    # Apply filters
+    if search_name:
+        query = query.filter(
+            or_(
+                Member.first_name.ilike(f'%{search_name}%'),
+                Member.last_name.ilike(f'%{search_name}%')
+            )
+        )
+
+    if search_number:
+        query = query.filter(Member.member_number.ilike(f'%{search_number}%'))
+
+    if filter_active == 'true':
+        query = query.filter(Member.active == True)
+    elif filter_active == 'false':
+        query = query.filter(Member.active == False)
+
+    # Filter by hours fulfillment
+    if filter_hours:
+        sum_hours_expr = func.coalesce(hours_subq.c.sum_hours, 0)
+        if filter_hours == 'met':
+            query = query.filter(and_(Member.required_hours != 0, sum_hours_expr >= Member.required_hours))
+        elif filter_hours == 'not_met':
+            query = query.filter(and_(Member.required_hours != 0, sum_hours_expr < Member.required_hours))
+        elif filter_hours == 'no_requirement':
+            query = query.filter(Member.required_hours == 0)
+
+    # Filter by hours fulfillment
+    if filter_hours:
+        sum_hours_expr = func.coalesce(hours_subq.c.sum_hours, 0)
+        if filter_hours == 'met':
+            query = query.filter(and_(Member.required_hours != 0, sum_hours_expr >= Member.required_hours))
+        elif filter_hours == 'not_met':
+            query = query.filter(and_(Member.required_hours != 0, sum_hours_expr < Member.required_hours))
+        elif filter_hours == 'no_requirement':
+            query = query.filter(Member.required_hours == 0)
+
+    # Apply sorting — support sorting by aggregated numeric columns
+    if sort_by == 'sum_hours_this_year':
+        sort_expr = func.coalesce(hours_subq.c.sum_hours, 0)
+    elif sort_by == 'hours_status':
+        # If required_hours == 0 treat as very large to put them at the top when sorting desc
+        sort_expr = case(
+            (Member.required_hours == 0, 999999),
+            else_=func.coalesce(hours_subq.c.sum_hours, 0) /
+            func.nullif(Member.required_hours, 0),
+        )
+    else:
+        sort_expr = getattr(Member, sort_by, Member.id)
+
+    if sort_dir == 'desc':
+        query = query.order_by(sort_expr.desc())
+    else:
+        query = query.order_by(sort_expr.asc())
+
+    # Paginate
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    members = pagination.items
+
+    # Efficiently load sum of hours for members on this page
+    member_ids = [m.id for m in members]
+    if member_ids:
+        sums = db.session.query(
+            WorkingHoursLog.member_id,
+            func.coalesce(func.sum(WorkingHoursLog.hours),
+                          0).label('sum_hours'),
+        ).filter(
+            WorkingHoursLog.member_id.in_(member_ids),
+            extract('year', WorkingHoursLog.date) == current_year,
+        ).group_by(WorkingHoursLog.member_id).all()
+        sums_map = {mid: s for (mid, s) in sums}
+    else:
+        sums_map = {}
+
     for member in members:
-        sum_hours = db.session.query(func.sum(WorkingHoursLog.hours)).filter(
-            WorkingHoursLog.member_id == member.id,
-            extract('year', WorkingHoursLog.date) == current_year
-        ).scalar() or 0
-        member.sum_hours_this_year = sum_hours
-    
+        member.sum_hours_this_year = sums_map.get(member.id, 0)
+
     member_form = MemberForm()
-    return render_template('notification/site.members.html', members=members, member_form=member_form)
+    return render_template(
+        'notification/site.members.html',
+        members=members,
+        member_form=member_form,
+        pagination=pagination,
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+        search_name=search_name,
+        search_number=search_number,
+        filter_active=filter_active,
+        filter_hours=filter_hours,
+        per_page=per_page,
+        max=max,
+        min=min
+    )
 
 
 @notification_bp.route('/members', methods=['POST'])
@@ -1753,8 +1858,98 @@ def member_post():
         db.session.commit()
         return redirect(url_for('notification.member_detail', member_id=member.id))
 
-    members = Member.query.all()
-    return render_template('notification/site.members.html', members=members, member_form=member_form)
+    # Re-render with pagination when form fails validation
+    page = request.args.get('page', 1, type=int)
+    sort_by = request.args.get('sort', 'id', type=str)
+    sort_dir = request.args.get('dir', 'asc', type=str)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    search_name = request.args.get('search_name', '', type=str)
+    search_number = request.args.get('search_number', '', type=str)
+    filter_active = request.args.get('filter_active', '', type=str)
+    filter_hours = request.args.get('filter_hours', '', type=str)
+
+    # Build hours subquery for sorting and efficient lookup
+    current_year = datetime.utcnow().year
+    hours_subq = db.session.query(
+        WorkingHoursLog.member_id.label('member_id'),
+        func.coalesce(func.sum(WorkingHoursLog.hours), 0).label('sum_hours'),
+    ).filter(
+        extract('year', WorkingHoursLog.date) == current_year
+    ).group_by(WorkingHoursLog.member_id).subquery()
+
+    query = db.session.query(Member).outerjoin(
+        hours_subq, Member.id == hours_subq.c.member_id)
+
+    if search_name:
+        query = query.filter(
+            or_(
+                Member.first_name.ilike(f'%{search_name}%'),
+                Member.last_name.ilike(f'%{search_name}%')
+            )
+        )
+
+    if search_number:
+        query = query.filter(Member.member_number.ilike(f'%{search_number}%'))
+
+    if filter_active == 'true':
+        query = query.filter(Member.active == True)
+    elif filter_active == 'false':
+        query = query.filter(Member.active == False)
+
+    # Sorting
+    if sort_by == 'sum_hours_this_year':
+        sort_expr = func.coalesce(hours_subq.c.sum_hours, 0)
+    elif sort_by == 'hours_status':
+        sort_expr = case(
+            (Member.required_hours == 0, 999999),
+            else_=func.coalesce(hours_subq.c.sum_hours, 0) /
+            func.nullif(Member.required_hours, 0),
+        )
+    else:
+        sort_expr = getattr(Member, sort_by, Member.id)
+
+    if sort_dir == 'desc':
+        query = query.order_by(sort_expr.desc())
+    else:
+        query = query.order_by(sort_expr.asc())
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    members = pagination.items
+
+    # Efficient per-page sum lookup
+    member_ids = [m.id for m in members]
+    if member_ids:
+        sums = db.session.query(
+            WorkingHoursLog.member_id,
+            func.coalesce(func.sum(WorkingHoursLog.hours),
+                          0).label('sum_hours'),
+        ).filter(
+            WorkingHoursLog.member_id.in_(member_ids),
+            extract('year', WorkingHoursLog.date) == current_year,
+        ).group_by(WorkingHoursLog.member_id).all()
+        sums_map = {mid: s for (mid, s) in sums}
+    else:
+        sums_map = {}
+
+    for member in members:
+        member.sum_hours_this_year = sums_map.get(member.id, 0)
+
+    return render_template(
+        'notification/site.members.html',
+        members=members,
+        member_form=member_form,
+        pagination=pagination,
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+        search_name=search_name,
+        search_number=search_number,
+        filter_active=filter_active,
+        filter_hours=filter_hours,
+        per_page=per_page,
+        max=max,
+        min=min
+    )
 
 
 @notification_bp.route('/members/<int:member_id>')
