@@ -50,6 +50,8 @@ The following languages are currently supported.
         SMTP_PASSWORD=YourPassword
         MAIL_FROM=Your.Name <mail.example.org>
 
+        EVENT_DOMAIN=example.org
+
         ```
     2. Provide your secret key.
     3. Set your database path.
