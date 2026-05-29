@@ -108,7 +108,7 @@
             <div class="card-body">
                 {% if top_members %}
                 <div class="list-group list-group-flush">
-                    {% for member_name, hours in top_members %}
+                    {% for member_name, hours in top_members[:5] %}
                     <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <div>
                             <div class="fw-semibold">{{ member_name }}</div>
@@ -145,7 +145,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for log in recent_logs %}
+                        {% for log in recent_logs[:6] %}
                         <tr>
                             <td>{{ log.date }}</td>
                             <td>{{ log.member.first_name }} {{ log.member.last_name }}</td>
