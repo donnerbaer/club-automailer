@@ -70,7 +70,7 @@
                         <div>
                             {% if receiver.receiver_type == 'group' %}
                             <div class="fw-semibold">{{ _('Group') }}</div>
-                            <div class="text-muted small">{{ group_map[receiver.group_id].name if receiver.group_id in group_map else '-' }}</div>
+                            <div class="text-muted small"><a href="{{ url_for('notification.group_detail', group_id=receiver.group_id) }}">{{ group_map[receiver.group_id].name if receiver.group_id in group_map else '-' }}</a></div>
                             {% else %}
                             <div class="fw-semibold">{{ _('Custom Email') }}</div>
                             <div class="text-muted small">{{ receiver.custom_email or '-' }}</div>
