@@ -1784,11 +1784,17 @@ def group_detail(group_id):
     group = Group.query.get_or_404(group_id)
     group_update_form = AuthGroupUpdateForm(obj=group)
     group_membership_form = NotificationGroupMembershipForm(group_id=group.id)
+    # Rules that target this group
+    rules = NotificationRule.query.join(NotificationRuleReceiver).filter(
+        NotificationRuleReceiver.receiver_type == 'group',
+        NotificationRuleReceiver.group_id == group.id
+    ).order_by(NotificationRule.id.desc()).all()
     return render_template(
         'notification/site.group.html',
         group=group,
         group_update_form=group_update_form,
         group_membership_form=group_membership_form,
+        rules=rules,
     )
 
 
@@ -1813,11 +1819,18 @@ def group_update(group_id):
         group_update_form.name.errors.append(_('Group name already exists.'))
 
     group_membership_form = NotificationGroupMembershipForm(group_id=group.id)
+    # Rules that target this group
+    rules = NotificationRule.query.join(NotificationRuleReceiver).filter(
+        NotificationRuleReceiver.receiver_type == 'group',
+        NotificationRuleReceiver.group_id == group.id
+    ).order_by(NotificationRule.id.desc()).all()
+
     return render_template(
         'notification/site.group.html',
         group=group,
         group_update_form=group_update_form,
         group_membership_form=group_membership_form,
+        rules=rules,
     )
 
 
@@ -1843,11 +1856,18 @@ def add_member_to_group(group_id):
             return redirect(url_for('notification.group_detail', group_id=group.id))
 
     group_update_form = AuthGroupUpdateForm(obj=group)
+    # Rules that target this group
+    rules = NotificationRule.query.join(NotificationRuleReceiver).filter(
+        NotificationRuleReceiver.receiver_type == 'group',
+        NotificationRuleReceiver.group_id == group.id
+    ).order_by(NotificationRule.id.desc()).all()
+
     return render_template(
         'notification/site.group.html',
         group=group,
         group_update_form=group_update_form,
         group_membership_form=group_membership_form,
+        rules=rules,
     )
 
 
