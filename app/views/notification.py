@@ -11,7 +11,7 @@ from flask_login import login_required, current_user
 from jinja2 import Undefined
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
-from sqlalchemy import func, or_, extract, case, and_
+from sqlalchemy import func, or_, extract, case, and_, cast, String
 
 from app import db
 from app.forms import (
@@ -860,11 +860,85 @@ def clear_logs():
 @login_required
 @check_permissions(['notification.events.view'])
 def events_view():
-    events = Event.query.order_by(Event.start_at.desc()).all()
     event_form = EventForm()
     cleanup_form = EventCleanupForm()
+    return render_template(
+        'notification/site.events.html',
+        event_form=event_form,
+        cleanup_form=cleanup_form,
+        **_build_events_view_context()
+    )
+
+
+def _build_events_view_context():
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    search = request.args.get('search', '', type=str)
+    filter_start = request.args.get('filter_start', '', type=str)
+    filter_end = request.args.get('filter_end', '', type=str)
+    sort_by = request.args.get('sort_by', 'start_at', type=str)
+    sort_order = request.args.get('sort_order', 'desc', type=str)
+
+    sort_columns = {
+        'id': Event.id,
+        'title': Event.title,
+        'event_type': Event.event_type,
+        'start_at': Event.start_at,
+        'end_at': Event.end_at,
+        'location': Event.location,
+    }
+
+    if sort_by not in sort_columns:
+        sort_by = 'start_at'
+    if sort_order not in ['asc', 'desc']:
+        sort_order = 'desc'
+
+    effective_end_date = func.coalesce(
+        func.date(Event.end_at), func.date(Event.start_at))
+
+    query = Event.query
+    if search:
+        query = query.filter(
+            or_(
+                Event.title.ilike(f'%{search}%'),
+                Event.description.ilike(f'%{search}%'),
+                Event.location.ilike(f'%{search}%'),
+                Event.event_type.ilike(f'%{search}%'),
+                cast(func.date(Event.start_at), String).ilike(f'%{search}%'),
+                cast(effective_end_date, String).ilike(f'%{search}%'),
+            )
+        )
+
+    try:
+        filter_start_date = datetime.fromisoformat(
+            filter_start).date() if filter_start else None
+    except ValueError:
+        filter_start_date = None
+
+    try:
+        filter_end_date = datetime.fromisoformat(
+            filter_end).date() if filter_end else None
+    except ValueError:
+        filter_end_date = None
+
+    if filter_start_date is not None:
+        query = query.filter(func.date(Event.start_at) >= filter_start_date)
+
+    if filter_end_date is not None:
+        query = query.filter(effective_end_date <= filter_end_date)
+
+    sort_column = sort_columns[sort_by]
+    if sort_order == 'desc':
+        query = query.order_by(sort_column.desc())
+    else:
+        query = query.order_by(sort_column.asc())
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    events = pagination.items
+
     trigger_type_map = {
         trigger.code: trigger for trigger in TriggerType.query.all()}
+
     cleanup_result = {
         'deleted_events': request.args.get('deleted_events', type=int),
         'deleted_logs': request.args.get('deleted_logs', type=int),
@@ -873,6 +947,7 @@ def events_view():
     }
     if cleanup_result['deleted_events'] is None and cleanup_result['deleted_logs'] is None:
         cleanup_result = None
+
     # Detect recurrence series links for events (either from column or embedded token)
     for ev in events:
         _attach_rendered_event_title(ev)
@@ -888,14 +963,21 @@ def events_view():
                     break
         ev.recurrence_series_link = url_for(
             'notification.event_series_detail', group_id=ev._recurrence_group_id) if ev._recurrence_group_id else None
-    return render_template(
-        'notification/site.events.html',
-        events=events,
-        event_form=event_form,
-        cleanup_form=cleanup_form,
-        trigger_type_map=trigger_type_map,
-        cleanup_result=cleanup_result,
-    )
+
+    return {
+        'events': events,
+        'pagination': pagination,
+        'trigger_type_map': trigger_type_map,
+        'cleanup_result': cleanup_result,
+        'search': search,
+        'filter_start': filter_start,
+        'filter_end': filter_end,
+        'sort_by': sort_by,
+        'sort_order': sort_order,
+        'per_page': per_page,
+        'max': max,
+        'min': min,
+    }
 
 
 @notification_bp.route('/events/import-ics', methods=['GET', 'POST'])
@@ -1296,18 +1378,12 @@ def download_event_import_template():
 def cleanup_old_events():
     cleanup_form = EventCleanupForm()
     if not cleanup_form.validate_on_submit():
-        events = Event.query.order_by(Event.start_at.desc()).all()
-        for event in events:
-            _attach_rendered_event_title(event)
         event_form = EventForm()
-        trigger_type_map = {
-            trigger.code: trigger for trigger in TriggerType.query.all()}
         return render_template(
             'notification/site.events.html',
-            events=events,
             event_form=event_form,
             cleanup_form=cleanup_form,
-            trigger_type_map=trigger_type_map,
+            **_build_events_view_context()
         )
 
     age_value = cleanup_form.age_value.data
@@ -1430,14 +1506,11 @@ def event_post():
             db.session.commit()
             return redirect(url_for('notification.event_detail', event_id=event.id))
 
-    events = Event.query.order_by(Event.start_at.desc()).all()
-    trigger_type_map = {
-        trigger.code: trigger for trigger in TriggerType.query.all()}
     return render_template(
         'notification/site.events.html',
-        events=events,
         event_form=event_form,
-        trigger_type_map=trigger_type_map,
+        cleanup_form=EventCleanupForm(),
+        **_build_events_view_context()
     )
 
 
@@ -1590,9 +1663,54 @@ def event_series_detail(group_id):
 @login_required
 @check_permissions(['notification.groups.view'])
 def groups_view():
-    groups = Group.query.all()
+    # Get pagination parameters
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    # Get filter and sorting parameters
+    search = request.args.get('search', '', type=str)
+    sort_by = request.args.get('sort_by', 'id', type=str)
+    sort_order = request.args.get('sort_order', 'asc', type=str)
+
+    # Validate sorting parameters
+    allowed_sort_fields = ['id', 'name', 'description']
+    if sort_by not in allowed_sort_fields:
+        sort_by = 'id'
+    if sort_order not in ['asc', 'desc']:
+        sort_order = 'asc'
+
+    # Build base query with search filter
+    query = Group.query
+    if search:
+        query = query.filter(
+            or_(
+                Group.name.ilike(f'%{search}%'),
+                Group.description.ilike(f'%{search}%')
+            )
+        )
+
+    # Apply sorting
+    sort_column = getattr(Group, sort_by)
+    if sort_order == 'desc':
+        query = query.order_by(sort_column.desc())
+    else:
+        query = query.order_by(sort_column.asc())
+
+    # Apply pagination
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    groups = pagination.items
+
     group_form = AuthGroupCreateForm()
-    return render_template('notification/site.groups.html', groups=groups, group_form=group_form)
+    return render_template(
+        'notification/site.groups.html',
+        groups=groups,
+        pagination=pagination,
+        group_form=group_form,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        per_page=per_page
+    )
 
 
 @notification_bp.route('/groups', methods=['POST'])
@@ -1611,8 +1729,52 @@ def group_post():
             return redirect(url_for('notification.groups_view'))
         group_form.name.errors.append(_('Group name already exists.'))
 
-    groups = Group.query.all()
-    return render_template('notification/site.groups.html', groups=groups, group_form=group_form)
+    # Get pagination parameters for re-render
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    search = request.args.get('search', '', type=str)
+    sort_by = request.args.get('sort_by', 'id', type=str)
+    sort_order = request.args.get('sort_order', 'asc', type=str)
+
+    # Validate sorting parameters
+    allowed_sort_fields = ['id', 'name',
+                           'description', 'created_at', 'updated_at']
+    if sort_by not in allowed_sort_fields:
+        sort_by = 'id'
+    if sort_order not in ['asc', 'desc']:
+        sort_order = 'asc'
+
+    # Build query with search filter
+    query = Group.query
+    if search:
+        query = query.filter(
+            or_(
+                Group.name.ilike(f'%{search}%'),
+                Group.description.ilike(f'%{search}%')
+            )
+        )
+
+    # Apply sorting
+    sort_column = getattr(Group, sort_by)
+    if sort_order == 'desc':
+        query = query.order_by(sort_column.desc())
+    else:
+        query = query.order_by(sort_column.asc())
+
+    # Apply pagination
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    groups = pagination.items
+
+    return render_template(
+        'notification/site.groups.html',
+        groups=groups,
+        pagination=pagination,
+        group_form=group_form,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        per_page=per_page
+    )
 
 
 @notification_bp.route('/groups/<int:group_id>')
@@ -1763,9 +1925,11 @@ def members_view():
     if filter_hours:
         sum_hours_expr = func.coalesce(hours_subq.c.sum_hours, 0)
         if filter_hours == 'met':
-            query = query.filter(and_(Member.required_hours != 0, sum_hours_expr >= Member.required_hours))
+            query = query.filter(
+                and_(Member.required_hours != 0, sum_hours_expr >= Member.required_hours))
         elif filter_hours == 'not_met':
-            query = query.filter(and_(Member.required_hours != 0, sum_hours_expr < Member.required_hours))
+            query = query.filter(
+                and_(Member.required_hours != 0, sum_hours_expr < Member.required_hours))
         elif filter_hours == 'no_requirement':
             query = query.filter(Member.required_hours == 0)
 
@@ -1773,9 +1937,11 @@ def members_view():
     if filter_hours:
         sum_hours_expr = func.coalesce(hours_subq.c.sum_hours, 0)
         if filter_hours == 'met':
-            query = query.filter(and_(Member.required_hours != 0, sum_hours_expr >= Member.required_hours))
+            query = query.filter(
+                and_(Member.required_hours != 0, sum_hours_expr >= Member.required_hours))
         elif filter_hours == 'not_met':
-            query = query.filter(and_(Member.required_hours != 0, sum_hours_expr < Member.required_hours))
+            query = query.filter(
+                and_(Member.required_hours != 0, sum_hours_expr < Member.required_hours))
         elif filter_hours == 'no_requirement':
             query = query.filter(Member.required_hours == 0)
 
