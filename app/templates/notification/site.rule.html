@@ -38,9 +38,12 @@
                     <dt class="col-sm-4">{{ _('Recurrence Type') }}</dt>
                     <dd class="col-sm-8">
                         {% if rule.recurrence_type == 'monthly' %}
-                            {{ _('Monthly (Day %d)' % rule.recurrence_day) }}
+                            {% set day = rule.recurrence_day if rule.recurrence_day is not none else '-' %}
+                            {{ _('Monthly') }} ({{ _('Day') }} {{ day }})
                         {% elif rule.recurrence_type == 'yearly' %}
-                            {{ _('Yearly (%d.%d)' % (rule.recurrence_day_yearly, rule.recurrence_month)) }}
+                            {% set yday = rule.recurrence_day_yearly if rule.recurrence_day_yearly is not none else '-' %}
+                            {% set ymonth = rule.recurrence_month if rule.recurrence_month is not none else '-' %}
+                            {{ _('Yearly') }} {{ yday }}.{{ ymonth }}
                         {% else %}
                             {{ rule.recurrence_type }}
                         {% endif %}

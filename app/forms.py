@@ -11,6 +11,7 @@ from wtforms import (
     FloatField,
     IntegerField,
     SelectField,
+    SelectMultipleField,
     RadioField,
     TextAreaField,
     DateField,
@@ -475,14 +476,39 @@ class NotificationRuleForm(FlaskForm):
         _l('Recurrence Type'),
         choices=[
             ('', _l('-- None (Trigger-based) --')),
+            ('daily', _l('Daily')),
+            ('weekly', _l('Weekly')),
             ('monthly', _l('Monthly')),
             ('yearly', _l('Yearly'))
         ],
         validators=[Optional()]
     )
+    recurrence_interval = IntegerField(
+        _l('Interval'),
+        description=_l('Every N days/weeks (default 1)'),
+        validators=[Optional(), NumberRange(min=1)]
+    )
+    recurrence_weekdays = SelectMultipleField(
+        _l('Weekdays'),
+        choices=[],
+        coerce=int,
+        validators=[Optional()]
+    )
     recurrence_day = IntegerField(
         _l('Day of Month (1-31)'),
         validators=[Optional(), NumberRange(min=1, max=31)]
+    )
+    recurrence_monthly_week = SelectField(
+        _l('Week of Month'),
+        choices=[],
+        coerce=int,
+        validators=[Optional()]
+    )
+    recurrence_weekday = SelectField(
+        _l('Weekday'),
+        choices=[],
+        coerce=int,
+        validators=[Optional()]
     )
     recurrence_month = IntegerField(
         _l('Month (1-12)'),
@@ -491,6 +517,11 @@ class NotificationRuleForm(FlaskForm):
     recurrence_day_yearly = IntegerField(
         _l('Day of Month for Yearly (1-31)'),
         validators=[Optional(), NumberRange(min=1, max=31)]
+    )
+    recurrence_end_date = DateField(
+        _l('Recurrence End Date'),
+        validators=[Optional()],
+        format='%Y-%m-%d'
     )
     active = BooleanField(_l('Active'), default=True)
     submit = SubmitField(_l('Save Rule'))
@@ -512,6 +543,24 @@ class NotificationRuleForm(FlaskForm):
         ]
         self.template_id.choices = template_choices
 
+        # Weekday choices (0=Monday .. 6=Sunday)
+        weekday_choices = [
+            (0, _l('Monday')),
+            (1, _l('Tuesday')),
+            (2, _l('Wednesday')),
+            (3, _l('Thursday')),
+            (4, _l('Friday')),
+            (5, _l('Saturday')),
+            (6, _l('Sunday')),
+        ]
+        self.recurrence_weekdays.choices = weekday_choices
+        self.recurrence_weekday.choices = weekday_choices
+
+        # Week of month choices (1..4, 5 = last)
+        week_choices = [(1, _l('1st')), (2, _l('2nd')),
+                        (3, _l('3rd')), (4, _l('4th')), (5, _l('last'))]
+        self.recurrence_monthly_week.choices = week_choices
+
     def validate(self, *args, **kwargs):
         """Custom validation for recurrence fields."""
         if not super().validate(*args, **kwargs):
@@ -524,15 +573,23 @@ class NotificationRuleForm(FlaskForm):
                     _l('Trigger Type is required if Recurrence is not set'))
                 return False
 
-        # If recurrence_type is monthly, recurrence_day is required
-        if self.recurrence_type.data == 'monthly':
-            if not self.recurrence_day.data:
-                self.recurrence_day.errors.append(
-                    _l('Day of Month is required for monthly recurrence'))
+        # Validate recurrence fields per type
+        rtype = self.recurrence_type.data
+        if rtype == 'daily':
+            # recurrence_interval optional, default handled at runtime
+            pass
+        elif rtype == 'weekly':
+            if not self.recurrence_weekdays.data or len(self.recurrence_weekdays.data) == 0:
+                self.recurrence_weekdays.errors.append(
+                    _l('Please select at least one weekday for weekly recurrence'))
                 return False
-
-        # If recurrence_type is yearly, month and day are required
-        if self.recurrence_type.data == 'yearly':
+        elif rtype == 'monthly':
+            # Either day of month OR monthly-week + weekday must be provided
+            if not self.recurrence_day.data and not (self.recurrence_monthly_week.data and self.recurrence_weekday.data is not None):
+                self.recurrence_day.errors.append(
+                    _l('Provide a day of month OR a week+weekday for monthly recurrence'))
+                return False
+        elif rtype == 'yearly':
             if not self.recurrence_month.data:
                 self.recurrence_month.errors.append(
                     _l('Month is required for yearly recurrence'))

@@ -56,9 +56,12 @@
             <td>
                 {% if rule.recurrence_type %}
                     {% if rule.recurrence_type == 'monthly' %}
-                        <span class="badge text-bg-info">{{ _('Monthly (Day %d)' % rule.recurrence_day) }}</span>
+                        {% set mday = rule.recurrence_day if rule.recurrence_day is not none else '-' %}
+                        <span class="badge text-bg-info">{{ _('Monthly') }} ({{ _('Day') }} {{ mday }})</span>
                     {% elif rule.recurrence_type == 'yearly' %}
-                        <span class="badge text-bg-info">{{ _('Yearly %d.%d' % (rule.recurrence_day_yearly, rule.recurrence_month)) }}</span>
+                        {% set yday = rule.recurrence_day_yearly if rule.recurrence_day_yearly is not none else '-' %}
+                        {% set ymonth = rule.recurrence_month if rule.recurrence_month is not none else '-' %}
+                        <span class="badge text-bg-info">{{ _('Yearly') }} {{ yday }}.{{ ymonth }}</span>
                     {% endif %}
                 {% else %}
                     {{ trigger_type_map[rule.trigger_type].code if rule.trigger_type in trigger_type_map else '-' }}

@@ -791,15 +791,85 @@ def is_recurring_rule_due(rule: NotificationRule, now_dt: datetime) -> bool:
 
     now_date = now_dt.date()
 
+    # Respect optional end date
+    if getattr(rule, 'recurrence_end_date', None):
+        try:
+            if now_date > rule.recurrence_end_date:
+                return False
+        except Exception:
+            pass
+
+    if rule.recurrence_type == "daily":
+        interval = int(rule.recurrence_interval or 1)
+        # Use rule.created_at as start anchor if available
+        start_date = rule.created_at.date() if getattr(
+            rule, 'created_at', None) else now_date
+        days = (now_date - start_date).days
+        return (days % interval) == 0
+
+    if rule.recurrence_type == "weekly":
+        # Weekly recurrence: check weekdays and optional interval
+        weekdays = []
+        if getattr(rule, 'recurrence_weekdays', None):
+            try:
+                weekdays = [int(x) for x in rule.recurrence_weekdays.split(
+                    ',') if x is not None and str(x) != '']
+            except Exception:
+                weekdays = []
+        if not weekdays:
+            return False
+        if now_date.weekday() not in weekdays:
+            return False
+        interval = int(rule.recurrence_interval or 1)
+        start_date = rule.created_at.date() if getattr(
+            rule, 'created_at', None) else now_date
+        weeks = (now_date - start_date).days // 7
+        return (weeks % interval) == 0
+
     if rule.recurrence_type == "monthly":
         # Monthly recurrence: check if today matches the configured day of month
-        if rule.recurrence_day is None:
-            return False
-        # Handle months with fewer days (e.g., Feb 30 -> Feb 28)
-        max_day = (now_date.replace(day=1) + timedelta(days=32)
-                   ).replace(day=1) - timedelta(days=1)
-        target_day = min(rule.recurrence_day, max_day.day)
-        return now_date.day == target_day
+        # Option A: day of month
+        if getattr(rule, 'recurrence_day', None):
+            # Handle months with fewer days (e.g., Feb 30 -> Feb 28)
+            max_day = (now_date.replace(day=1) + timedelta(days=32)
+                       ).replace(day=1) - timedelta(days=1)
+            target_day = min(rule.recurrence_day, max_day.day)
+            if now_date.day == target_day:
+                return True
+        # Option B: nth weekday of month (e.g., 2nd Tuesday)
+        if getattr(rule, 'recurrence_monthly_week', None) and getattr(rule, 'recurrence_weekday', None) is not None:
+            n = int(rule.recurrence_monthly_week)
+            weekday = int(rule.recurrence_weekday)
+            year = now_date.year
+            month = now_date.month
+            # compute nth weekday
+
+            def nth_weekday(year, month, weekday, n):
+                from datetime import date as _date
+                # find first occurrence of weekday in month
+                first = _date(year, month, 1)
+                first_weekday = first.weekday()
+                days_until = (weekday - first_weekday) % 7
+                first_occurrence = first + timedelta(days=days_until)
+                if n >= 1 and n <= 4:
+                    candidate = first_occurrence + timedelta(days=7*(n-1))
+                    if candidate.month == month:
+                        return candidate
+                # handle last occurrence
+                # find last day
+                last = (first.replace(day=1) + timedelta(days=32)
+                        ).replace(day=1) - timedelta(days=1)
+                # walk back to find last weekday
+                days_back = (last.weekday() - weekday) % 7
+                last_occurrence = last - timedelta(days=days_back)
+                if n == 5:
+                    return last_occurrence
+                return None
+
+            candidate = nth_weekday(year, month, weekday, n)
+            if candidate and candidate == now_date:
+                return True
+        return False
 
     elif rule.recurrence_type == "yearly":
         # Yearly recurrence: check if today matches the configured month and day
