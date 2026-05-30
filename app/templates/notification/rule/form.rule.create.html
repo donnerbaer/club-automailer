@@ -2,10 +2,33 @@
     {{ rule_form.hidden_tag() }}
     <div class="row g-3">
         <div class="col-md-6">{{ rule_form.name.label(class='form-label') }}{{ rule_form.name(class='form-control') }}</div>
-        <div class="col-md-6">{{ rule_form.trigger_type.label(class='form-label') }}{{ rule_form.trigger_type(class='form-select') }}</div>
-        <div class="col-md-3">{{ rule_form.trigger_value.label(class='form-label') }}{{ rule_form.trigger_value(class='form-control') }}</div>
+        <div class="col-md-6">{{ rule_form.recurrence_type.label(class='form-label') }}{{ rule_form.recurrence_type(class='form-select', id='recurrence_type_select_create') }}</div>
+        
+        <!-- Trigger-based rule fields (shown when recurrence_type is empty) -->
+        <div id="trigger_fields_create" class="w-100">
+            <div class="row g-3">
+                <div class="col-md-6">{{ rule_form.trigger_type.label(class='form-label') }}{{ rule_form.trigger_type(class='form-select') }}</div>
+                <div class="col-md-3">{{ rule_form.trigger_value.label(class='form-label') }}{{ rule_form.trigger_value(class='form-control') }}</div>
+                <div class="col-md-3">{{ rule_form.days_before.label(class='form-label') }}{{ rule_form.days_before(class='form-control') }}</div>
+            </div>
+        </div>
+        
+        <!-- Monthly recurrence fields -->
+        <div id="monthly_fields_create" class="w-100" style="display: none;">
+            <div class="row g-3">
+                <div class="col-md-6">{{ rule_form.recurrence_day.label(class='form-label') }}{{ rule_form.recurrence_day(class='form-control', placeholder='z.B. 15') }}</div>
+            </div>
+        </div>
+        
+        <!-- Yearly recurrence fields -->
+        <div id="yearly_fields_create" class="w-100" style="display: none;">
+            <div class="row g-3">
+                <div class="col-md-3">{{ rule_form.recurrence_month.label(class='form-label') }}{{ rule_form.recurrence_month(class='form-control', placeholder='1-12') }}</div>
+                <div class="col-md-3">{{ rule_form.recurrence_day_yearly.label(class='form-label') }}{{ rule_form.recurrence_day_yearly(class='form-control', placeholder='1-31') }}</div>
+            </div>
+        </div>
+        
         <div class="col-md-6">{{ rule_form.template_id.label(class='form-label') }}{{ rule_form.template_id(class='form-select') }}</div>
-        <div class="col-md-3">{{ rule_form.days_before.label(class='form-label') }}{{ rule_form.days_before(class='form-control') }}</div>
         <div class="col-md-3">{{ rule_form.send_time.label(class='form-label') }}{{ rule_form.send_time(class='form-control', type='time') }}</div>
         <div class="col-12 form-check mt-2 ms-2">{{ rule_form.active(class='form-check-input', id='rule_active_create') }}{{ rule_form.active.label(class='form-check-label', for='rule_active_create') }}</div>
     </div>
@@ -14,3 +37,22 @@
         {{ rule_form.submit(class='btn btn-primary') }}
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const recurrenceSelect = document.getElementById('recurrence_type_select_create');
+    const triggerFields = document.getElementById('trigger_fields_create');
+    const monthlyFields = document.getElementById('monthly_fields_create');
+    const yearlyFields = document.getElementById('yearly_fields_create');
+    
+    function updateFieldVisibility() {
+        const value = recurrenceSelect.value;
+        triggerFields.style.display = value === '' ? 'block' : 'none';
+        monthlyFields.style.display = value === 'monthly' ? 'block' : 'none';
+        yearlyFields.style.display = value === 'yearly' ? 'block' : 'none';
+    }
+    
+    recurrenceSelect.addEventListener('change', updateFieldVisibility);
+    updateFieldVisibility();
+});
+</script>

@@ -590,21 +590,23 @@ def rules_view():
 def rule_post():
     rule_form = NotificationRuleForm()
     if rule_form.validate_on_submit():
-        trigger_id = int(rule_form.trigger_type.data)
+        trigger_id = int(
+            rule_form.trigger_type.data) if rule_form.trigger_type.data else 0
         template_id = int(rule_form.template_id.data)
-        if trigger_id == 0:
-            rule_form.trigger_type.errors.append(
-                _('Please select a trigger type.'))
         if template_id == 0:
             rule_form.template_id.errors.append(_('Please select a template.'))
-        if not rule_form.trigger_type.errors and not rule_form.template_id.errors:
+        if not rule_form.template_id.errors:
             rule = NotificationRule(
                 name=rule_form.name.data,
-                trigger_type=trigger_id,
+                trigger_type=trigger_id if trigger_id != 0 else None,
                 days_before=rule_form.days_before.data,
                 trigger_value=rule_form.trigger_value.data,
                 send_time=rule_form.send_time.data,
                 template_id=template_id,
+                recurrence_type=rule_form.recurrence_type.data if rule_form.recurrence_type.data else None,
+                recurrence_day=rule_form.recurrence_day.data,
+                recurrence_month=rule_form.recurrence_month.data,
+                recurrence_day_yearly=rule_form.recurrence_day_yearly.data,
                 active=rule_form.active.data,
             )
             db.session.add(rule)
@@ -655,21 +657,23 @@ def rule_update(rule_id):
     rule_update_form = NotificationRuleForm()
 
     if rule_update_form.validate_on_submit():
-        trigger_id = int(rule_update_form.trigger_type.data)
+        trigger_id = int(
+            rule_update_form.trigger_type.data) if rule_update_form.trigger_type.data else 0
         template_id = int(rule_update_form.template_id.data)
-        if trigger_id == 0:
-            rule_update_form.trigger_type.errors.append(
-                _('Please select a trigger type.'))
         if template_id == 0:
             rule_update_form.template_id.errors.append(
                 _('Please select a template.'))
-        if not rule_update_form.trigger_type.errors and not rule_update_form.template_id.errors:
+        if not rule_update_form.template_id.errors:
             rule.name = rule_update_form.name.data
-            rule.trigger_type = trigger_id
+            rule.trigger_type = trigger_id if trigger_id != 0 else None
             rule.days_before = rule_update_form.days_before.data
             rule.trigger_value = rule_update_form.trigger_value.data
             rule.send_time = rule_update_form.send_time.data
             rule.template_id = template_id
+            rule.recurrence_type = rule_update_form.recurrence_type.data if rule_update_form.recurrence_type.data else None
+            rule.recurrence_day = rule_update_form.recurrence_day.data
+            rule.recurrence_month = rule_update_form.recurrence_month.data
+            rule.recurrence_day_yearly = rule_update_form.recurrence_day_yearly.data
             rule.active = rule_update_form.active.data
             db.session.add(rule)
             db.session.commit()
