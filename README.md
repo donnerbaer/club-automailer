@@ -7,6 +7,12 @@ The following languages are currently supported.
 
 + en english
 
+## Requirements
+
+Python Version: 3.14.5
+
+Older versions maybe work.
+
 ## Setup
 
 1. Open a command line/terminal.

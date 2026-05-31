@@ -425,6 +425,25 @@ class NotificationRule(db.Model):
     trigger_value = Column(Integer)
     send_time = Column(Time, default="08:00")
     template_id = Column(Integer, ForeignKey("notification_templates.id"))
+    # Recurring scheduling fields
+    # Examples for recurrence_type: None, "daily", "weekly", "monthly", "yearly"
+    recurrence_type = Column(String(50), nullable=True)
+    # Generic recurrence interval (e.g. every N days/weeks)
+    recurrence_interval = Column(Integer, nullable=True)
+    # For weekly recurrence: comma-separated weekdays (0=Monday .. 6=Sunday)
+    recurrence_weekdays = Column(String(64), nullable=True)
+    # For monthly recurrence (simple): day of month (1-31)
+    recurrence_day = Column(Integer, nullable=True)
+    # For monthly recurrence (nth weekday): which week of month (1..4, 5=last)
+    recurrence_monthly_week = Column(Integer, nullable=True)
+    # For monthly nth-weekday recurrence: weekday (0=Monday .. 6=Sunday)
+    recurrence_weekday = Column(Integer, nullable=True)
+    # For yearly recurrence: month (1-12)
+    recurrence_month = Column(Integer, nullable=True)
+    # For yearly recurrence: day of month (1-31)
+    recurrence_day_yearly = Column(Integer, nullable=True)
+    # Optional end date for recurrence
+    recurrence_end_date = Column(Date, nullable=True)
     active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow,

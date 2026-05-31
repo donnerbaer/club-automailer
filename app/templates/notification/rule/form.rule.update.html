@@ -2,10 +2,58 @@
     {{ rule_update_form.hidden_tag() }}
     <div class="row g-3">
         <div class="col-md-6">{{ rule_update_form.name.label(class='form-label') }}{{ rule_update_form.name(class='form-control') }}</div>
-        <div class="col-md-6">{{ rule_update_form.trigger_type.label(class='form-label') }}{{ rule_update_form.trigger_type(class='form-select') }}</div>
-        <div class="col-md-3">{{ rule_update_form.trigger_value.label(class='form-label') }}{{ rule_update_form.trigger_value(class='form-control') }}</div>
+        <div class="col-md-6">{{ rule_update_form.recurrence_type.label(class='form-label') }}{{ rule_update_form.recurrence_type(class='form-select', id='recurrence_type_select') }}</div>
+        
+        <!-- Trigger-based rule fields (shown when recurrence_type is empty) -->
+        <div id="trigger_fields" class="w-100">
+            <div class="row g-3">
+                <div class="col-md-6">{{ rule_update_form.trigger_type.label(class='form-label') }}{{ rule_update_form.trigger_type(class='form-select') }}</div>
+                <div class="col-md-3">{{ rule_update_form.trigger_value.label(class='form-label') }}{{ rule_update_form.trigger_value(class='form-control') }}</div>
+                <div class="col-md-3">{{ rule_update_form.days_before.label(class='form-label') }}{{ rule_update_form.days_before(class='form-control') }}</div>
+            </div>
+        </div>
+        
+        <!-- Daily recurrence fields -->
+        <div id="daily_fields" class="w-100" style="display: none;">
+            <div class="row g-3">
+                <div class="col-md-4">{{ rule_update_form.recurrence_interval.label(class='form-label') }}{{ rule_update_form.recurrence_interval(class='form-control', placeholder='z.B. 1') }}</div>
+                <div class="col-md-4">{{ rule_update_form.recurrence_end_date.label(class='form-label') }}{{ rule_update_form.recurrence_end_date(class='form-control', type='date') }}</div>
+            </div>
+        </div>
+
+        <!-- Weekly recurrence fields -->
+        <div id="weekly_fields" class="w-100" style="display: none;">
+            <div class="row g-3">
+                <div class="col-md-4">{{ rule_update_form.recurrence_interval.label(class='form-label') }}{{ rule_update_form.recurrence_interval(class='form-control', placeholder='z.B. 1 (jede Woche)') }}</div>
+                <div class="col-md-8">{{ rule_update_form.recurrence_weekdays.label(class='form-label') }}{{ rule_update_form.recurrence_weekdays(class='form-select', multiple=true) }}</div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-4">{{ rule_update_form.recurrence_end_date.label(class='form-label') }}{{ rule_update_form.recurrence_end_date(class='form-control', type='date') }}</div>
+            </div>
+        </div>
+
+        <!-- Monthly recurrence fields -->
+        <div id="monthly_fields" class="w-100" style="display: none;">
+            <div class="row g-3">
+                <div class="col-md-6">{{ rule_update_form.recurrence_day.label(class='form-label') }}{{ rule_update_form.recurrence_day(class='form-control', placeholder='z.B. 15') }}</div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-4">{{ rule_update_form.recurrence_monthly_week.label(class='form-label') }}{{ rule_update_form.recurrence_monthly_week(class='form-select') }}</div>
+                <div class="col-md-4">{{ rule_update_form.recurrence_weekday.label(class='form-label') }}{{ rule_update_form.recurrence_weekday(class='form-select') }}</div>
+                <div class="col-md-4">{{ rule_update_form.recurrence_end_date.label(class='form-label') }}{{ rule_update_form.recurrence_end_date(class='form-control', type='date') }}</div>
+            </div>
+        </div>
+        
+        <!-- Yearly recurrence fields -->
+        <div id="yearly_fields" class="w-100" style="display: none;">
+            <div class="row g-3">
+                <div class="col-md-3">{{ rule_update_form.recurrence_month.label(class='form-label') }}{{ rule_update_form.recurrence_month(class='form-control', placeholder='1-12') }}</div>
+                <div class="col-md-3">{{ rule_update_form.recurrence_day_yearly.label(class='form-label') }}{{ rule_update_form.recurrence_day_yearly(class='form-control', placeholder='1-31') }}</div>
+                <div class="col-md-4">{{ rule_update_form.recurrence_end_date.label(class='form-label') }}{{ rule_update_form.recurrence_end_date(class='form-control', type='date') }}</div>
+            </div>
+        </div>
+        
         <div class="col-md-6">{{ rule_update_form.template_id.label(class='form-label') }}{{ rule_update_form.template_id(class='form-select') }}</div>
-        <div class="col-md-3">{{ rule_update_form.days_before.label(class='form-label') }}{{ rule_update_form.days_before(class='form-control') }}</div>
         <div class="col-md-3">{{ rule_update_form.send_time.label(class='form-label') }}{{ rule_update_form.send_time(class='form-control', type='time') }}</div>
         <div class="col-12 form-check mt-2 ms-2">{{ rule_update_form.active(class='form-check-input', id='rule_active_update') }}{{ rule_update_form.active.label(class='form-check-label', for='rule_active_update') }}</div>
     </div>
@@ -14,3 +62,31 @@
         {{ rule_update_form.submit(class='btn btn-success') }}
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const recurrenceSelect = document.getElementById('recurrence_type_select');
+    const triggerFields = document.getElementById('trigger_fields');
+    const dailyFields = document.getElementById('daily_fields');
+    const weeklyFields = document.getElementById('weekly_fields');
+    const monthlyFields = document.getElementById('monthly_fields');
+    const yearlyFields = document.getElementById('yearly_fields');
+    
+    function updateFieldVisibility() {
+        const value = recurrenceSelect.value;
+        triggerFields.style.display = value === '' ? 'block' : 'none';
+        dailyFields.style.display = value === 'daily' ? 'block' : 'none';
+        weeklyFields.style.display = value === 'weekly' ? 'block' : 'none';
+        monthlyFields.style.display = value === 'monthly' ? 'block' : 'none';
+        yearlyFields.style.display = value === 'yearly' ? 'block' : 'none';
+            // Disable inputs in hidden sections so they are not submitted
+            [dailyFields, weeklyFields, monthlyFields, yearlyFields].forEach(section => {
+                const isHidden = section.style.display === 'none';
+                section.querySelectorAll('input, select, textarea').forEach(el => el.disabled = isHidden);
+            });
+    }
+    
+    recurrenceSelect.addEventListener('change', updateFieldVisibility);
+    updateFieldVisibility();
+});
+</script>

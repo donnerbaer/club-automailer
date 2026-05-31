@@ -42,7 +42,7 @@
         <tr>
             <th>{{ _('ID') }}</th>
             <th>{{ _('Name') }}</th>
-            <th>{{ _('Trigger') }}</th>
+            <th>{{ _('Type') }}</th>
             <th>{{ _('Template') }}</th>
             <th>{{ _('Active') }}</th>
             <th>{{ _('Actions') }}</th>
@@ -53,7 +53,20 @@
         <tr>
             <td>{{ rule.id }}</td>
             <td>{{ rule.name }}</td>
-            <td>{{ trigger_type_map[rule.trigger_type].code if rule.trigger_type in trigger_type_map else '-' }}</td>
+            <td>
+                {% if rule.recurrence_type %}
+                    {% if rule.recurrence_type == 'monthly' %}
+                        {% set mday = rule.recurrence_day if rule.recurrence_day is not none else '-' %}
+                        <span class="badge text-bg-info">{{ _('Monthly') }} ({{ _('Day') }} {{ mday }})</span>
+                    {% elif rule.recurrence_type == 'yearly' %}
+                        {% set yday = rule.recurrence_day_yearly if rule.recurrence_day_yearly is not none else '-' %}
+                        {% set ymonth = rule.recurrence_month if rule.recurrence_month is not none else '-' %}
+                        <span class="badge text-bg-info">{{ _('Yearly') }} {{ yday }}.{{ ymonth }}</span>
+                    {% endif %}
+                {% else %}
+                    {{ trigger_type_map[rule.trigger_type].code if rule.trigger_type in trigger_type_map else '-' }}
+                {% endif %}
+            </td>
             <td>{{ template_map[rule.template_id].code if rule.template_id in template_map else '-' }}</td>
             <td>
                 {% if rule.active %}

@@ -776,10 +776,211 @@ def process_working_hours_monthly_rule(
             sleep_between_emails()
 
 
+def is_recurring_rule_due(rule: NotificationRule, now_dt: datetime) -> bool:
+    """Check if a recurring rule is due today.
+
+    Args:
+        rule: The notification rule to check
+        now_dt: The current datetime to check against
+
+    Returns:
+        True if the rule should be executed today, False otherwise
+    """
+    if not rule.recurrence_type:
+        return False
+
+    now_date = now_dt.date()
+
+    # Respect optional end date
+    if getattr(rule, 'recurrence_end_date', None):
+        try:
+            if now_date > rule.recurrence_end_date:
+                return False
+        except Exception:
+            pass
+
+    if rule.recurrence_type == "daily":
+        interval = int(rule.recurrence_interval or 1)
+        # Use rule.created_at as start anchor if available
+        start_date = rule.created_at.date() if getattr(
+            rule, 'created_at', None) else now_date
+        days = (now_date - start_date).days
+        return (days % interval) == 0
+
+    if rule.recurrence_type == "weekly":
+        # Weekly recurrence: check weekdays and optional interval
+        weekdays = []
+        if getattr(rule, 'recurrence_weekdays', None):
+            try:
+                weekdays = [int(x) for x in rule.recurrence_weekdays.split(
+                    ',') if x is not None and str(x) != '']
+            except Exception:
+                weekdays = []
+        if not weekdays:
+            return False
+        if now_date.weekday() not in weekdays:
+            return False
+        interval = int(rule.recurrence_interval or 1)
+        start_date = rule.created_at.date() if getattr(
+            rule, 'created_at', None) else now_date
+        weeks = (now_date - start_date).days // 7
+        return (weeks % interval) == 0
+
+    if rule.recurrence_type == "monthly":
+        # Monthly recurrence: check if today matches the configured day of month
+        # Option A: day of month
+        if getattr(rule, 'recurrence_day', None):
+            # Handle months with fewer days (e.g., Feb 30 -> Feb 28)
+            max_day = (now_date.replace(day=1) + timedelta(days=32)
+                       ).replace(day=1) - timedelta(days=1)
+            target_day = min(rule.recurrence_day, max_day.day)
+            if now_date.day == target_day:
+                return True
+        # Option B: nth weekday of month (e.g., 2nd Tuesday)
+        if getattr(rule, 'recurrence_monthly_week', None) and getattr(rule, 'recurrence_weekday', None) is not None:
+            n = int(rule.recurrence_monthly_week)
+            weekday = int(rule.recurrence_weekday)
+            year = now_date.year
+            month = now_date.month
+            # compute nth weekday
+
+            def nth_weekday(year, month, weekday, n):
+                from datetime import date as _date
+                # find first occurrence of weekday in month
+                first = _date(year, month, 1)
+                first_weekday = first.weekday()
+                days_until = (weekday - first_weekday) % 7
+                first_occurrence = first + timedelta(days=days_until)
+                if n >= 1 and n <= 4:
+                    candidate = first_occurrence + timedelta(days=7*(n-1))
+                    if candidate.month == month:
+                        return candidate
+                # handle last occurrence
+                # find last day
+                last = (first.replace(day=1) + timedelta(days=32)
+                        ).replace(day=1) - timedelta(days=1)
+                # walk back to find last weekday
+                days_back = (last.weekday() - weekday) % 7
+                last_occurrence = last - timedelta(days=days_back)
+                if n == 5:
+                    return last_occurrence
+                return None
+
+            candidate = nth_weekday(year, month, weekday, n)
+            if candidate and candidate == now_date:
+                return True
+        return False
+
+    elif rule.recurrence_type == "yearly":
+        # Yearly recurrence: check if today matches the configured month and day
+        if rule.recurrence_month is None or rule.recurrence_day_yearly is None:
+            return False
+        # Handle leap year edge cases (e.g., Feb 29)
+        try:
+            target_date = now_date.replace(
+                month=rule.recurrence_month, day=rule.recurrence_day_yearly)
+        except ValueError:
+            # Day doesn't exist in this month (e.g., Feb 30)
+            max_day = (now_date.replace(day=1) + timedelta(days=32)
+                       ).replace(day=1) - timedelta(days=1)
+            target_date = now_date.replace(
+                month=rule.recurrence_month, day=max(1, max_day.day))
+
+        return now_date == target_date
+
+    return False
+
+
+def process_recurring_rule(rule: NotificationRule, template: NotificationTemplate,
+                           now_dt: datetime) -> None:
+    """Process a recurring notification rule (monthly or yearly).
+
+    Args:
+        rule: The notification rule to process
+        template: The notification template to use
+        now_dt: The current datetime
+    """
+    debug_log(
+        f"Processing recurring rule: {rule.id} | Type: {rule.recurrence_type}")
+
+    # Build recipient list
+    recipients = []
+    for receiver in rule.receivers:
+        if receiver.receiver_type == "group" and receiver.group_id:
+            group = db.session.get(Group, receiver.group_id)
+            if group and group.members:
+                recipients.extend(
+                    [m.email for m in group.members if m.email and m.active])
+        elif receiver.receiver_type == "custom_email" and receiver.custom_email:
+            recipients.append(receiver.custom_email)
+
+    if not recipients:
+        debug_log(f"  └─ SKIPPED: No recipients configured")
+        return
+
+    # Build template context for recurring rules
+    context = {
+        "current_date": now_dt.date(),
+        "current_time": now_dt.time(),
+        "rule_name": rule.name,
+    }
+
+    # Render subject and body
+    subject = render_text(template.subject_template, context)
+    body = render_text(template.body_template, context)
+
+    # Send to all recipients
+    for index, recipient in enumerate(recipients):
+        try:
+            send_email(recipient, subject, body)
+            log_notification(
+                rule_id=rule.id,
+                recipient_email=recipient,
+                subject=subject,
+                body=body,
+                status="SENT",
+            )
+            debug_log(f"  └─ Email sent to {recipient}")
+        except (smtplib.SMTPException, OSError, ValueError) as exc:
+            db.session.rollback()
+            log_notification(
+                rule_id=rule.id,
+                recipient_email=recipient,
+                subject=subject,
+                body=body,
+                status="FAILED",
+                error_message=str(exc),
+            )
+            debug_log(f"  └─ Failed to send to {recipient}: {exc}")
+
+        if index < len(recipients) - 1:
+            sleep_between_emails()
+
+
 def process_rule(rule: NotificationRule, now_dt: datetime) -> None:
     """Process one rule if it is due at the configured send time."""
     debug_log(f"Processing rule: {rule.id} ({rule.name})")
 
+    # Check if this is a recurring rule
+    if rule.recurrence_type:
+        send_time = rule.send_time or datetime.strptime(
+            "08:00", "%H:%M").time()
+        if now_dt.time() < send_time:
+            debug_log(
+                f"  └─ SKIPPED: Current time {now_dt.time()} < send_time {send_time}")
+            return
+
+        if is_recurring_rule_due(rule, now_dt):
+            template = db.session.get(NotificationTemplate, rule.template_id)
+            if not template:
+                debug_log("  └─ SKIPPED: Template missing")
+                return
+            process_recurring_rule(rule, template, now_dt)
+        else:
+            debug_log(f"  └─ SKIPPED: Recurrence not due today")
+        return
+
+    # Standard trigger-based rules
     trigger = db.session.get(TriggerType, rule.trigger_type)
     template = db.session.get(NotificationTemplate, rule.template_id)
     if not trigger or not template:

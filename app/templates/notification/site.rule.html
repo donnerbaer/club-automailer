@@ -34,12 +34,28 @@
                 <dl class="row mb-0">
                     <dt class="col-sm-4">{{ _('Name') }}</dt>
                     <dd class="col-sm-8">{{ rule.name }}</dd>
+                    {% if rule.recurrence_type %}
+                    <dt class="col-sm-4">{{ _('Recurrence Type') }}</dt>
+                    <dd class="col-sm-8">
+                        {% if rule.recurrence_type == 'monthly' %}
+                            {% set day = rule.recurrence_day if rule.recurrence_day is not none else '-' %}
+                            {{ _('Monthly') }} ({{ _('Day') }} {{ day }})
+                        {% elif rule.recurrence_type == 'yearly' %}
+                            {% set yday = rule.recurrence_day_yearly if rule.recurrence_day_yearly is not none else '-' %}
+                            {% set ymonth = rule.recurrence_month if rule.recurrence_month is not none else '-' %}
+                            {{ _('Yearly') }} {{ yday }}.{{ ymonth }}
+                        {% else %}
+                            {{ rule.recurrence_type }}
+                        {% endif %}
+                    </dd>
+                    {% else %}
                     <dt class="col-sm-4">{{ _('Trigger Type') }}</dt>
                     <dd class="col-sm-8">{{ trigger.code if trigger else '-' }}</dd>
                     <dt class="col-sm-4">{{ _('Days Before') }}</dt>
                     <dd class="col-sm-8">{{ rule.days_before if rule.days_before is not none else '-' }}</dd>
                     <dt class="col-sm-4">{{ _('Years') }}</dt>
                     <dd class="col-sm-8">{{ rule.trigger_value if rule.trigger_value is not none else '-' }}</dd>
+                    {% endif %}
                     <dt class="col-sm-4">{{ _('Send Time') }}</dt>
                     <dd class="col-sm-8">{{ rule.send_time.strftime('%H:%M') if rule.send_time else '-' }}</dd>
                     <dt class="col-sm-4">{{ _('Template') }}</dt>

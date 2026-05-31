@@ -569,6 +569,21 @@ def rules_view():
         rule_form.send_time.data = copied_rule.send_time
         rule_form.template_id.data = copied_rule.template_id or 0
         rule_form.active.data = copied_rule.active
+        # Populate recurrence fields if copying
+        rule_form.recurrence_type.data = copied_rule.recurrence_type or ''
+        rule_form.recurrence_interval.data = copied_rule.recurrence_interval
+        if copied_rule.recurrence_weekdays:
+            try:
+                rule_form.recurrence_weekdays.data = [
+                    int(x) for x in copied_rule.recurrence_weekdays.split(',') if x]
+            except Exception:
+                rule_form.recurrence_weekdays.data = []
+        rule_form.recurrence_day.data = copied_rule.recurrence_day
+        rule_form.recurrence_monthly_week.data = copied_rule.recurrence_monthly_week
+        rule_form.recurrence_weekday.data = copied_rule.recurrence_weekday
+        rule_form.recurrence_month.data = copied_rule.recurrence_month
+        rule_form.recurrence_day_yearly.data = copied_rule.recurrence_day_yearly
+        rule_form.recurrence_end_date.data = copied_rule.recurrence_end_date
 
     trigger_type_map = {
         trigger.id: trigger for trigger in TriggerType.query.all()}
@@ -590,21 +605,29 @@ def rules_view():
 def rule_post():
     rule_form = NotificationRuleForm()
     if rule_form.validate_on_submit():
-        trigger_id = int(rule_form.trigger_type.data)
+        trigger_id = int(
+            rule_form.trigger_type.data) if rule_form.trigger_type.data else 0
         template_id = int(rule_form.template_id.data)
-        if trigger_id == 0:
-            rule_form.trigger_type.errors.append(
-                _('Please select a trigger type.'))
         if template_id == 0:
             rule_form.template_id.errors.append(_('Please select a template.'))
-        if not rule_form.trigger_type.errors and not rule_form.template_id.errors:
+        if not rule_form.template_id.errors:
             rule = NotificationRule(
                 name=rule_form.name.data,
-                trigger_type=trigger_id,
+                trigger_type=trigger_id if trigger_id != 0 else None,
                 days_before=rule_form.days_before.data,
                 trigger_value=rule_form.trigger_value.data,
                 send_time=rule_form.send_time.data,
                 template_id=template_id,
+                recurrence_type=rule_form.recurrence_type.data if rule_form.recurrence_type.data else None,
+                recurrence_interval=rule_form.recurrence_interval.data,
+                recurrence_weekdays=','.join(str(x) for x in (
+                    rule_form.recurrence_weekdays.data or [])),
+                recurrence_day=rule_form.recurrence_day.data,
+                recurrence_monthly_week=rule_form.recurrence_monthly_week.data,
+                recurrence_weekday=rule_form.recurrence_weekday.data,
+                recurrence_month=rule_form.recurrence_month.data,
+                recurrence_day_yearly=rule_form.recurrence_day_yearly.data,
+                recurrence_end_date=rule_form.recurrence_end_date.data,
                 active=rule_form.active.data,
             )
             db.session.add(rule)
@@ -632,6 +655,15 @@ def rule_post():
 def rule_detail(rule_id):
     rule = NotificationRule.query.get_or_404(rule_id)
     rule_update_form = NotificationRuleForm(obj=rule)
+    # Ensure SelectMultipleField gets a list of ints for weekdays
+    try:
+        if rule.recurrence_weekdays:
+            rule_update_form.recurrence_weekdays.data = [
+                int(x) for x in rule.recurrence_weekdays.split(',') if x]
+        else:
+            rule_update_form.recurrence_weekdays.data = []
+    except Exception:
+        rule_update_form.recurrence_weekdays.data = []
     receiver_form = NotificationRuleReceiverForm()
     trigger = TriggerType.query.get(rule.trigger_type)
     template = NotificationTemplate.query.get(rule.template_id)
@@ -655,21 +687,29 @@ def rule_update(rule_id):
     rule_update_form = NotificationRuleForm()
 
     if rule_update_form.validate_on_submit():
-        trigger_id = int(rule_update_form.trigger_type.data)
+        trigger_id = int(
+            rule_update_form.trigger_type.data) if rule_update_form.trigger_type.data else 0
         template_id = int(rule_update_form.template_id.data)
-        if trigger_id == 0:
-            rule_update_form.trigger_type.errors.append(
-                _('Please select a trigger type.'))
         if template_id == 0:
             rule_update_form.template_id.errors.append(
                 _('Please select a template.'))
-        if not rule_update_form.trigger_type.errors and not rule_update_form.template_id.errors:
+        if not rule_update_form.template_id.errors:
             rule.name = rule_update_form.name.data
-            rule.trigger_type = trigger_id
+            rule.trigger_type = trigger_id if trigger_id != 0 else None
             rule.days_before = rule_update_form.days_before.data
             rule.trigger_value = rule_update_form.trigger_value.data
             rule.send_time = rule_update_form.send_time.data
             rule.template_id = template_id
+            rule.recurrence_type = rule_update_form.recurrence_type.data if rule_update_form.recurrence_type.data else None
+            rule.recurrence_interval = rule_update_form.recurrence_interval.data
+            rule.recurrence_weekdays = ','.join(str(x) for x in (
+                rule_update_form.recurrence_weekdays.data or []))
+            rule.recurrence_day = rule_update_form.recurrence_day.data
+            rule.recurrence_monthly_week = rule_update_form.recurrence_monthly_week.data
+            rule.recurrence_weekday = rule_update_form.recurrence_weekday.data
+            rule.recurrence_month = rule_update_form.recurrence_month.data
+            rule.recurrence_day_yearly = rule_update_form.recurrence_day_yearly.data
+            rule.recurrence_end_date = rule_update_form.recurrence_end_date.data
             rule.active = rule_update_form.active.data
             db.session.add(rule)
             db.session.commit()
