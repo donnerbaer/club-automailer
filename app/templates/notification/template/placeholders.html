@@ -1,0 +1,175 @@
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <h5>Event</h5>
+        <ul>
+            <li>Title: <code>{{ '{{event.title}}' }}</code></li>
+            <li>Description: <code>{{ '{{event.description}}' }}</code></li>
+            <li>Location: <code>{{ '{{event.location}}' }}</code></li>
+            <li>Start at: <code>{{ '{{event.start_at}}' }}</code></li>
+            <li>End at: <code>{{ '{{event.end_at}}' }}</code></li>
+            <li>Start date: <code>{{ '{{event.start_date}}' }}</code></li>
+            <li>Start time: <code>{{ '{{event.start_time}}' }}</code></li>
+            <li>End date: <code>{{ '{{event.end_date}}' }}</code></li>
+            <li>End time: <code>{{ '{{event.end_time}}' }}</code></li>
+            <li>Duration hours: <code>{{ '{{event.duration_hours}}' }}</code></li>
+            <li>Participants count: <code>{{ '{{event.participants_count}}' }}</code></li>
+            <li>Participant names: <code>{{ '{{event_participants_names}}' }}</code></li>
+            <li>Participant emails: <code>{{ '{{event_participants_emails}}' }}</code></li>
+            <li>Google calendar: <code>{{ '{{event_calendar_google}}' }}</code></li>
+            <li>Outlook calendar: <code>{{ '{{event_calendar_outlook}}' }}</code></li>
+        </ul>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <h5>Current date</h5>
+        <ul>
+            <li>Date: <code>{{ '{{current.date}}' }}</code></li>
+            <li>Time: <code>{{ '{{current.time}}' }}</code></li>
+            <li>Month: <code>{{ '{{current.month}}' }}</code> / <code>{{ '{{current.month_number}}' }}</code></li>
+            <li>Year: <code>{{ '{{current.year}}' }}</code></li>
+            <li>Previous month: <code>{{ '{{previous.month}}' }}</code> / <code>{{ '{{previous.month_number}}' }}</code></li>
+            <li>Next month: <code>{{ '{{next.month}}' }}</code> / <code>{{ '{{next.month_number}}' }}</code></li>
+        </ul>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <h5>Birthdays</h5>
+        <ul>
+            <li>Today: <code>{{ '{{birthdays.count.today}}' }}</code></li>
+            <li>This week: <code>{{ '{{birthdays.count.this_week}}' }}</code></li>
+            <li>Current month: <code>{{ '{{birthdays.count.current_month}}' }}</code></li>
+        </ul>
+
+        <h6 class="mt-3">Birthday Lists</h6>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in birthdays_today %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}
+
+{% for person in birthdays_tomorrow %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}
+
+{% for person in birthdays_this_week %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}
+
+{% for person in birthdays_next_week %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}
+
+{% for person in birthdays_current_month %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}
+
+{% for person in birthdays_next_month %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <h5>Membership anniversaries</h5>
+        <ul>
+            <li>Current month: <code>{{ '{{membership.anniversaries.count.current_month}}' }}</code></li>
+            <li>Next month: <code>{{ '{{membership.anniversaries.count.next_month}}' }}</code></li>
+        </ul>
+
+        <h6 class="mt-3">Anniversary Lists</h6>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in membership_anniversaries_current_month %}
+{{person.first_name}} {{person.last_name}} ({{person.join_date}})
+{% endfor %}
+
+{% for person in membership_anniversaries_next_month %}
+{{person.first_name}} {{person.last_name}} ({{person.join_date}})
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <h5>Upcoming birthdays</h5>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in upcoming_birthdays.current.today %}
+Today: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_birthdays.current.this_week %}
+This week: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_birthdays.next.tomorrow %}
+Tomorrow: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_birthdays.next.week %}
+Next week: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_birthdays.next.month %}
+Next month: {{person.first_name}} {{person.last_name}}
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <h5>Upcoming anniversaries</h5>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in upcoming_anniversaries.current.today %}
+Today: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_anniversaries.current.this_week %}
+This week: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_anniversaries.next.tomorrow %}
+Tomorrow: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_anniversaries.next.week %}
+Next week: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_anniversaries.next.month %}
+Next month: {{person.first_name}} {{person.last_name}}
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <h5>Upcoming events</h5>
+
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for item in upcoming_events.current.today %}
+Today: {{item.title}} on {{item.start_at}}
+{% endfor %}
+
+{% for item in upcoming_events.current.this_week %}
+This week: {{item.title}} on {{item.start_at}}
+{% endfor %}
+
+{% for item in upcoming_events.next.tomorrow %}
+Tomorrow: {{item.title}} on {{item.start_at}}
+{% endfor %}
+
+{% for item in upcoming_events.next.week %}
+Next week: {{item.title}} on {{item.start_at}}
+{% endfor %}
+
+{% for item in upcoming_events.next.month %}
+Next month: {{item.title}} on {{item.start_at}}
+{% endfor %}
+
+{% for participant in event.participants %}
+{{participant.name}} ({{participant.email}})
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+</div>

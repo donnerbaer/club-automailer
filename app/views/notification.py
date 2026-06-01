@@ -2586,3 +2586,11 @@ def download_working_hours_import_template():
     )
     response.headers['Content-Disposition'] = 'attachment; filename=working_hours_import_template.csv'
     return response
+
+
+@notification_bp.route('/template-placeholders')
+@login_required
+@check_permissions(['notification.template.read'])
+def template_placeholders():
+    """Documentation page listing available placeholders for notification templates."""
+    return render_template('notification/site.template_placeholders.html')

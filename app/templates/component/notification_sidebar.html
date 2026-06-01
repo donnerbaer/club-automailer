@@ -91,6 +91,12 @@
                 <i class="bi bi-list-ul"></i> {{ _('All Templates') }}
             </a>
         </li>
+        <li class="nav-item ms-3">
+            <a href="{{ url_for('notification.template_placeholders') }}" 
+               class="nav-link {% if request.endpoint == 'notification.template_placeholders' %}active{% endif %}">
+                <i class="bi bi-list-ul"></i> {{ _('Placeholders') }}
+            </a>
+        </li>
         {% endif %}
 
         <!-- Rules & Trigger Types Section -->
