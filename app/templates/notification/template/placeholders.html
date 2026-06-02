@@ -1,34 +1,39 @@
 <div class="row">
     <div class="col-lg-6 mb-4">
         <h5>Event</h5>
+        <p class="text-muted small">Use these placeholders to insert event details into your notification templates.</p>
         <ul>
-            <li>Title: <code>{{ '{{event.title}}' }}</code></li>
-            <li>Description: <code>{{ '{{event.description}}' }}</code></li>
-            <li>Location: <code>{{ '{{event.location}}' }}</code></li>
-            <li>Start at: <code>{{ '{{event.start_at}}' }}</code></li>
-            <li>End at: <code>{{ '{{event.end_at}}' }}</code></li>
-            <li>Start date: <code>{{ '{{event.start_date}}' }}</code></li>
-            <li>Start time: <code>{{ '{{event.start_time}}' }}</code></li>
-            <li>End date: <code>{{ '{{event.end_date}}' }}</code></li>
-            <li>End time: <code>{{ '{{event.end_time}}' }}</code></li>
-            <li>Duration hours: <code>{{ '{{event.duration_hours}}' }}</code></li>
-            <li>Participants count: <code>{{ '{{event.participants_count}}' }}</code></li>
-            <li>Participant names: <code>{{ '{{event_participants_names}}' }}</code></li>
-            <li>Participant emails: <code>{{ '{{event_participants_emails}}' }}</code></li>
-            <li>Google calendar: <code>{{ '{{event_calendar_google}}' }}</code></li>
-            <li>Outlook calendar: <code>{{ '{{event_calendar_outlook}}' }}</code></li>
+            <li>Title: <code>{{ '{{event.title}}' }}</code> - <small class="text-secondary">The event name</small></li>
+            <li>Description: <code>{{ '{{event.description}}' }}</code> - <small class="text-secondary">Event details and description</small></li>
+            <li>Location: <code>{{ '{{event.location}}' }}</code> - <small class="text-secondary">Where the event takes place</small></li>
+            <li>Start at: <code>{{ '{{event.start_at}}' }}</code> - <small class="text-secondary">Full date and time when event begins</small></li>
+            <li>End at: <code>{{ '{{event.end_at}}' }}</code> - <small class="text-secondary">Full date and time when event ends</small></li>
+            <li>Start date: <code>{{ '{{event.start_date}}' }}</code> - <small class="text-secondary">Only the start date</small></li>
+            <li>Start time: <code>{{ '{{event.start_time}}' }}</code> - <small class="text-secondary">Only the start time</small></li>
+            <li>End date: <code>{{ '{{event.end_date}}' }}</code> - <small class="text-secondary">Only the end date</small></li>
+            <li>End time: <code>{{ '{{event.end_time}}' }}</code> - <small class="text-secondary">Only the end time</small></li>
+            <li>Duration hours: <code>{{ '{{event.duration_hours}}' }}</code> - <small class="text-secondary">How long the event lasts in hours</small></li>
+            <li>Participants count: <code>{{ '{{event.participants_count}}' }}</code> - <small class="text-secondary">Number of people attending</small></li>
+            <li>Participant names: <code>{{ '{{event_participants_names}}' }}</code> - <small class="text-secondary">Comma-separated list of attendees</small></li>
+            <li>Participant emails: <code>{{ '{{event_participants_emails}}' }}</code> - <small class="text-secondary">Comma-separated email addresses</small></li>
+            <li>Google calendar: <code>{{ '{{event_calendar_google}}' }}</code> - <small class="text-secondary">Link to add event to Google Calendar</small></li>
+            <li>Outlook calendar: <code>{{ '{{event_calendar_outlook}}' }}</code> - <small class="text-secondary">Link to add event to Outlook Calendar</small></li>
         </ul>
     </div>
 
     <div class="col-lg-6 mb-4">
         <h5>Current date</h5>
+        <p class="text-muted small">Insert current date and time information into your templates.</p>
         <ul>
-            <li>Date: <code>{{ '{{current.date}}' }}</code></li>
-            <li>Time: <code>{{ '{{current.time}}' }}</code></li>
-            <li>Month: <code>{{ '{{current.month}}' }}</code> / <code>{{ '{{current.month_number}}' }}</code></li>
-            <li>Year: <code>{{ '{{current.year}}' }}</code></li>
-            <li>Previous month: <code>{{ '{{previous.month}}' }}</code> / <code>{{ '{{previous.month_number}}' }}</code></li>
-            <li>Next month: <code>{{ '{{next.month}}' }}</code> / <code>{{ '{{next.month_number}}' }}</code></li>
+            <li>Date: <code>{{ '{{current.date}}' }}</code> - <small class="text-secondary">Today's date</small></li>
+            <li>Time: <code>{{ '{{current.time}}' }}</code> - <small class="text-secondary">Current time of day</small></li>
+            <li>Month: <code>{{ '{{current.month}}' }}</code> - <small class="text-secondary">Current month name</small></li>
+            <li>Month number: <code>{{ '{{current.month_number}}' }}</code> - <small class="text-secondary">Month as number (1-12)</small></li>
+            <li>Year: <code>{{ '{{current.year}}' }}</code> - <small class="text-secondary">Current year</small></li>
+            <li>Previous month: <code>{{ '{{previous.month}}' }}</code> - <small class="text-secondary">Last month's name</small></li>
+            <li>Previous month number: <code>{{ '{{previous.month_number}}' }}</code> - <small class="text-secondary">Last month as number</small></li>
+            <li>Next month: <code>{{ '{{next.month}}' }}</code> - <small class="text-secondary">Next month's name</small></li>
+            <li>Next month number: <code>{{ '{{next.month_number}}' }}</code> - <small class="text-secondary">Next month as number</small></li>
         </ul>
     </div>
 </div>
@@ -36,16 +41,18 @@
 <div class="row">
     <div class="col-lg-6 mb-4">
         <h5>Birthdays</h5>
+        <p class="text-muted small">Show birthday-related information for members.</p>
         <ul>
-            <li>Today: <code>{{ '{{birthdays_today}}' }}</code></li>
-            <li>Tomorrow: <code>{{ '{{birthdays_tomorrow}}' }}</code></li>
-            <li>This week: <code>{{ '{{birthdays_this_week}}' }}</code></li>
-            <li>Next week: <code>{{ '{{birthdays_next_week}}' }}</code></li>
-            <li>Current month: <code>{{ '{{birthdays_current_month}}' }}</code></li>
-            <li>Next month: <code>{{ '{{birthdays_next_month}}' }}</code></li>
+            <li>Today: <code>{{ '{{birthdays_today}}' }}</code> - <small class="text-secondary">List of birthdays today</small></li>
+            <li>Tomorrow: <code>{{ '{{birthdays_tomorrow}}' }}</code> - <small class="text-secondary">List of birthdays tomorrow</small></li>
+            <li>This week: <code>{{ '{{birthdays_this_week}}' }}</code> - <small class="text-secondary">List of birthdays this week</small></li>
+            <li>Next week: <code>{{ '{{birthdays_next_week}}' }}</code> - <small class="text-secondary">List of birthdays next week</small></li>
+            <li>Current month: <code>{{ '{{birthdays_current_month}}' }}</code> - <small class="text-secondary">List of birthdays this month</small></li>
+            <li>Next month: <code>{{ '{{birthdays_next_month}}' }}</code> - <small class="text-secondary">List of birthdays next month</small></li>
         </ul>
 
         <h6 class="mt-3">Birthday Lists</h6>
+        <p class="text-muted small">Loop through lists to display birthday details. Use these in your notification templates.</p>
         <pre class="bg-light p-3 border rounded"><code>
 {% raw %}{% for person in birthdays_today %}
 {{person.first_name}} {{person.last_name}} ({{person.birth_date}})
@@ -75,12 +82,14 @@
 
     <div class="col-lg-6 mb-4">
         <h5>Membership anniversaries</h5>
+        <p class="text-muted small">Display member anniversaries (dates members joined).</p>
         <ul>
-            <li>Current month: <code>{{ '{{membership.anniversaries.count.current_month}}' }}</code></li>
-            <li>Next month: <code>{{ '{{membership.anniversaries.count.next_month}}' }}</code></li>
+            <li>Current month count: <code>{{ '{{membership.anniversaries.count.current_month}}' }}</code> - <small class="text-secondary">How many anniversaries this month</small></li>
+            <li>Next month count: <code>{{ '{{membership.anniversaries.count.next_month}}' }}</code> - <small class="text-secondary">How many anniversaries next month</small></li>
         </ul>
 
         <h6 class="mt-3">Anniversary Lists</h6>
+        <p class="text-muted small">Loop through to display member join dates and names.</p>
         <pre class="bg-light p-3 border rounded"><code>
 {% raw %}{% for person in membership_anniversaries_current_month %}
 {{person.first_name}} {{person.last_name}} ({{person.join_date}})
@@ -96,6 +105,7 @@
 <div class="row">
     <div class="col-lg-6 mb-4">
         <h5>Upcoming birthdays</h5>
+        <p class="text-muted small">Loop through upcoming birthdays organized by time periods (today, this week, tomorrow, next week, next month).</p>
         <pre class="bg-light p-3 border rounded"><code>
 {% raw %}{% for person in upcoming_birthdays.current.today %}
 Today: {{person.first_name}} {{person.last_name}}
@@ -121,6 +131,7 @@ Next month: {{person.first_name}} {{person.last_name}}
 
     <div class="col-lg-6 mb-4">
         <h5>Upcoming anniversaries</h5>
+        <p class="text-muted small">Loop through upcoming membership anniversaries organized by time periods.</p>
         <pre class="bg-light p-3 border rounded"><code>
 {% raw %}{% for person in upcoming_anniversaries.current.today %}
 Today: {{person.first_name}} {{person.last_name}}
@@ -148,6 +159,7 @@ Next month: {{person.first_name}} {{person.last_name}}
 <div class="row">
     <div class="col-lg-12 mb-4">
         <h5>Upcoming events</h5>
+        <p class="text-muted small">Display events organized by time periods (today, this week, tomorrow, next week, next month) and include participant information.</p>
 
         <pre class="bg-light p-3 border rounded"><code>
 {% raw %}{% for item in upcoming_events.current.today %}
