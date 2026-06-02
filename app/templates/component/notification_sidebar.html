@@ -12,7 +12,7 @@
 
         <!-- Members Section -->
         {% if current_user.has_permission('notification.members.read') %}
-        <li class="nav-item mt-3">
+        <li class="nav-item">
             <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
                 <i class="bi bi-people-fill"></i> {{ _('Members') }}
             </span>
@@ -35,7 +35,7 @@
 
         <!-- Groups Section -->
         {% if current_user.has_permission('notification.groups.view') %}
-        <li class="nav-item mt-3">
+        <li class="nav-item">
             <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
                 <i class="bi bi-diagram-3-fill"></i> {{ _('Groups') }}
             </span>
@@ -50,7 +50,7 @@
 
         <!-- Events Section -->
         {% if current_user.has_permission('notification.events.view') %}
-        <li class="nav-item mt-3">
+        <li class="nav-item">
             <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
                 <i class="bi bi-calendar-event"></i> {{ _('Events') }}
             </span>
@@ -80,7 +80,7 @@
 
         <!-- Templates Section -->
         {% if current_user.has_permission('notification.templates.view') %}
-        <li class="nav-item mt-3">
+        <li class="nav-item">
             <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
                 <i class="bi bi-file-earmark-text"></i> {{ _('Templates') }}
             </span>
@@ -101,7 +101,7 @@
 
         <!-- Rules & Trigger Types Section -->
         {% if current_user.has_permission('notification.rules.view') %}
-        <li class="nav-item mt-3">
+        <li class="nav-item">
             <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
                 <i class="bi bi-gear-fill"></i> {{ _('Rules & Automation') }}
             </span>
@@ -122,7 +122,7 @@
 
         <!-- Logs Section -->
         {% if current_user.has_permission('notification.logs.read') %}
-        <li class="nav-item mt-3">
+        <li class="nav-item">
             <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
                 <i class="bi bi-file-earmark-check"></i> {{ _('Logs') }}
             </span>
@@ -135,7 +135,7 @@
         </li>
         {% endif %}
         {% if current_user.has_permission('notification.workinghours.view') %}
-        <li class="nav-item mt-3">
+        <li class="nav-item">
             <span class="nav-link text-dark" style="cursor: default; font-weight: 600; padding-bottom: 0.5rem;">
                 <i class="bi bi-clock"></i> {{ _('Working Hours') }}
             </span>
