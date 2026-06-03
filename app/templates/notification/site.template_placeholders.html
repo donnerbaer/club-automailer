@@ -3,7 +3,21 @@
 
 {% block notification_content %}
 
-<h1>{{ _('Template Placeholders') }}</h1>
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: '>';">
+    <ol class="breadcrumb breadcrumb-chevron pe-3 bg-body-tertiary rounded-3">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i></a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('notification.index') }}">{{ _('Notification') }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ _('Overview: Template Placeholders') }}
+        </li>
+    </ol>
+</nav>
+
+<h1>{{ _('Overview: Template Placeholders') }}</h1>
 
 {% include 'notification/template/placeholders.html' %}
 
