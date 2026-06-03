@@ -1,6 +1,67 @@
+<!-- Table of Contents / Navigation -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h6 class="mb-0">{{ _('Quick Navigation') }}</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <h6 class="text-primary">{{ _('Event Context') }}</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#event">{{ _('Event') }}</a></li>
+                    <li><a href="#upcoming-events">{{ _('Upcoming events') }}</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-warning">{{ _('Birthday Context') }}</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#birthdays">{{ _('Birthdays') }}</a></li>
+                    <li><a href="#upcoming-birthdays">{{ _('Upcoming birthdays') }}</a></li>
+                    <li><a href="#members-birthdays">{{ _('Members with birthdays') }}</a></li>
+                    <li><a href="#birthday-milestones">{{ _('Birthday milestones') }}</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-success">{{ _('Anniversary Context') }}</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#anniversaries">{{ _('Membership anniversaries') }}</a></li>
+                    <li><a href="#upcoming-anniversaries">{{ _('Upcoming anniversaries') }}</a></li>
+                    <li><a href="#membership-milestones">{{ _('Membership milestones') }}</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <h6 class="text-info">{{ _('Member Context') }}</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#recipient">{{ _('Recipient') }}</a></li>
+                    <li><a href="#member-subject">{{ _('Member / Subject') }}</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-danger">{{ _('Trigger Context') }}</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#trigger">{{ _('Trigger') }}</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-secondary">{{ _('Global') }}</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#current-date">{{ _('Current date') }}</a></li>
+                    <li><a href="#global-hours">{{ _('Global hours') }}</a></li>
+                    <li><a href="#participant-stats">{{ _('Participant statistics') }}</a></li>
+                    <li><a href="#members-hours">{{ _('Members with/without hours') }}</a></li>
+                    <li><a href="#upcoming-lists">{{ _('Additional upcoming lists') }}</a></li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+
 <div class="row">
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Event') }}</h5>
+        <h5 id="event">{{ _('Event') }} <span class="badge bg-primary">{{ _('Event Context') }}</span></h5>
         <p class="text-muted small">{{ _('Use these placeholders to insert event details into your notification templates.') }}</p>
         <ul>
             <li>{{ _('Title') }}: <code>{{ '{{event.title}}' }}</code> - <small class="text-secondary">{{ _('The event name') }}</small></li>
@@ -22,7 +83,7 @@
     </div>
 
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Current date') }}</h5>
+        <h5 id="current-date">{{ _('Current date') }} <span class="badge bg-secondary">{{ _('Global') }}</span></h5>
         <p class="text-muted small">{{ _('Insert current date and time information into your templates.') }}</p>
         <ul>
             <li>{{ _('Date') }}: <code>{{ '{{current.date}}' }}</code> - <small class="text-secondary">{{ _('Today\'s date') }}</small></li>
@@ -40,7 +101,7 @@
 
 <div class="row">
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Birthdays') }}</h5>
+        <h5 id="birthdays">{{ _('Birthdays') }} <span class="badge bg-warning">{{ _('Birthday Context') }}</span></h5>
         <p class="text-muted small">{{ _('Show birthday-related information for members.') }}</p>
         <ul>
             <li>{{ _('Today') }}: <code>{{ '{{birthdays_today}}' }}</code> - <small class="text-secondary">{{ _('List of birthdays today') }}</small></li>
@@ -81,7 +142,7 @@
     </div>
 
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Membership anniversaries') }}</h5>
+        <h5 id="anniversaries">{{ _('Membership anniversaries') }} <span class="badge bg-success">{{ _('Anniversary Context') }}</span></h5>
         <p class="text-muted small">{{ _('Display member anniversaries (dates members joined).') }}</p>
         <ul>
             <li>{{ _('Current month count') }}: <code>{{ '{{membership.anniversaries.count.current_month}}' }}</code> - <small class="text-secondary">{{ _('How many anniversaries this month') }}</small></li>
@@ -104,7 +165,7 @@
 
 <div class="row">
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Upcoming birthdays') }}</h5>
+        <h5 id="upcoming-birthdays">{{ _('Upcoming birthdays') }} <span class="badge bg-warning">{{ _('Birthday Context') }}</span></h5>
         <p class="text-muted small">{{ _('Loop through upcoming birthdays organized by time periods (today, this week, tomorrow, next week, next month).') }}</p>
         <pre class="bg-light p-3 border rounded"><code>
 {% raw %}{% for person in upcoming_birthdays.current.today %}
@@ -130,7 +191,7 @@ Next month: {{person.first_name}} {{person.last_name}}
     </div>
 
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Upcoming anniversaries') }}</h5>
+        <h5 id="upcoming-anniversaries">{{ _('Upcoming anniversaries') }} <span class="badge bg-success">{{ _('Anniversary Context') }}</span></h5>
         <p class="text-muted small">{{ _('Loop through upcoming membership anniversaries organized by time periods.') }}</p>
         <pre class="bg-light p-3 border rounded"><code>
 {% raw %}{% for person in upcoming_anniversaries.current.today %}
@@ -158,7 +219,7 @@ Next month: {{person.first_name}} {{person.last_name}}
 
 <div class="row">
     <div class="col-lg-12 mb-4">
-        <h5>{{ _('Upcoming events') }}</h5>
+        <h5 id="upcoming-events">{{ _('Upcoming events') }} <span class="badge bg-primary">{{ _('Event Context') }}</span></h5>
         <p class="text-muted small">{{ _('Display events organized by time periods (today, this week, tomorrow, next week, next month) and include participant information.') }}</p>
 
         <pre class="bg-light p-3 border rounded"><code>
@@ -192,7 +253,7 @@ Next month: {{item.title}} on {{item.start_at}}
 <!-- Additional placeholders added according to user request -->
 <div class="row">
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Recipient') }}</h5>
+        <h5 id="recipient">{{ _('Recipient') }} <span class="badge bg-info">{{ _('Recipient Context') }}</span></h5>
         <p class="text-muted small">{{ _('Placeholders for the message recipient (member or external recipient).') }}</p>
         <ul>
             <li>{{ _('First name') }}: <code>{{ '{{recipient.first_name}}' }}</code></li>
@@ -208,7 +269,7 @@ Next month: {{item.title}} on {{item.start_at}}
     </div>
 
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Trigger') }}</h5>
+        <h5 id="trigger">{{ _('Trigger') }} <span class="badge bg-danger">{{ _('Trigger Context') }}</span></h5>
         <p class="text-muted small">{{ _('Placeholders describing the trigger that fired the notification.') }}</p>
         <ul>
             <li>{{ _('Name') }}: <code>{{ '{{trigger.name}}' }}</code></li>
@@ -221,7 +282,7 @@ Next month: {{item.title}} on {{item.start_at}}
 
 <div class="row">
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Member / Subject') }}</h5>
+        <h5 id="member-subject">{{ _('Member / Subject') }} <span class="badge bg-info">{{ _('Member Context') }}</span></h5>
         <p class="text-muted small">{{ _('Placeholders for a member referenced as `member` or `subject` in templates.') }}</p>
         <ul>
             <li>{{ _('First name') }}: <code>{{ '{{member.first_name}}' }}</code> / <code>{{ '{{subject.first_name}}' }}</code></li>
@@ -242,22 +303,11 @@ Next month: {{item.title}} on {{item.start_at}}
         </ul>
     </div>
 
-    <div class="col-lg-6 mb-4">
-        <h5>{{ _('Deprecated anniversary placeholders') }}</h5>
-        <p class="text-muted small">{{ _('Legacy placeholders — prefer the `membership_anniversaries_*` lists.') }}</p>
-        <ul>
-            <li>{{ _('First name') }}: <code>{{ '{{anniversary.firstname}}' }}</code></li>
-            <li>{{ _('Last name') }}: <code>{{ '{{anniversary.lastname}}' }}</code></li>
-            <li>{{ _('Full name') }}: <code>{{ '{{anniversary.fullname}}' }}</code></li>
-            <li>{{ _('Years') }}: <code>{{ '{{anniversary.years}}' }}</code></li>
-            <li>{{ _('Member since') }}: <code>{{ '{{anniversary.member_since}}' }}</code></li>
-        </ul>
-    </div>
 </div>
 
 <div class="row">
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Global hours') }}</h5>
+        <h5 id="global-hours">{{ _('Global hours') }} <span class="badge bg-secondary">{{ _('Global') }}</span></h5>
         <p class="text-muted small">{{ _('Aggregated hours statistics.') }}</p>
         <ul>
             <li>{{ _('Total') }}: <code>{{ '{{hours.total}}' }}</code></li>
@@ -268,7 +318,7 @@ Next month: {{item.title}} on {{item.start_at}}
     </div>
 
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Participant statistics') }}</h5>
+        <h5 id="participant-stats">{{ _('Participant statistics') }} <span class="badge bg-secondary">{{ _('Global') }}</span></h5>
         <p class="text-muted small">{{ _('Counts and statistics about participants.') }}</p>
         <ul>
             <li>{{ _('Total members') }}: <code>{{ '{{participants.total.count}}' }}</code></li>
@@ -282,7 +332,7 @@ Next month: {{item.title}} on {{item.start_at}}
 
 <div class="row">
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Members with / without hours') }}</h5>
+        <h5 id="members-hours">{{ _('Members with / without hours') }} <span class="badge bg-secondary">{{ _('Global') }}</span></h5>
         <p class="text-muted small">{{ _('Lists and example loops for members with or without hours.') }}</p>
         <pre class="bg-light p-3 border rounded"><code>
 {% raw %}{% for person in members.with_hours.current.week %}
@@ -296,7 +346,7 @@ Next month: {{item.title}} on {{item.start_at}}
     </div>
 
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Members with birthdays in the current month') }}</h5>
+        <h5 id="members-birthdays">{{ _('Members with birthdays in the current month') }} <span class="badge bg-warning">{{ _('Birthday Context') }}</span></h5>
         <p class="text-muted small">{{ _('Loop through members who have birthdays this month.') }}</p>
         <pre class="bg-light p-3 border rounded"><code>
 {% raw %}{% for person in members.birthday.current_month %}
@@ -308,7 +358,7 @@ Next month: {{item.title}} on {{item.start_at}}
 
 <div class="row">
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Birthday milestones') }}</h5>
+        <h5 id="birthday-milestones">{{ _('Birthday milestones') }} <span class="badge bg-warning">{{ _('Birthday Context') }}</span></h5>
         <p class="text-muted small">{{ _('Lists for milestone birthdays.') }}</p>
         <pre class="bg-light p-3 border rounded"><code>
 {% raw %}{% for person in birthdays_milestone_40 %}
@@ -321,7 +371,7 @@ Next month: {{item.title}} on {{item.start_at}}
     </div>
 
     <div class="col-lg-6 mb-4">
-        <h5>{{ _('Membership milestones') }}</h5>
+        <h5 id="membership-milestones">{{ _('Membership milestones') }} <span class="badge bg-success">{{ _('Anniversary Context') }}</span></h5>
         <p class="text-muted small">{{ _('Lists for milestone anniversaries.') }}</p>
         <pre class="bg-light p-3 border rounded"><code>
 {% raw %}{% for person in membership_anniversaries_milestone_10 %}
@@ -336,7 +386,7 @@ Next month: {{item.title}} on {{item.start_at}}
 
 <div class="row">
     <div class="col-lg-12 mb-4">
-        <h5>{{ _('Additional upcoming lists') }}</h5>
+        <h5 id="upcoming-lists">{{ _('Additional upcoming lists') }} <span class="badge bg-secondary">{{ _('Global') }}</span></h5>
         <p class="text-muted small">{{ _('Alternative loop variable names used in some templates.') }}</p>
         <pre class="bg-light p-3 border rounded"><code>
 {% raw %}{% for person in upcoming_birthdays_today %}
