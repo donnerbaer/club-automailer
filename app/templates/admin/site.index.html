@@ -58,7 +58,7 @@
         <div class="alert alert-info">
             <h2 class="h4">{{ _('Version Check') }}</h2>
             <p class="mt-2">
-                {{ _('The current version of SmartStorage is:') }} <strong>{{ version_info.current_version }}</strong>
+                {{ _('The current software version is:') }} <strong>{{ version_info.current_version }}</strong>
                 {% if version_info.latest_version %}
                     <br>
                     {{ _('The latest version available is:') }} <strong>{{ version_info.latest_version }}</strong>
@@ -70,11 +70,11 @@
             {% if version_info.update_available %}
                 <p class="mt-2">
                     <strong>{{ _('An update is available!') }}</strong>
-                    <a href="https://github.com/donnerbaer/smart-storage">{{ _('Get the newest release') }}</a>
+                    <a href="https://github.com/donnerbaer/club-automailer">{{ _('Get the newest release') }}</a>
                 </p>
             {% else %}
                 <p class="mt-2">
-                    {{ _('You are using the latest version of SmartStorage.') }}
+                    {{ _('You are using the latest version.') }}
                 </p>
             {% endif %}
 
