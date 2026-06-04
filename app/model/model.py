@@ -314,7 +314,11 @@ class Member(db.Model):
 
     groups = relationship("Group", secondary=group_members,
                           back_populates="members")
-    events = relationship("EventParticipant", back_populates="member")
+    events = relationship(
+        "EventParticipant",
+        back_populates="member",
+        cascade="all, delete-orphan",
+    )
     working_hours_logs = relationship(
         "WorkingHoursLog",
         back_populates="member",

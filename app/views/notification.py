@@ -1222,8 +1222,7 @@ def import_members():
 
         deleted_count = 0
         for member in members_to_delete:
-            for event_participant in list(member.events):
-                db.session.delete(event_participant)
+            member.events.clear()
             member.groups.clear()
             db.session.delete(member)
             deleted_count += 1
@@ -2270,8 +2269,7 @@ def remove_group_from_member(member_id, group_id):
 def member_delete(member_id):
     member = Member.query.get_or_404(member_id)
 
-    for event_participant in list(member.events):
-        db.session.delete(event_participant)
+    member.events.clear()
 
     for event in Event.query.filter_by(created_by=member.id).all():
         event.created_by = None
