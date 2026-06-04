@@ -1,14 +1,14 @@
-# German translations for PROJECT.
+# German translations for Club Automailer.
 # Copyright (C) 2026 ORGANIZATION
-# This file is distributed under the same license as the PROJECT project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+# This file is distributed under the same license as the Club Automailer project.
+# FIRST AUTHOR donnerbaer, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
+"Project-Id-Version: 0.4\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-06-03 23:18+0200\n"
-"PO-Revision-Date: 2026-06-03 22:42+0200\n"
+"PO-Revision-Date: 2026-06-04 13:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
 "Language-Team: de <LL@li.org>\n"
@@ -46,7 +46,7 @@ msgstr "Registrieren"
 
 #: templates/site.register.html:5
 msgid "Register new account"
-msgstr "Neues Konto registrieren"
+msgstr "Neues Benutzerkonto erstellen"
 
 #: templates/site.user.html:2
 msgid "Profile"
@@ -991,7 +991,7 @@ msgstr "Erstellt"
 #: templates/notification/site.events.html:162
 #, python-format
 msgid "Deleted %(events)s events and %(logs)s logs older than %(value)s %(unit)s."
-msgstr ""
+msgstr "Es wurden %(events) Ereignisse und %(logs) Protokolle gelöscht, die älter als %(value) %(unit)s sind."
 
 #: templates/notification/site.events.html:171
 msgid "No events found."
@@ -1390,7 +1390,7 @@ msgstr "Keine Gruppen zugewiesen."
 #: templates/notification/member/modal.member.create.html:6
 #: templates/notification/site.members.html:47
 msgid "Create member"
-msgstr "Mitglied erstellen"
+msgstr "Mitglied anlegen"
 
 #: templates/notification/site.members.html:64
 msgid "Import members CSV"
@@ -2135,19 +2135,19 @@ msgstr ""
 #: templates/notification/template/placeholders.html:96
 #: templates/notification/template/placeholders.html:112
 msgid "Next month"
-msgstr ""
+msgstr "Nächsten Monat"
 
 #: templates/notification/template/placeholders.html:96
 msgid "Next month's name"
-msgstr ""
+msgstr "Nächsten Monat (Name)"
 
 #: templates/notification/template/placeholders.html:97
 msgid "Next month number"
-msgstr ""
+msgstr "Nächsten Monat (Zahl)"
 
 #: templates/notification/template/placeholders.html:97
 msgid "Next month as number"
-msgstr ""
+msgstr "Nächsten Monat (Zahl)"
 
 #: templates/notification/template/placeholders.html:105
 msgid "Show birthday-related information for members."
@@ -2155,19 +2155,19 @@ msgstr ""
 
 #: templates/notification/template/placeholders.html:107
 msgid "Today"
-msgstr ""
+msgstr "Heute"
 
 #: templates/notification/template/placeholders.html:107
 msgid "List of birthdays today"
-msgstr ""
+msgstr "Geburtstagsliste heute"
 
 #: templates/notification/template/placeholders.html:108
 msgid "Tomorrow"
-msgstr ""
+msgstr "Morgen"
 
 #: templates/notification/template/placeholders.html:108
 msgid "List of birthdays tomorrow"
-msgstr ""
+msgstr "Geburtstagsliste morgen"
 
 #: templates/notification/template/placeholders.html:109
 msgid "This week"
@@ -2175,23 +2175,23 @@ msgstr ""
 
 #: templates/notification/template/placeholders.html:109
 msgid "List of birthdays this week"
-msgstr ""
+msgstr "Geburtstagsliste diese Woche"
 
 #: templates/notification/template/placeholders.html:110
 msgid "Next week"
-msgstr ""
+msgstr "Nächste Woche"
 
 #: templates/notification/template/placeholders.html:110
 msgid "List of birthdays next week"
-msgstr ""
+msgstr "Geburtstagsliste nächste Woche"
 
 #: templates/notification/template/placeholders.html:111
 msgid "Current month"
-msgstr ""
+msgstr "Aktueller Monat"
 
 #: templates/notification/template/placeholders.html:111
 msgid "List of birthdays this month"
-msgstr ""
+msgstr "Geburtstagsliste aktueller Monat"
 
 #: templates/notification/template/placeholders.html:112
 msgid "List of birthdays next month"
@@ -2481,11 +2481,12 @@ msgstr ""
 msgid ""
 "The file must contain the columns: title, description, start_at, end_at, "
 "location, participants."
-msgstr ""
+msgstr "Die Datei muss folgende Spalten enthalten: title, description, start_at, end_at, "
+"location, participants."
 
 #: views/notification.py:1353
 msgid "The file does not contain any valid event rows."
-msgstr ""
+msgstr "Diese Datei enthält keine zulässige Reihe."
 
 #: views/notification.py:1628
 msgid "Please select a member to add to the event."
@@ -2505,7 +2506,7 @@ msgstr "Unbekanntes Mitglied"
 
 #: views/notification.py:2415 views/notification.py:2442
 msgid "Please select a member"
-msgstr ""
+msgstr "Bitte wähle ein Mitglied"
 
 #: views/notification.py:2425
 msgid "Working hours entry created."
@@ -2517,7 +2518,7 @@ msgstr ""
 
 #: views/notification.py:2462
 msgid "Working hours entry deleted."
-msgstr ""
+msgstr "Arbeitsstundeneintrag gelöscht."
 
 #: views/notification.py:2513
 msgid "The CSV file must contain the columns: member_number, date, and hours."
@@ -2534,10 +2535,3 @@ msgstr "Benutzer*in nicht gefunden."
 #: views/user.py:148
 msgid "Old password is incorrect."
 msgstr "Altes Passwort ist inkorrekt."
-
-#~ msgid "The current version of SmartStorage is:"
-#~ msgstr ""
-
-#~ msgid "You are using the latest version of SmartStorage."
-#~ msgstr ""
-

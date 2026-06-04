@@ -13,7 +13,7 @@ Web application and mail service for club notifications.
 ## Supported Languages
 
 - `en` English
-- `de` Deutsch
+- `de` Deutsch ~70¼
 
 ## Requirements
 
@@ -43,7 +43,7 @@ Older Python versions may also work, but are not officially tested.
 
     ```sh
     SECRET_KEY=change-me
-    SQLALCHEMY_DATABASE_URI=sqlite:///instance/database.db
+    SQLALCHEMY_DATABASE_URI=sqlite:///database.db
     EVENT_DOMAIN=example.org
 
     SMTP_HOST=smtp.example.org
