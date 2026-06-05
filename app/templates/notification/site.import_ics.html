@@ -26,7 +26,7 @@
 
             <div class="mb-3">
                 <label class="form-label">{{ form.ics_file.label }}</label>
-                {{ form.ics_file(class_='form-control') }}
+                {{ form.ics_file(class_='form-control', accept='.ics,text/calendar') }}
                 {% for err in form.ics_file.errors %}
                 <div class="text-danger small">{{ err }}</div>
                 {% endfor %}

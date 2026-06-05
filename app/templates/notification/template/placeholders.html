@@ -1,0 +1,401 @@
+<!-- Table of Contents / Navigation -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h6 class="mb-0">{{ _('Quick Navigation') }}</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <h6 class="text-primary">{{ _('Event Context') }}</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#event">{{ _('Event') }}</a></li>
+                    <li><a href="#upcoming-events">{{ _('Upcoming events') }}</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-warning">{{ _('Birthday Context') }}</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#birthdays">{{ _('Birthdays') }}</a></li>
+                    <li><a href="#upcoming-birthdays">{{ _('Upcoming birthdays') }}</a></li>
+                    <li><a href="#members-birthdays">{{ _('Members with birthdays') }}</a></li>
+                    <li><a href="#birthday-milestones">{{ _('Birthday milestones') }}</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-success">{{ _('Anniversary Context') }}</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#anniversaries">{{ _('Membership anniversaries') }}</a></li>
+                    <li><a href="#upcoming-anniversaries">{{ _('Upcoming anniversaries') }}</a></li>
+                    <li><a href="#membership-milestones">{{ _('Membership milestones') }}</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <h6 class="text-info">{{ _('Member Context') }}</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#recipient">{{ _('Recipient') }}</a></li>
+                    <li><a href="#member-subject">{{ _('Member / Subject') }}</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-danger">{{ _('Trigger Context') }}</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#trigger">{{ _('Trigger') }}</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-secondary">{{ _('Global') }}</h6>
+                <ul class="list-unstyled small">
+                    <li><a href="#current-date">{{ _('Current date') }}</a></li>
+                    <li><a href="#global-hours">{{ _('Global hours') }}</a></li>
+                    <li><a href="#participant-stats">{{ _('Participant statistics') }}</a></li>
+                    <li><a href="#members-hours">{{ _('Members with/without hours') }}</a></li>
+                    <li><a href="#upcoming-lists">{{ _('Additional upcoming lists') }}</a></li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <h5 id="event">{{ _('Event') }} <span class="badge bg-primary">{{ _('Event Context') }}</span></h5>
+        <p class="text-muted small">{{ _('Use these placeholders to insert event details into your notification templates.') }}</p>
+        <ul>
+            <li>{{ _('Title') }}: <code>{{ '{{event.title}}' }}</code> - <small class="text-secondary">{{ _('The event name') }}</small></li>
+            <li>{{ _('Description') }}: <code>{{ '{{event.description}}' }}</code> - <small class="text-secondary">{{ _('Event details and description') }}</small></li>
+            <li>{{ _('Location') }}: <code>{{ '{{event.location}}' }}</code> - <small class="text-secondary">{{ _('Where the event takes place') }}</small></li>
+            <li>{{ _('Start at') }}: <code>{{ '{{event.start_at}}' }}</code> - <small class="text-secondary">{{ _('Full date and time when event begins') }}</small></li>
+            <li>{{ _('End at') }}: <code>{{ '{{event.end_at}}' }}</code> - <small class="text-secondary">{{ _('Full date and time when event ends') }}</small></li>
+            <li>{{ _('Start date') }}: <code>{{ '{{event.start_date}}' }}</code> - <small class="text-secondary">{{ _('Only the start date') }}</small></li>
+            <li>{{ _('Start time') }}: <code>{{ '{{event.start_time}}' }}</code> - <small class="text-secondary">{{ _('Only the start time') }}</small></li>
+            <li>{{ _('End date') }}: <code>{{ '{{event.end_date}}' }}</code> - <small class="text-secondary">{{ _('Only the end date') }}</small></li>
+            <li>{{ _('End time') }}: <code>{{ '{{event.end_time}}' }}</code> - <small class="text-secondary">{{ _('Only the end time') }}</small></li>
+            <li>{{ _('Duration hours') }}: <code>{{ '{{event.duration_hours}}' }}</code> - <small class="text-secondary">{{ _('How long the event lasts in hours') }}</small></li>
+            <li>{{ _('Participants count') }}: <code>{{ '{{event.participants_count}}' }}</code> - <small class="text-secondary">{{ _('Number of people attending') }}</small></li>
+            <li>{{ _('Participant names') }}: <code>{{ '{{event_participants_names}}' }}</code> - <small class="text-secondary">{{ _('Comma-separated list of attendees') }}</small></li>
+            <li>{{ _('Participant emails') }}: <code>{{ '{{event_participants_emails}}' }}</code> - <small class="text-secondary">{{ _('Comma-separated email addresses') }}</small></li>
+            <li>{{ _('Google calendar') }}: <code>{{ '{{event_calendar_google}}' }}</code> - <small class="text-secondary">{{ _('Link to add event to Google Calendar') }}</small></li>
+            <li>{{ _('Outlook calendar') }}: <code>{{ '{{event_calendar_outlook}}' }}</code> - <small class="text-secondary">{{ _('Link to add event to Outlook Calendar') }}</small></li>
+        </ul>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <h5 id="current-date">{{ _('Current date') }} <span class="badge bg-secondary">{{ _('Global') }}</span></h5>
+        <p class="text-muted small">{{ _('Insert current date and time information into your templates.') }}</p>
+        <ul>
+            <li>{{ _('Date') }}: <code>{{ '{{current.date}}' }}</code> - <small class="text-secondary">{{ _('Today\'s date') }}</small></li>
+            <li>{{ _('Time') }}: <code>{{ '{{current.time}}' }}</code> - <small class="text-secondary">{{ _('Current time of day') }}</small></li>
+            <li>{{ _('Month') }}: <code>{{ '{{current.month}}' }}</code> - <small class="text-secondary">{{ _('Current month name') }}</small></li>
+            <li>{{ _('Month number') }}: <code>{{ '{{current.month_number}}' }}</code> - <small class="text-secondary">{{ _('Month as number (1-12)') }}</small></li>
+            <li>{{ _('Year') }}: <code>{{ '{{current.year}}' }}</code> - <small class="text-secondary">{{ _('Current year') }}</small></li>
+            <li>{{ _('Previous month') }}: <code>{{ '{{previous.month}}' }}</code> - <small class="text-secondary">{{ _('Last month\'s name') }}</small></li>
+            <li>{{ _('Previous month number') }}: <code>{{ '{{previous.month_number}}' }}</code> - <small class="text-secondary">{{ _('Last month as number') }}</small></li>
+            <li>{{ _('Next month') }}: <code>{{ '{{next.month}}' }}</code> - <small class="text-secondary">{{ _('Next month\'s name') }}</small></li>
+            <li>{{ _('Next month number') }}: <code>{{ '{{next.month_number}}' }}</code> - <small class="text-secondary">{{ _('Next month as number') }}</small></li>
+        </ul>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <h5 id="birthdays">{{ _('Birthdays') }} <span class="badge bg-warning">{{ _('Birthday Context') }}</span></h5>
+        <p class="text-muted small">{{ _('Show birthday-related information for members.') }}</p>
+        <ul>
+            <li>{{ _('Today') }}: <code>{{ '{{birthdays_today}}' }}</code> - <small class="text-secondary">{{ _('List of birthdays today') }}</small></li>
+            <li>{{ _('Tomorrow') }}: <code>{{ '{{birthdays_tomorrow}}' }}</code> - <small class="text-secondary">{{ _('List of birthdays tomorrow') }}</small></li>
+            <li>{{ _('This week') }}: <code>{{ '{{birthdays_this_week}}' }}</code> - <small class="text-secondary">{{ _('List of birthdays this week') }}</small></li>
+            <li>{{ _('Next week') }}: <code>{{ '{{birthdays_next_week}}' }}</code> - <small class="text-secondary">{{ _('List of birthdays next week') }}</small></li>
+            <li>{{ _('Current month') }}: <code>{{ '{{birthdays_current_month}}' }}</code> - <small class="text-secondary">{{ _('List of birthdays this month') }}</small></li>
+            <li>{{ _('Next month') }}: <code>{{ '{{birthdays_next_month}}' }}</code> - <small class="text-secondary">{{ _('List of birthdays next month') }}</small></li>
+        </ul>
+
+        <h6 class="mt-3">{{ _('Birthday Lists') }}</h6>
+        <p class="text-muted small">{{ _('Loop through lists to display birthday details. Use these in your notification templates.') }}</p>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in birthdays_today %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}
+
+{% for person in birthdays_tomorrow %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}
+
+{% for person in birthdays_this_week %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}
+
+{% for person in birthdays_next_week %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}
+
+{% for person in birthdays_current_month %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}
+
+{% for person in birthdays_next_month %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <h5 id="anniversaries">{{ _('Membership anniversaries') }} <span class="badge bg-success">{{ _('Anniversary Context') }}</span></h5>
+        <p class="text-muted small">{{ _('Display member anniversaries (dates members joined).') }}</p>
+        <ul>
+            <li>{{ _('Current month count') }}: <code>{{ '{{membership.anniversaries.count.current_month}}' }}</code> - <small class="text-secondary">{{ _('How many anniversaries this month') }}</small></li>
+            <li>{{ _('Next month count') }}: <code>{{ '{{membership.anniversaries.count.next_month}}' }}</code> - <small class="text-secondary">{{ _('How many anniversaries next month') }}</small></li>
+        </ul>
+
+        <h6 class="mt-3">Anniversary Lists</h6>
+        <p class="text-muted small">Loop through to display member join dates and names.</p>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in membership_anniversaries_current_month %}
+{{person.first_name}} {{person.last_name}} ({{person.join_date}})
+{% endfor %}
+
+{% for person in membership_anniversaries_next_month %}
+{{person.first_name}} {{person.last_name}} ({{person.join_date}})
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <h5 id="upcoming-birthdays">{{ _('Upcoming birthdays') }} <span class="badge bg-warning">{{ _('Birthday Context') }}</span></h5>
+        <p class="text-muted small">{{ _('Loop through upcoming birthdays organized by time periods (today, this week, tomorrow, next week, next month).') }}</p>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in upcoming_birthdays.current.today %}
+Today: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_birthdays.current.this_week %}
+This week: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_birthdays.next.tomorrow %}
+Tomorrow: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_birthdays.next.week %}
+Next week: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_birthdays.next.month %}
+Next month: {{person.first_name}} {{person.last_name}}
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <h5 id="upcoming-anniversaries">{{ _('Upcoming anniversaries') }} <span class="badge bg-success">{{ _('Anniversary Context') }}</span></h5>
+        <p class="text-muted small">{{ _('Loop through upcoming membership anniversaries organized by time periods.') }}</p>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in upcoming_anniversaries.current.today %}
+Today: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_anniversaries.current.this_week %}
+This week: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_anniversaries.next.tomorrow %}
+Tomorrow: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_anniversaries.next.week %}
+Next week: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_anniversaries.next.month %}
+Next month: {{person.first_name}} {{person.last_name}}
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <h5 id="upcoming-events">{{ _('Upcoming events') }} <span class="badge bg-primary">{{ _('Event Context') }}</span></h5>
+        <p class="text-muted small">{{ _('Display events organized by time periods (today, this week, tomorrow, next week, next month) and include participant information.') }}</p>
+
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for item in upcoming_events.current.today %}
+Today: {{item.title}} on {{item.start_at}}
+{% endfor %}
+
+{% for item in upcoming_events.current.this_week %}
+This week: {{item.title}} on {{item.start_at}}
+{% endfor %}
+
+{% for item in upcoming_events.next.tomorrow %}
+Tomorrow: {{item.title}} on {{item.start_at}}
+{% endfor %}
+
+{% for item in upcoming_events.next.week %}
+Next week: {{item.title}} on {{item.start_at}}
+{% endfor %}
+
+{% for item in upcoming_events.next.month %}
+Next month: {{item.title}} on {{item.start_at}}
+{% endfor %}
+
+{% for participant in event.participants %}
+{{participant.name}} ({{participant.email}})
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+</div>
+
+<!-- Additional placeholders added according to user request -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <h5 id="recipient">{{ _('Recipient') }} <span class="badge bg-info">{{ _('Recipient Context') }}</span></h5>
+        <p class="text-muted small">{{ _('Placeholders for the message recipient (member or external recipient).') }}</p>
+        <ul>
+            <li>{{ _('First name') }}: <code>{{ '{{recipient.first_name}}' }}</code></li>
+            <li>{{ _('Last name') }}: <code>{{ '{{recipient.last_name}}' }}</code></li>
+            <li>{{ _('Full name') }}: <code>{{ '{{recipient.fullname}}' }}</code></li>
+            <li>{{ _('Email') }}: <code>{{ '{{recipient.email}}' }}</code></li>
+            <li>{{ _('Phone') }}: <code>{{ '{{recipient.phone}}' }}</code></li>
+            <li>{{ _('Member number') }}: <code>{{ '{{recipient.member_number}}' }}</code></li>
+            <li>{{ _('Birth date') }}: <code>{{ '{{recipient.birth_date}}' }}</code></li>
+            <li>{{ _('Join date') }}: <code>{{ '{{recipient.join_date}}' }}</code></li>
+            <li>{{ _('Age') }}: <code>{{ '{{recipient.age}}' }}</code></li>
+        </ul>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <h5 id="trigger">{{ _('Trigger') }} <span class="badge bg-danger">{{ _('Trigger Context') }}</span></h5>
+        <p class="text-muted small">{{ _('Placeholders describing the trigger that fired the notification.') }}</p>
+        <ul>
+            <li>{{ _('Name') }}: <code>{{ '{{trigger.name}}' }}</code></li>
+            <li>{{ _('Description') }}: <code>{{ '{{trigger.description}}' }}</code></li>
+            <li>{{ _('Code') }}: <code>{{ '{{trigger.code}}' }}</code></li>
+            <li>{{ _('Days before') }}: <code>{{ '{{trigger.days_before}}' }}</code></li>
+        </ul>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <h5 id="member-subject">{{ _('Member / Subject') }} <span class="badge bg-info">{{ _('Member Context') }}</span></h5>
+        <p class="text-muted small">{{ _('Placeholders for a member referenced as `member` or `subject` in templates.') }}</p>
+        <ul>
+            <li>{{ _('First name') }}: <code>{{ '{{member.first_name}}' }}</code> / <code>{{ '{{subject.first_name}}' }}</code></li>
+            <li>{{ _('Last name') }}: <code>{{ '{{member.last_name}}' }}</code> / <code>{{ '{{subject.last_name}}' }}</code></li>
+            <li>{{ _('Full name') }}: <code>{{ '{{member.fullname}}' }}</code> / <code>{{ '{{subject.fullname}}' }}</code></li>
+            <li>{{ _('Email') }}: <code>{{ '{{member.email}}' }}</code> / <code>{{ '{{subject.email}}' }}</code></li>
+            <li>{{ _('Phone') }}: <code>{{ '{{member.phone}}' }}</code> / <code>{{ '{{subject.phone}}' }}</code></li>
+            <li>{{ _('Member number') }}: <code>{{ '{{member.member_number}}' }}</code> / <code>{{ '{{subject.member_number}}' }}</code></li>
+            <li>{{ _('Birth date') }}: <code>{{ '{{member.birth_date}}' }}</code> / <code>{{ '{{subject.birth_date}}' }}</code></li>
+            <li>{{ _('Join date') }}: <code>{{ '{{member.join_date}}' }}</code> / <code>{{ '{{subject.join_date}}' }}</code></li>
+            <li>{{ _('Age') }}: <code>{{ '{{member.age}}' }}</code> / <code>{{ '{{subject.age}}' }}</code></li>
+            <li>{{ _('Required hours') }}: <code>{{ '{{member.required_hours}}' }}</code> / <code>{{ '{{subject.required_hours}}' }}</code></li>
+            <li>{{ _('All hours') }}: <code>{{ '{{member.all_hours}}' }}</code> / <code>{{ '{{subject.all_hours}}' }}</code></li>
+            <li>{{ _('This year hours') }}: <code>{{ '{{member.hours.this_year}}' }}</code> / <code>{{ '{{subject.hours.this_year}}' }}</code></li>
+            <li>{{ _('Today hours') }}: <code>{{ '{{member.hours.today}}' }}</code></li>
+            <li>{{ _('Membership duration') }}: <code>{{ '{{member.membership_duration}}' }}</code></li>
+            <li>{{ _('Active') }}: <code>{{ '{{member.active}}' }}</code></li>
+        </ul>
+    </div>
+
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <h5 id="global-hours">{{ _('Global hours') }} <span class="badge bg-secondary">{{ _('Global') }}</span></h5>
+        <p class="text-muted small">{{ _('Aggregated hours statistics.') }}</p>
+        <ul>
+            <li>{{ _('Total') }}: <code>{{ '{{hours.total}}' }}</code></li>
+            <li>{{ _('This year') }}: <code>{{ '{{hours.this_year}}' }}</code></li>
+            <li>{{ _('This month') }}: <code>{{ '{{hours.this_month}}' }}</code></li>
+            <li>{{ _('Last month') }}: <code>{{ '{{hours.last_month}}' }}</code></li>
+        </ul>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <h5 id="participant-stats">{{ _('Participant statistics') }} <span class="badge bg-secondary">{{ _('Global') }}</span></h5>
+        <p class="text-muted small">{{ _('Counts and statistics about participants.') }}</p>
+        <ul>
+            <li>{{ _('Total members') }}: <code>{{ '{{participants.total.count}}' }}</code></li>
+            <li>{{ _('Active members') }}: <code>{{ '{{participants.active.count}}' }}</code></li>
+            <li>{{ _('Worked this month') }}: <code>{{ '{{participants.worked.this_month.count}}' }}</code></li>
+            <li>{{ _('Worked last month') }}: <code>{{ '{{participants.worked.last_month.count}}' }}</code></li>
+            <li>{{ _('Worked this year') }}: <code>{{ '{{participants.worked.this_year.count}}' }}</code></li>
+        </ul>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <h5 id="members-hours">{{ _('Members with / without hours') }} <span class="badge bg-secondary">{{ _('Global') }}</span></h5>
+        <p class="text-muted small">{{ _('Lists and example loops for members with or without hours.') }}</p>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in members.with_hours.current.week %}
+{{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in members.without_hours.current.week %}
+{{person.first_name}} {{person.last_name}}
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <h5 id="members-birthdays">{{ _('Members with birthdays in the current month') }} <span class="badge bg-warning">{{ _('Birthday Context') }}</span></h5>
+        <p class="text-muted small">{{ _('Loop through members who have birthdays this month.') }}</p>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in members.birthday.current_month %}
+{{person.first_name}} {{person.last_name}} ({{person.birth_date}})
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <h5 id="birthday-milestones">{{ _('Birthday milestones') }} <span class="badge bg-warning">{{ _('Birthday Context') }}</span></h5>
+        <p class="text-muted small">{{ _('Lists for milestone birthdays.') }}</p>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in birthdays_milestone_40 %}
+{{person.first_name}} {{person.last_name}}
+{% endfor %}
+{% for person in birthdays_milestone_50 %}
+{{person.first_name}} {{person.last_name}}
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <h5 id="membership-milestones">{{ _('Membership milestones') }} <span class="badge bg-success">{{ _('Anniversary Context') }}</span></h5>
+        <p class="text-muted small">{{ _('Lists for milestone anniversaries.') }}</p>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in membership_anniversaries_milestone_10 %}
+{{person.first_name}} {{person.last_name}}
+{% endfor %}
+{% for person in membership_anniversaries_milestone_25 %}
+{{person.first_name}} {{person.last_name}}
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <h5 id="upcoming-lists">{{ _('Additional upcoming lists') }} <span class="badge bg-secondary">{{ _('Global') }}</span></h5>
+        <p class="text-muted small">{{ _('Alternative loop variable names used in some templates.') }}</p>
+        <pre class="bg-light p-3 border rounded"><code>
+{% raw %}{% for person in upcoming_birthdays_today %}
+Today: {{person.first_name}} {{person.last_name}}
+{% endfor %}
+
+{% for person in upcoming_anniversaries_today %}
+Today: {{person.first_name}} {{person.last_name}}
+{% endfor %}{% endraw %}
+        </code></pre>
+    </div>
+</div>

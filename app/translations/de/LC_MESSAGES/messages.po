@@ -1,0 +1,2537 @@
+# German translations for Club Automailer.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the Club Automailer project.
+# FIRST AUTHOR donnerbaer, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.4\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-06-03 23:18+0200\n"
+"PO-Revision-Date: 2026-06-04 13:00+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: templates/component/navbar.html:18 templates/component/navbar.html:30
+#: templates/component/notification_sidebar.html:9
+#: templates/component/notification_sidebar.html:152
+#: templates/notification/site.dashboard.html:14
+#: templates/notification/site.working_hours.dashboard.html:17
+#: templates/site.dashboard.html:2 templates/site.dashboard.html:5
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: templates/component/navbar.html:14 templates/site.index.html:2
+msgid "Home"
+msgstr ""
+
+#: templates/site.index.html:13
+msgid "Manuel"
+msgstr "Anleitung"
+
+#: templates/auth/modal.login.html:5 templates/component/navbar.html:75
+#: templates/site.login.html:2 templates/site.login.html:5
+msgid "Sign-in"
+msgstr "Anmelden"
+
+#: templates/site.register.html:2
+msgid "Register"
+msgstr "Registrieren"
+
+#: templates/site.register.html:5
+msgid "Register new account"
+msgstr "Neues Benutzerkonto erstellen"
+
+#: templates/site.user.html:2
+msgid "Profile"
+msgstr "Profil"
+
+#: templates/admin/site.index.html:24 templates/admin/site.users.html:2
+#: templates/admin/site.users.html:15 templates/admin/site.users.html:20
+#: templates/component/navbar.html:39 templates/site.user.html:12
+#: templates/site.user.update.html:13 templates/site.users.html:12
+#: templates/site.users.html:17
+msgid "Users"
+msgstr "Benutzer*innen"
+
+#: templates/admin/site.group.html:61 templates/site.user.html:29
+msgid "Username"
+msgstr "Benutzername"
+
+#: templates/site.user.html:33
+msgid "First Name"
+msgstr "Vorname"
+
+#: templates/site.user.html:37
+msgid "Last Name"
+msgstr "Nachname"
+
+#: templates/notification/site.member.html:59
+#: templates/notification/template/placeholders.html:262
+#: templates/notification/template/placeholders.html:291
+#: templates/site.user.html:41
+msgid "Email"
+msgstr "E-Mail"
+
+#: templates/site.user.html:45
+msgid "Created At"
+msgstr "Erstellt am"
+
+#: templates/site.user.html:49
+msgid "Image Filename"
+msgstr "Bildateiname"
+
+#: templates/site.user.html:51 templates/site.user.html:62
+msgid "No image uploaded"
+msgstr "Kein Bild hochgeladen"
+
+#: templates/site.user.html:55
+msgid "Image URL"
+msgstr "Bild URL"
+
+#: templates/admin/role/modal.role.update.html:4
+#: templates/notification/rule/modal.rule.update.html:2
+#: templates/notification/site.working_hours.html:136
+#: templates/notification/trigger_type/modal.trigger_type.update.html:2
+#: templates/site.user.html:71
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: templates/site.user.update.html:2
+msgid "Update User"
+msgstr "Benutzer*in aktualisieren"
+
+#: templates/notification/site.import_events.html:92
+#: templates/notification/site.import_members.html:68
+#: templates/notification/site.import_working_hours.html:68
+#: templates/notification/site.logs.html:90 templates/site.user.update.html:23
+#: templates/site.user.update.html:102 templates/user/modal.delete.html:20
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: templates/site.user.update.html:42
+msgid "Errors:"
+msgstr "Fehler:"
+
+#: templates/site.user.update.html:95
+msgid "Required"
+msgstr "Benötigt"
+
+#: templates/site.users.html:2
+msgid "List of all users"
+msgstr "Liste aller Benutzer*innen"
+
+#: templates/site.users.html:20 templates/site.users.html:27
+msgid "Create User"
+msgstr "Erstelle Benutzer*in"
+
+#: templates/admin/group/modal.group.create.html:18
+#: templates/admin/group/modal.group.update.html:18
+#: templates/admin/role/modal.role.create.html:20
+#: templates/admin/role/modal.role.delete.html:23
+#: templates/admin/role/modal.role.update.html:20
+#: templates/notification/event/form.event.add_member.html:23
+#: templates/notification/event/form.event.cleanup.html:33
+#: templates/notification/event/form.event.create.html:61
+#: templates/notification/event/form.event.update.html:61
+#: templates/notification/event/modal.event.delete.html:24
+#: templates/notification/event/modal.event.remove_member.html:23
+#: templates/notification/group/form.group.add_member.html:12
+#: templates/notification/group/form.group.html:26
+#: templates/notification/group/modal.group.delete.html:20
+#: templates/notification/group/modal.group.remove_member.html:23
+#: templates/notification/member/form.member.add_group.html:23
+#: templates/notification/member/form.member.create.html:57
+#: templates/notification/member/form.member.update.html:57
+#: templates/notification/member/modal.member.delete.html:23
+#: templates/notification/member/modal.member.remove_group.html:19
+#: templates/notification/rule/form.rule.add_receiver.html:16
+#: templates/notification/rule/form.rule.create.html:61
+#: templates/notification/rule/form.rule.update.html:61
+#: templates/notification/rule/modal.rule.delete.html:13
+#: templates/notification/rule/modal.rule.remove_receiver.html:12
+#: templates/notification/site.import_events.html:83
+#: templates/notification/site.import_members.html:59
+#: templates/notification/site.import_working_hours.html:59
+#: templates/notification/site.logs.html:46
+#: templates/notification/site.logs.html:242
+#: templates/notification/site.logs.html:259
+#: templates/notification/template/form.template.create.html:33
+#: templates/notification/template/form.template.update.html:33
+#: templates/notification/template/modal.template.delete.html:24
+#: templates/notification/trigger_type/form.trigger_type.create.html:12
+#: templates/notification/trigger_type/form.trigger_type.update.html:12
+#: templates/notification/trigger_type/modal.trigger_type.delete.html:13
+#: templates/site.users.html:36
+msgid "Close"
+msgstr "Schließen"
+
+#: templates/admin/site.users.html:36 templates/admin/site.users.html:58
+#: templates/site.users.html:43
+msgid "No users found."
+msgstr "Keine Benutzer*innen gefunden."
+
+#: templates/admin/site.users.html:38 templates/site.users.html:45
+#: templates/site.users.html:47
+msgid "Number of users"
+msgstr "Anzahl Benutzer*innen"
+
+#: templates/admin/site.group.html:59 templates/admin/site.group.html:105
+#: templates/admin/site.groups.html:35 templates/admin/site.role.html:36
+#: templates/admin/site.roles.html:34 templates/admin/site.users.html:44
+#: templates/notification/site.event.html:52
+#: templates/notification/site.group.html:40
+#: templates/notification/site.group.html:62
+#: templates/notification/site.groups.html:141
+#: templates/notification/site.member.html:47
+#: templates/notification/site.members.html:163
+#: templates/notification/site.rules.html:43
+#: templates/notification/site.templates.html:52
+#: templates/notification/site.trigger_type.html:30
+#: templates/notification/site.trigger_types.html:43
+#: templates/notification/site.working_hours.html:101
+#: templates/site.users.html:53
+msgid "ID"
+msgstr "ID"
+
+#: templates/site.users.html:54
+msgid "Firstname"
+msgstr "Vorname"
+
+#: templates/site.users.html:55
+msgid "Lastname"
+msgstr "Nachname"
+
+#: templates/admin/site.group.html:62 templates/admin/site.group.html:108
+#: templates/notification/site.events.html:207
+#: templates/notification/site.groups.html:145
+#: templates/notification/site.members.html:172
+#: templates/notification/site.rules.html:48
+#: templates/notification/site.templates.html:56
+#: templates/notification/site.trigger_types.html:46
+#: templates/notification/site.working_hours.html:106
+#: templates/site.users.html:56
+msgid "Actions"
+msgstr "Aktionen"
+
+#: templates/site.users.html:66
+msgid "Display"
+msgstr "Anzeigen"
+
+#: templates/admin/site.group.html:2 templates/admin/site.group.html:35
+#: templates/notification/site.group.html:22
+#: templates/notification/site.rule.html:88
+msgid "Group"
+msgstr "Gruppe"
+
+#: templates/admin/site.group.html:2 templates/admin/site.group.html:12
+#: templates/admin/site.groups.html:2 templates/admin/site.groups.html:12
+#: templates/admin/site.index.html:2 templates/admin/site.index.html:12
+#: templates/admin/site.role.html:2 templates/admin/site.role.html:12
+#: templates/admin/site.roles.html:2 templates/admin/site.roles.html:12
+#: templates/admin/site.users.html:2 templates/admin/site.users.html:12
+#: templates/component/navbar.html:27
+msgid "Admin"
+msgstr "Admin"
+
+#: templates/admin/site.group.html:15 templates/admin/site.groups.html:2
+#: templates/admin/site.groups.html:15 templates/admin/site.groups.html:21
+#: templates/admin/site.index.html:27 templates/component/navbar.html:33
+#: templates/component/notification_sidebar.html:40
+#: templates/notification/site.dashboard.html:143
+#: templates/notification/site.group.html:2
+#: templates/notification/site.group.html:14
+#: templates/notification/site.groups.html:2
+#: templates/notification/site.groups.html:34
+#: templates/notification/site.groups.html:39
+#: templates/notification/site.member.html:90
+msgid "Groups"
+msgstr "Gruppen"
+
+#: templates/admin/site.group.html:24
+#: templates/notification/event/form.event.add_member.html:6
+#: templates/notification/event/form.event.cleanup.html:6
+#: templates/notification/event/form.event.create.html:6
+#: templates/notification/event/form.event.update.html:6
+#: templates/notification/group/form.group.html:6
+#: templates/notification/member/form.member.add_group.html:6
+#: templates/notification/member/form.member.create.html:6
+#: templates/notification/member/form.member.update.html:6
+#: templates/notification/template/form.template.create.html:6
+#: templates/notification/template/form.template.update.html:6
+msgid "There were errors in your form submission:"
+msgstr "Bei der Übermittlung deines Formulars sind Fehler aufgetreten:"
+
+#: templates/admin/site.group.html:37 templates/admin/site.group.html:107
+#: templates/admin/site.groups.html:37 templates/admin/site.role.html:25
+#: templates/admin/site.role.html:39 templates/admin/site.roles.html:36
+#: templates/admin/site.users.html:46 templates/notification/site.event.html:73
+#: templates/notification/site.group.html:44
+#: templates/notification/site.groups.html:143
+#: templates/notification/site.trigger_type.html:34
+#: templates/notification/site.trigger_types.html:45
+#: templates/notification/template/placeholders.html:68
+#: templates/notification/template/placeholders.html:276
+msgid "Description"
+msgstr "Beschreibung"
+
+#: templates/admin/site.group.html:39 templates/notification/site.group.html:23
+msgid "No description provided for this group."
+msgstr "Für diese Gruppe wurde keine Beschreibung angegeben."
+
+#: templates/admin/site.group.html:50
+msgid "Users assigned to"
+msgstr "Benutzer*innen, die zugewiesen sind"
+
+#: templates/admin/site.group.html:53 templates/admin/site.group.html:99
+msgid "No users assigned to the group."
+msgstr "Keiner Benutzer*innen sind dieser Gruppe zugewiesen."
+
+#: templates/admin/site.group.html:60 templates/admin/site.group.html:106
+#: templates/admin/site.groups.html:36 templates/admin/site.roles.html:35
+#: templates/admin/site.users.html:45 templates/notification/site.group.html:42
+#: templates/notification/site.groups.html:142
+#: templates/notification/site.members.html:77
+#: templates/notification/site.rule.html:35
+#: templates/notification/site.rules.html:44
+#: templates/notification/template/placeholders.html:275
+msgid "Name"
+msgstr "Name"
+
+#: templates/admin/site.group.html:78
+msgid "View User"
+msgstr "Benutzer anzeigen"
+
+#: templates/admin/site.group.html:96
+msgid "Roles assigned to"
+msgstr "Zugewiesene Rollen"
+
+#: templates/admin/site.group.html:124
+msgid "View Role"
+msgstr "Rolle anzeigen"
+
+#: templates/admin/site.groups.html:26 templates/admin/site.groups.html:51
+#: templates/notification/site.groups.html:110
+msgid "No groups found."
+msgstr "Keine Gruppen gefunden."
+
+#: templates/admin/site.groups.html:28
+msgid "Number of Groups"
+msgstr "Anzahl Gruppen"
+
+#: templates/admin/site.index.html:18
+msgid "Admin Panel"
+msgstr "Admin-Bereich"
+
+#: templates/admin/site.index.html:19
+msgid "Here is some content for the admin dashboard."
+msgstr "Hier sind einige Inhalte für das Admin-Dashboard."
+
+#: templates/admin/site.index.html:30 templates/admin/site.role.html:15
+#: templates/admin/site.roles.html:2 templates/admin/site.roles.html:15
+#: templates/admin/site.roles.html:20 templates/component/navbar.html:36
+msgid "Roles"
+msgstr "Rollen"
+
+#: templates/admin/site.index.html:38
+msgid "Notes"
+msgstr "Anmerkung"
+
+#: templates/admin/site.index.html:39
+msgid "How is the authorization system build?"
+msgstr "Wie ist das Autorisierungssystem aufgebaut?"
+
+#: templates/admin/site.index.html:42
+msgid "Each user is assigned to at least one group."
+msgstr "Jeder Benutzer ist mindestens einer Gruppe zugewiesen."
+
+#: templates/admin/site.index.html:45
+msgid "Each group is assigned at least one role."
+msgstr "Jeder Gruppe ist mindestens eine Rolle zugewiesen."
+
+#: templates/admin/site.index.html:48
+msgid "Each role has at least one authorization."
+msgstr "Jede Rolle hat mindestens eine Berechtigung."
+
+#: templates/admin/site.index.html:59
+msgid "Version Check"
+msgstr "Versionsprüfung"
+
+#: templates/admin/site.index.html:61
+msgid "The current software version is:"
+msgstr "Die aktuelle Softwareversion ist:"
+
+#: templates/admin/site.index.html:64
+msgid "The latest version available is:"
+msgstr "Die neueste verfügbare Version ist:"
+
+#: templates/admin/site.index.html:67
+msgid "Could not retrieve the latest version information."
+msgstr "Die Informationen zur neuesten Version konnten nicht abgerufen werden."
+
+#: templates/admin/site.index.html:72
+msgid "An update is available!"
+msgstr "Ein Update ist verfügbar!"
+
+#: templates/admin/site.index.html:73
+msgid "Get the newest release"
+msgstr "Die neueste Version herunterladen"
+
+#: templates/admin/site.index.html:77
+#, fuzzy
+msgid "You are using the latest version."
+msgstr "Du verwendest die neueste Version."
+
+#: templates/admin/site.role.html:2 templates/admin/site.role.html:24
+msgid "Role"
+msgstr "Rolle"
+
+#: templates/admin/site.role.html:37
+msgid "Allowed"
+msgstr "Erlaubt"
+
+#: templates/admin/site.role.html:38
+msgid "Permission Name"
+msgstr "Berechtigungsname"
+
+#: templates/admin/site.roles.html:26 templates/admin/site.roles.html:48
+msgid "No roles found."
+msgstr "Keine Rollen gefunden."
+
+#: templates/admin/site.roles.html:28
+msgid "Number of roles"
+msgstr "Anzahl Rollen"
+
+#: templates/admin/site.users.html:26
+msgid "Create user"
+msgstr "Benutzer*in erstellen"
+
+#: templates/admin/group/form.group.add_user.html:4
+#: templates/notification/group/form.group.add_member.html:4
+msgid "Filter by Name"
+msgstr "Nach Name filtern"
+
+#: templates/admin/group/form.group.add_user.html:5
+msgid "Search user..."
+msgstr "Benutzer*in suchen..."
+
+#: templates/admin/group/modal.group.add_user.html:4
+msgid "Add User"
+msgstr "Benutzer*in hinzufügen"
+
+#: templates/admin/group/modal.group.add_user.html:12
+msgid "Add User to the Group"
+msgstr "Benutzer*in zur Gruppe hinzufügen"
+
+#: templates/admin/group/modal.group.assign_role.html:4
+msgid "Assign Role"
+msgstr "Rolle zuweisen"
+
+#: templates/admin/group/modal.group.assign_role.html:12
+msgid "Assign Role to"
+msgstr "Rolle zuweisen an"
+
+#: templates/admin/group/modal.group.create.html:3
+#: templates/admin/group/modal.group.create.html:9
+msgid "Create Group"
+msgstr "Gruppe erstellen"
+
+#: templates/admin/group/modal.group.delete.html:4
+#: templates/admin/group/modal.group.delete.html:12
+msgid "Delete Group"
+msgstr "Gruppe löschen"
+
+#: templates/admin/group/modal.group.delete.html:17
+#: templates/user/modal.delete.html:14
+msgid "Warning!"
+msgstr "Warnung!"
+
+#: templates/admin/group/modal.group.delete.html:18
+#: templates/notification/group/modal.group.delete.html:15
+msgid "Are you sure you want to delete the group? This action cannot be undone."
+msgstr ""
+"Möchtest du die Gruppe wirklich löschen? Diese Aktion kann nicht "
+"rückgängig gemacht werden."
+
+#: templates/admin/group/modal.group.remove_role.html:4
+#: templates/admin/group/modal.group.remove_user.html:4
+#: templates/admin/group/modal.group.remove_user.html:21
+#: templates/notification/event/modal.event.remove_member.html:2
+#: templates/notification/event/modal.event.remove_member.html:21
+#: templates/notification/group/modal.group.remove_member.html:2
+#: templates/notification/group/modal.group.remove_member.html:21
+#: templates/notification/member/modal.member.remove_group.html:17
+#: templates/notification/rule/modal.rule.remove_receiver.html:1
+#: templates/notification/rule/modal.rule.remove_receiver.html:11
+#: templates/notification/site.member.html:118
+msgid "Remove"
+msgstr "Entfernen"
+
+#: templates/admin/group/modal.group.remove_role.html:12
+msgid "Remove role from group"
+msgstr "Rolle aus Gruppe entfernen"
+
+#: templates/admin/group/modal.group.remove_role.html:17
+msgid ""
+"Are you sure you want to remove this role from the group? This action "
+"cannot be undone."
+msgstr ""
+"Möchtest du diese Rolle wirklich aus der Gruppe entfernen? Diese Aktion "
+"kann nicht rückgängig gemacht werden."
+
+#: templates/admin/group/modal.group.remove_role.html:22
+msgid "Remove Role"
+msgstr "Rolle entfernen"
+
+#: templates/admin/group/modal.group.remove_user.html:12
+msgid "Remove user from group"
+msgstr "Benutzer*in aus Gruppe entfernen"
+
+#: templates/admin/group/modal.group.remove_user.html:17
+msgid ""
+"Are you sure you want to remove this user from the group? This action "
+"cannot be undone."
+msgstr ""
+"Möchtest du diese*n Benutzer*in wirklich aus der Gruppe entfernen? Diese "
+"Aktion kann nicht rückgängig gemacht werden."
+
+#: templates/admin/group/modal.group.update.html:3
+#: templates/admin/group/modal.group.update.html:9
+msgid "Edit Group"
+msgstr "Gruppe bearbeiten"
+
+#: templates/admin/role/form.role.create.html:5
+msgid "required"
+msgstr "erforderlich"
+
+#: templates/admin/role/modal.role.add_permission.html:4
+msgid "Update Permissions"
+msgstr "Berechtigungen aktualisieren"
+
+#: templates/admin/role/modal.role.add_permission.html:11
+msgid "Update Permissons for"
+msgstr "Berechtigungen aktualisieren für"
+
+#: templates/admin/role/modal.role.create.html:4
+#: templates/admin/role/modal.role.create.html:11
+msgid "Create role"
+msgstr "Rolle erstellen"
+
+#: templates/admin/role/modal.role.delete.html:4
+#: templates/notification/event/modal.event.delete.html:22
+#: templates/notification/rule/modal.rule.delete.html:2
+#: templates/notification/rule/modal.rule.delete.html:12
+#: templates/notification/site.working_hours.html:141
+#: templates/notification/template/modal.template.delete.html:22
+#: templates/notification/trigger_type/modal.trigger_type.delete.html:2
+#: templates/notification/trigger_type/modal.trigger_type.delete.html:12
+#: templates/user/modal.delete.html:3
+msgid "Delete"
+msgstr "Löschen"
+
+#: templates/admin/role/modal.role.delete.html:11
+#: templates/admin/role/modal.role.delete.html:21
+msgid "Delete Role"
+msgstr "Rolle löschen"
+
+#: templates/admin/role/modal.role.delete.html:16
+msgid "Are you sure you want to delete the role? This action cannot be undone."
+msgstr ""
+"Möchtest du die Rolle wirklich löschen? Diese Aktion kann nicht "
+"rückgängig gemacht werden."
+
+#: templates/admin/role/modal.role.update.html:11
+msgid "Update role"
+msgstr "Rolle aktualisieren"
+
+#: templates/auth/modal.register.html:3 templates/auth/modal.register.html:11
+msgid "Sign-up"
+msgstr "Registrieren"
+
+#: templates/component/navbar.html:21
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+#: templates/component/navbar.html:53 templates/component/navbar.html:54
+#: templates/notification/site.events.html:98
+#: templates/notification/site.events.html:139
+#: templates/notification/site.groups.html:67
+#: templates/notification/site.groups.html:90
+#: templates/notification/site.members.html:105
+msgid "Search"
+msgstr "Suchen"
+
+#: templates/component/navbar.html:66
+msgid "My Profile"
+msgstr "Mein Profil"
+
+#: templates/component/navbar.html:68
+msgid "Logout"
+msgstr "Abmelden"
+
+#: templates/component/notification_sidebar.html:17
+#: templates/notification/site.dashboard.html:140
+#: templates/notification/site.event.html:85
+#: templates/notification/site.events.html:229
+#: templates/notification/site.group.html:46
+#: templates/notification/site.groups.html:144
+#: templates/notification/site.import_members.html:14
+#: templates/notification/site.member.html:2
+#: templates/notification/site.member.html:15
+#: templates/notification/site.members.html:2
+#: templates/notification/site.members.html:37
+#: templates/notification/site.members.html:42
+msgid "Members"
+msgstr "Mitglieder"
+
+#: templates/component/notification_sidebar.html:23
+msgid "All Members"
+msgstr "Alle Mitglieder"
+
+#: templates/component/notification_sidebar.html:30
+#: templates/notification/site.import_members.html:2
+#: templates/notification/site.import_members.html:17
+#: templates/notification/site.import_members.html:22
+msgid "Import Members CSV"
+msgstr "Mitglieder-CSV importieren"
+
+#: templates/component/notification_sidebar.html:46
+msgid "All Groups"
+msgstr "Alle Gruppen"
+
+#: templates/component/notification_sidebar.html:55
+#: templates/notification/site.dashboard.html:146
+#: templates/notification/site.event.html:2
+#: templates/notification/site.event.html:14
+#: templates/notification/site.event_series.html:9
+#: templates/notification/site.events.html:37
+#: templates/notification/site.events.html:42
+#: templates/notification/site.import_events.html:14
+msgid "Events"
+msgstr "Ereignisse"
+
+#: templates/component/notification_sidebar.html:61
+msgid "All Events"
+msgstr "Alle Ereignisse"
+
+#: templates/component/notification_sidebar.html:70
+#: templates/notification/site.import_ics.html:2
+#: templates/notification/site.import_ics.html:14
+msgid "Import ICS"
+msgstr "ICS importieren"
+
+#: templates/component/notification_sidebar.html:76
+msgid "Import CSV/TSV"
+msgstr "CSV/TSV importieren"
+
+#: templates/component/notification_sidebar.html:85
+#: templates/notification/site.template.html:2
+#: templates/notification/site.template.html:14
+#: templates/notification/site.templates.html:2
+#: templates/notification/site.templates.html:14
+#: templates/notification/site.templates.html:21
+msgid "Templates"
+msgstr "Vorlagen"
+
+#: templates/component/notification_sidebar.html:91
+msgid "All Templates"
+msgstr "Alle Vorlagen"
+
+#: templates/component/notification_sidebar.html:97
+msgid "Placeholders"
+msgstr "Platzhalter"
+
+#: templates/component/notification_sidebar.html:106
+msgid "Rules & Automation"
+msgstr "Regeln & Automatisierung"
+
+#: templates/component/notification_sidebar.html:112
+#: templates/notification/site.trigger_type.html:2
+#: templates/notification/site.trigger_type.html:9
+#: templates/notification/site.trigger_types.html:2
+#: templates/notification/site.trigger_types.html:9
+#: templates/notification/site.trigger_types.html:15
+msgid "Trigger Types"
+msgstr "Trigger-Typen"
+
+#: templates/component/notification_sidebar.html:118
+#: templates/notification/site.dashboard.html:149
+#: templates/notification/site.rule.html:2
+#: templates/notification/site.rule.html:9
+#: templates/notification/site.rules.html:2
+#: templates/notification/site.rules.html:9
+#: templates/notification/site.rules.html:15
+msgid "Rules"
+msgstr "Regeln"
+
+#: templates/component/notification_sidebar.html:127
+#: templates/notification/site.dashboard.html:152
+#: templates/notification/site.logs.html:9
+msgid "Logs"
+msgstr "Protokolle"
+
+#: templates/component/notification_sidebar.html:133
+msgid "All Logs"
+msgstr "Alle Protokolle"
+
+#: templates/component/notification_sidebar.html:140
+#: templates/notification/site.import_working_hours.html:14
+#: templates/notification/site.working_hours.dashboard.html:14
+#: templates/notification/site.working_hours.form.html:2
+#: templates/notification/site.working_hours.html:2
+#: templates/notification/site.working_hours.html:14
+#: templates/notification/site.working_hours.html:19
+msgid "Working Hours"
+msgstr "Arbeitsstunden"
+
+#: templates/component/notification_sidebar.html:146
+#: templates/notification/site.working_hours.dashboard.html:31
+msgid "All Working Hours"
+msgstr "Alle Arbeitsstunden"
+
+#: templates/component/notification_sidebar.html:159
+#: templates/notification/site.import_working_hours.html:2
+#: templates/notification/site.import_working_hours.html:17
+#: templates/notification/site.import_working_hours.html:22
+msgid "Import Working Hours CSV"
+msgstr "Arbeitsstunden-CSV importieren"
+
+#: templates/error/403.html:2
+msgid "Error 403"
+msgstr "Fehler 403"
+
+#: templates/error/403.html:7
+msgid "Error 403: Forbidden"
+msgstr "Fehler 403: Verboten"
+
+#: templates/error/403.html:8
+msgid ""
+"You don't have the permission to access the requested resource. It is "
+"either read-protected or not readable by the server."
+msgstr ""
+
+#: templates/error/404.html:2
+msgid "Error 404"
+msgstr "Fehler 404"
+
+#: templates/error/500.html:2
+msgid "Error 500"
+msgstr "Fehler 500"
+
+#: templates/notification/site.dashboard.html:2
+#: templates/notification/site.dashboard.html:19
+msgid "Notification Dashboard"
+msgstr "Benachrichtigungs-Dashboard"
+
+#: templates/notification/site.dashboard.html:11
+#: templates/notification/site.event.html:11
+#: templates/notification/site.event_series.html:2
+#: templates/notification/site.event_series.html:8
+#: templates/notification/site.events.html:34
+#: templates/notification/site.group.html:11
+#: templates/notification/site.groups.html:2
+#: templates/notification/site.groups.html:31
+#: templates/notification/site.import_events.html:11
+#: templates/notification/site.import_ics.html:11
+#: templates/notification/site.import_members.html:11
+#: templates/notification/site.import_working_hours.html:11
+#: templates/notification/site.index.html:2
+#: templates/notification/site.index.html:11
+#: templates/notification/site.index.html:16
+#: templates/notification/site.logs.html:2
+#: templates/notification/site.logs.html:8
+#: templates/notification/site.manuel.html:2
+#: templates/notification/site.member.html:12
+#: templates/notification/site.members.html:2
+#: templates/notification/site.members.html:34
+#: templates/notification/site.rule.html:8
+#: templates/notification/site.rules.html:2
+#: templates/notification/site.rules.html:8
+#: templates/notification/site.template.html:11
+#: templates/notification/site.template_placeholders.html:2
+#: templates/notification/site.template_placeholders.html:12
+#: templates/notification/site.templates.html:2
+#: templates/notification/site.templates.html:11
+#: templates/notification/site.trigger_type.html:8
+#: templates/notification/site.trigger_types.html:2
+#: templates/notification/site.trigger_types.html:8
+#: templates/notification/site.working_hours.dashboard.html:11
+#: templates/notification/site.working_hours.form.html:2
+#: templates/notification/site.working_hours.html:2
+#: templates/notification/site.working_hours.html:11
+msgid "Notification"
+msgstr "Benachrichtigung"
+
+#: templates/notification/site.dashboard.html:26
+msgid "Total Members"
+msgstr "Anzahl Mitglieder"
+
+#: templates/notification/site.dashboard.html:34
+msgid "Total Events"
+msgstr "Anzahl Ereignisse"
+
+#: templates/notification/site.dashboard.html:42
+msgid "Active Rules"
+msgstr "Aktive Regeln"
+
+#: templates/notification/site.dashboard.html:50
+msgid "Total Groups"
+msgstr "Anzahl Gruppen"
+
+#: templates/notification/site.dashboard.html:63
+msgid "Notification Status Distribution"
+msgstr "Verteilung des Benachrichtigungsstatus"
+
+#: templates/notification/site.dashboard.html:69
+#, python-format
+msgid "Total logs: %(total)d"
+msgstr "Gesamtzahl der Protokolle: %(total)d"
+
+#: templates/notification/site.dashboard.html:78
+msgid "Log Status Summary"
+msgstr "Protokollstatus-Zusammenfassung"
+
+#: templates/notification/site.dashboard.html:82
+#: templates/notification/site.dashboard.html:177
+msgid "Sent"
+msgstr "Gesendet"
+
+#: templates/notification/site.dashboard.html:86
+#: templates/notification/site.dashboard.html:177
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+#: templates/notification/site.dashboard.html:90
+#: templates/notification/site.dashboard.html:177
+msgid "Pending"
+msgstr "Ausstehend"
+
+#: templates/notification/site.dashboard.html:95
+#: templates/notification/template/placeholders.html:313
+msgid "Total"
+msgstr "Gesamt"
+
+#: templates/notification/site.dashboard.html:110
+msgid "Logs by Trigger Type"
+msgstr "Protokolle nach Trigger-Typ"
+
+#: templates/notification/site.dashboard.html:124
+msgid "Notification Trend (Last 7 Days)"
+msgstr "Benachrichtigungstrend (letzte 7 Tage)"
+
+#: templates/notification/site.dashboard.html:137
+msgid "Quick Links"
+msgstr "Schnellzugriffe"
+
+#: templates/notification/site.dashboard.html:205
+msgid "Number of Logs"
+msgstr "Anzahl Protokolle"
+
+#: templates/notification/site.dashboard.html:234
+msgid "Notifications Sent"
+msgstr "Benachrichtigungen gesendet"
+
+#: templates/notification/site.event.html:22
+#: templates/notification/site.logs.html:179
+#: templates/notification/template/placeholders.html:11
+#: templates/notification/template/placeholders.html:64
+msgid "Event"
+msgstr "Ereignis"
+
+#: templates/notification/site.event.html:24
+#: templates/notification/site.event.html:58
+#: templates/notification/site.events.html:216
+msgid "View series"
+msgstr "Serie anzeigen"
+
+#: templates/notification/site.event.html:39
+#: templates/notification/site.event_series.html:19
+msgid "Back to events"
+msgstr "Zurück zu den Ereignissen"
+
+#: templates/notification/site.event.html:49
+msgid "Event details"
+msgstr "Ereignisdetails"
+
+#: templates/notification/site.event.html:55
+#: templates/notification/site.events.html:201
+#: templates/notification/template/placeholders.html:67
+msgid "Title"
+msgstr "Titel"
+
+#: templates/notification/site.event.html:64
+#: templates/notification/site.rule.html:52
+#: templates/notification/site.trigger_type.html:16
+msgid "Trigger Type"
+msgstr "Trigger-Typ"
+
+#: templates/notification/site.event.html:76
+msgid "Start At"
+msgstr "Startzeit"
+
+#: templates/notification/site.event.html:79
+msgid "End At"
+msgstr "Endzeit"
+
+#: templates/notification/site.event.html:82
+#: templates/notification/site.events.html:206
+#: templates/notification/template/placeholders.html:69
+msgid "Location"
+msgstr "Ort"
+
+#: templates/notification/site.event.html:95
+#: templates/notification/site.event_series.html:40
+#: templates/notification/site.events.html:203
+msgid "Participants"
+msgstr "Teilnehmende"
+
+#: templates/notification/site.event.html:102
+#: templates/notification/site.group.html:92
+msgid "No members assigned."
+msgstr "Keine Mitglieder zugewiesen."
+
+#: templates/notification/site.event_series.html:2
+#: templates/notification/site.event_series.html:10
+#: templates/notification/site.event_series.html:16
+msgid "Event Series"
+msgstr "Ereignisserie"
+
+#: templates/notification/site.event_series.html:17
+msgid "Manage participants for each event in the series."
+msgstr "Verwalte die Teilnehmenden für jedes Ereignis in der Serie."
+
+#: templates/notification/site.event_series.html:35
+#: templates/notification/site.rules.html:80
+#: templates/notification/site.trigger_types.html:58
+msgid "View"
+msgstr "Anzeigen"
+
+#: templates/notification/site.event_series.html:44
+msgid "No participants assigned yet."
+msgstr "Noch keine Teilnehmenden zugewiesen."
+
+#: templates/notification/site.event_series.html:71
+msgid "Add"
+msgstr "Hinzufügen"
+
+#: templates/notification/site.event_series.html:82
+msgid "No events found for this series."
+msgstr "Keine Ereignisse für diese Serie gefunden."
+
+#: templates/notification/site.events.html:2
+msgid "List of all events"
+msgstr "Liste aller Ereignisse"
+
+#: templates/notification/event/modal.event.cleanup.html:6
+#: templates/notification/site.events.html:47
+msgid "Delete old events"
+msgstr "Alte Ereignisse löschen"
+
+#: templates/notification/site.events.html:52
+#: templates/notification/site.import_events.html:72
+#: templates/notification/site.import_events.html:82
+#: templates/notification/site.import_events.html:93
+msgid "Import events"
+msgstr "Ereignisse importieren"
+
+#: templates/notification/event/modal.event.create.html:6
+#: templates/notification/site.events.html:55
+msgid "Create event"
+msgstr "Ereignis erstellen"
+
+#: templates/notification/site.events.html:93
+#: templates/notification/site.groups.html:61
+#: templates/notification/site.members.html:72
+msgid "Filter and Search"
+msgstr "Filtern und suchen"
+
+#: templates/notification/site.events.html:105
+msgid "Search by title, type, description, location, start date or end date"
+msgstr "Nach Titel, Typ, Beschreibung, Ort, Start- oder Enddatum suchen"
+
+#: templates/notification/site.events.html:109
+#: templates/notification/site.events.html:204
+msgid "Start"
+msgstr "Start"
+
+#: templates/notification/site.events.html:119
+#: templates/notification/site.events.html:205
+msgid "End"
+msgstr "Ende"
+
+#: templates/notification/site.events.html:129
+#: templates/notification/site.groups.html:79
+msgid "Per Page"
+msgstr "Pro Seite"
+
+#: templates/notification/site.events.html:145
+#: templates/notification/site.groups.html:96
+#: templates/notification/site.members.html:111
+msgid "Clear filters"
+msgstr "Filter zurücksetzen"
+
+#: templates/notification/site.events.html:155
+#: templates/notification/site.members.html:121
+#: templates/notification/site.working_hours.html:71
+msgid "Import finished."
+msgstr "Import abgeschlossen."
+
+#: templates/notification/site.events.html:156
+#: templates/notification/site.members.html:122
+#: templates/notification/site.working_hours.html:72
+msgid "Created"
+msgstr "Erstellt"
+
+#: templates/notification/site.events.html:162
+#, python-format
+msgid "Deleted %(events)s events and %(logs)s logs older than %(value)s %(unit)s."
+msgstr "Es wurden %(events) Ereignisse und %(logs) Protokolle gelöscht, die älter als %(value) %(unit)s sind."
+
+#: templates/notification/site.events.html:171
+msgid "No events found."
+msgstr "Keine Ereignisse gefunden."
+
+#: templates/notification/site.events.html:175
+#: templates/notification/site.groups.html:114
+#: templates/notification/site.members.html:137
+#: templates/notification/site.working_hours.html:84
+msgid "Showing"
+msgstr "Angezeigt"
+
+#: templates/notification/site.events.html:177
+#: templates/notification/site.groups.html:116
+#: templates/notification/site.members.html:139
+#: templates/notification/site.working_hours.html:86
+msgid "to"
+msgstr "bis"
+
+#: templates/notification/site.events.html:179
+#: templates/notification/site.groups.html:118
+#: templates/notification/site.members.html:141
+#: templates/notification/site.working_hours.html:88
+msgid "of"
+msgstr "von"
+
+#: templates/notification/site.events.html:181
+msgid "events"
+msgstr "Ereignisse"
+
+#: templates/notification/site.events.html:186
+#: templates/notification/site.groups.html:125
+#: templates/notification/site.members.html:148
+#: templates/notification/site.working_hours.html:54
+msgid "Per page"
+msgstr "Pro Seite"
+
+#: templates/notification/site.events.html:202
+#: templates/notification/site.rules.html:45
+msgid "Type"
+msgstr "Typ"
+
+#: templates/notification/site.events.html:235
+msgid "No end time"
+msgstr "Keine Endzeit"
+
+#: templates/notification/site.events.html:238
+msgid "No location"
+msgstr "Kein Ort"
+
+#: templates/notification/site.events.html:242
+msgid "View event"
+msgstr "Ereignis anzeigen"
+
+#: templates/notification/site.group.html:27
+msgid "Back to groups"
+msgstr "Zurück zu den Gruppen"
+
+#: templates/notification/site.group.html:37
+msgid "Group details"
+msgstr "Gruppendetails"
+
+#: templates/notification/site.group.html:52
+msgid "Rules targeting this group"
+msgstr "Regeln für diese Gruppe"
+
+#: templates/notification/site.group.html:55
+msgid "No rules assigned to this group."
+msgstr "Dieser Gruppe sind keine Regeln zugewiesen."
+
+#: templates/notification/site.group.html:66
+#: templates/notification/site.member.html:77
+#: templates/notification/site.members.html:90
+#: templates/notification/site.members.html:171
+#: templates/notification/site.members.html:199
+#: templates/notification/site.rule.html:65
+#: templates/notification/site.rules.html:47
+#: templates/notification/site.rules.html:73
+#: templates/notification/template/placeholders.html:302
+msgid "Active"
+msgstr "Aktiv"
+
+#: templates/notification/site.group.html:68
+#: templates/notification/site.member.html:79
+#: templates/notification/site.members.html:91
+#: templates/notification/site.members.html:201
+#: templates/notification/site.rule.html:65
+#: templates/notification/site.rules.html:75
+msgid "Inactive"
+msgstr "Inaktiv"
+
+#: templates/notification/site.group.html:85
+msgid "Members in group"
+msgstr "Mitglieder in der Gruppe"
+
+#: templates/notification/site.groups.html:74
+msgid "Search by name or description"
+msgstr "Nach Name oder Beschreibung suchen"
+
+#: templates/notification/site.groups.html:120
+msgid "groups"
+msgstr "Gruppen"
+
+#: templates/notification/site.groups.html:158
+msgid "View group"
+msgstr "Gruppe anzeigen"
+
+#: templates/notification/site.import_events.html:2
+#: templates/notification/site.import_events.html:17
+#: templates/notification/site.import_events.html:22
+msgid "Import Events CSV/TSV"
+msgstr "Ereignisse CSV/TSV importieren"
+
+#: templates/notification/site.import_events.html:24
+msgid ""
+"Upload a CSV or TSV file with title, description, start_at, end_at, "
+"location, and participants (comma-, semicolon-, or whitespace-separated "
+"member numbers)."
+msgstr ""
+"Lade eine CSV- oder TSV-Datei mit Titel, Beschreibung, start_at, end_at, "
+"Ort und Teilnehmenden hoch (durch Kommas, Semikolons oder Leerzeichen "
+"getrennte Mitgliedsnummern)."
+
+#: templates/notification/site.import_events.html:29
+msgid "File Format"
+msgstr "Dateiformat"
+
+#: templates/notification/site.import_events.html:31
+msgid "Columns:"
+msgstr "Spalten:"
+
+#: templates/notification/site.import_events.html:41
+msgid "Example"
+msgstr "Beispiel"
+
+#: templates/notification/site.import_events.html:48
+msgid "Download TSV template"
+msgstr "TSV-Vorlage herunterladen"
+
+#: templates/notification/site.import_events.html:68
+msgid "Trigger type to apply to all imported events"
+msgstr "Trigger-Typ für alle importierten Ereignisse anwenden"
+
+#: templates/notification/site.import_events.html:74
+#: templates/notification/site.import_ics.html:45
+#: templates/notification/site.import_members.html:50
+#: templates/notification/site.import_working_hours.html:50
+msgid "Back"
+msgstr "Zurück"
+
+#: templates/notification/site.import_events.html:88
+msgid ""
+"Are you sure you want to import these events? This action cannot be "
+"undone."
+msgstr ""
+
+#: templates/notification/site.import_ics.html:21
+msgid "Import events from ICS"
+msgstr "Ereignisse aus ICS importieren"
+
+#: templates/notification/site.import_ics.html:22
+msgid ""
+"Upload an .ics calendar file to import events. Optionally apply a trigger"
+" type to all imported events."
+msgstr ""
+"Lade eine .ics-Kalenderdatei hoch, um Ereignisse zu importieren. Optional"
+" kannst du allen importierten Ereignissen einen Trigger-Typ zuweisen."
+
+#: templates/notification/site.import_members.html:24
+msgid ""
+"Upload a CSV file with member_number, first_name, last_name, birth_date, "
+"email, phone, member_since, required_hours, and status. Existing members "
+"are updated by member number, and members not present in the file are "
+"deleted."
+msgstr ""
+"Lade eine CSV-Datei mit member_number, first_name, last_name, birth_date,"
+" email, phone, member_since, required_hours und status hoch. Vorhandene "
+"Mitglieder werden anhand der Mitgliedsnummer aktualisiert, und "
+"Mitglieder, die nicht in der Datei enthalten sind, werden gelöscht."
+
+#: templates/notification/site.import_members.html:29
+#: templates/notification/site.import_working_hours.html:29
+msgid "Download empty CSV template"
+msgstr "Leere CSV-Vorlage herunterladen"
+
+#: templates/notification/site.import_members.html:48
+#: templates/notification/site.import_members.html:58
+#: templates/notification/site.import_members.html:69
+msgid "Import members"
+msgstr "Mitglieder importieren"
+
+#: templates/notification/site.import_members.html:64
+msgid "Are you sure? Not reimported members will be deleted."
+msgstr "Bist du sicher? Nicht erneut importierte Mitglieder werden gelöscht."
+
+#: templates/notification/site.import_working_hours.html:24
+msgid ""
+"Upload a CSV file with member_number, date, and hours. Each row will be "
+"added as a new working-hours entry for the matching member."
+msgstr ""
+"Lade eine CSV-Datei mit member_number, date und hours hoch. Jede Zeile "
+"wird als neuer Arbeitsstunden-Eintrag für das passende Mitglied "
+"hinzugefügt."
+
+#: templates/notification/site.import_working_hours.html:48
+#: templates/notification/site.import_working_hours.html:58
+#: templates/notification/site.import_working_hours.html:69
+msgid "Import working hours"
+msgstr "Arbeitsstunden importieren"
+
+#: templates/notification/site.import_working_hours.html:64
+msgid "Are you sure? Each CSV row will create a new working-hours entry."
+msgstr ""
+"Bist du sicher? Jede CSV-Zeile erstellt einen neuen Arbeitsstunden-"
+"Eintrag."
+
+#: templates/notification/site.logs.html:2
+#: templates/notification/site.logs.html:14
+msgid "Notification Logs"
+msgstr "Benachrichtigungsprotokolle"
+
+#: templates/notification/site.logs.html:18
+#: templates/notification/site.logs.html:45
+msgid "Clear Logs"
+msgstr "Protokolle leeren"
+
+#: templates/notification/site.logs.html:27
+#, python-format
+msgid "Deleted %(count)s log entries."
+msgstr "%(count)s Protokolleinträge wurden gelöscht."
+
+#: templates/notification/site.logs.html:31
+#, python-format
+msgid "Deleted %(count)s failed log entries."
+msgstr "%(count)s fehlgeschlagene Protokolleinträge wurden gelöscht."
+
+#: templates/notification/site.logs.html:35
+#, python-format
+msgid "Deleted %(count)s log entries before %(date)s."
+msgstr "%(count)s Protokolleinträge vor %(date)s wurden gelöscht."
+
+#: templates/notification/site.logs.html:78
+msgid ""
+"Are you sure you want to delete all notification logs? This action cannot"
+" be undone."
+msgstr ""
+
+#: templates/notification/site.logs.html:82
+msgid ""
+"This will delete all notification logs with status FAILED. This action "
+"cannot be undone."
+msgstr ""
+
+#: templates/notification/site.logs.html:86
+msgid ""
+"This will delete all notification logs before the selected date. This "
+"action cannot be undone."
+msgstr ""
+
+#: templates/notification/site.logs.html:147
+msgid "Please select a date."
+msgstr "Bitte wähle ein Datum aus."
+
+#: templates/notification/site.logs.html:170
+msgid "No logs found."
+msgstr "Keine Protokolle gefunden."
+
+#: templates/notification/site.logs.html:176
+msgid "Sent At"
+msgstr "Gesendet am"
+
+#: templates/notification/site.logs.html:177
+#: templates/notification/site.rule.html:16
+msgid "Rule"
+msgstr "Regel"
+
+#: templates/notification/site.logs.html:178
+msgid "Recipient Member"
+msgstr "Empfangenes Mitglied"
+
+#: templates/notification/site.logs.html:180
+#: templates/notification/template/placeholders.html:37
+#: templates/notification/template/placeholders.html:256
+msgid "Recipient"
+msgstr "Empfänger"
+
+#: templates/notification/site.logs.html:181
+#: templates/notification/site.logs.html:246
+#: templates/notification/site.templates.html:54
+msgid "Subject"
+msgstr "Betreff"
+
+#: templates/notification/site.logs.html:182
+#: templates/notification/site.member.html:74
+#: templates/notification/site.members.html:87
+#: templates/notification/site.rule.html:63
+msgid "Status"
+msgstr "Status"
+
+#: templates/notification/site.logs.html:183
+msgid "Action"
+msgstr "Aktion"
+
+#: templates/notification/site.logs.html:226
+#: templates/notification/site.trigger_type.html:27
+msgid "Details"
+msgstr "Details"
+
+#: templates/notification/site.logs.html:241
+msgid "Notification Details"
+msgstr "Benachrichtigungsdetails"
+
+#: templates/notification/site.logs.html:250
+msgid "Message Body"
+msgstr "Nachrichtentext"
+
+#: templates/notification/site.logs.html:254
+msgid "Error Message"
+msgstr "Fehlermeldung"
+
+#: templates/notification/site.manuel.html:2
+#: templates/notification/site.template_placeholders.html:2
+msgid "Manual"
+msgstr "Handbuch"
+
+#: templates/notification/site.manuel.html:24
+msgid "Go to Notifications"
+msgstr "Zu den Benachrichtigungen"
+
+#: templates/notification/site.member.html:25
+#: templates/notification/site.working_hours.dashboard.html:142
+#: templates/notification/site.working_hours.html:39
+#: templates/notification/site.working_hours.html:102
+msgid "Member"
+msgstr "Mitglied"
+
+#: templates/notification/site.member.html:30
+msgid "Back to members"
+msgstr "Zurück zu den Mitgliedern"
+
+#: templates/notification/site.member.html:43
+msgid "Member details"
+msgstr "Mitgliedsdetails"
+
+#: templates/notification/site.member.html:50
+#: templates/notification/site.members.html:82
+#: templates/notification/site.members.html:84
+#: templates/notification/site.members.html:164
+#: templates/notification/template/placeholders.html:264
+#: templates/notification/template/placeholders.html:293
+msgid "Member number"
+msgstr "Mitgliedsnummer"
+
+#: templates/notification/site.member.html:53
+#: templates/notification/site.members.html:165
+#: templates/notification/template/placeholders.html:259
+#: templates/notification/template/placeholders.html:288
+msgid "First name"
+msgstr "Vorname"
+
+#: templates/notification/site.member.html:56
+#: templates/notification/site.members.html:166
+#: templates/notification/template/placeholders.html:260
+#: templates/notification/template/placeholders.html:289
+msgid "Last name"
+msgstr "Nachname"
+
+#: templates/notification/site.member.html:62
+#: templates/notification/template/placeholders.html:263
+#: templates/notification/template/placeholders.html:292
+msgid "Phone"
+msgstr "Telefon"
+
+#: templates/notification/site.member.html:65
+msgid "Birth Date"
+msgstr "Geburtsdatum"
+
+#: templates/notification/site.member.html:68
+#: templates/notification/site.members.html:167
+msgid "Join Date"
+msgstr "Beitrittsdatum"
+
+#: templates/notification/site.member.html:71
+#: templates/notification/site.members.html:169
+msgid "Required Hours"
+msgstr "Erforderliche Stunden"
+
+#: templates/notification/site.member.html:93
+msgid "Add group"
+msgstr "Gruppe hinzufügen"
+
+#: templates/notification/site.member.html:100
+msgid "No groups assigned."
+msgstr "Keine Gruppen zugewiesen."
+
+#: templates/notification/member/modal.member.create.html:6
+#: templates/notification/site.members.html:47
+msgid "Create member"
+msgstr "Mitglied anlegen"
+
+#: templates/notification/site.members.html:64
+msgid "Import members CSV"
+msgstr "Mitglieder-CSV importieren"
+
+#: templates/notification/site.members.html:79
+msgid "First or Last name"
+msgstr "Vor- oder Nachname"
+
+#: templates/notification/site.members.html:89
+#: templates/notification/site.members.html:97
+msgid "All"
+msgstr "Alle"
+
+#: templates/notification/site.members.html:95
+#: templates/notification/site.working_hours.dashboard.html:143
+#: templates/notification/site.working_hours.dashboard.html:182
+#: templates/notification/site.working_hours.html:104
+msgid "Hours"
+msgstr "Stunden"
+
+#: templates/notification/site.members.html:98
+msgid "Met required hours"
+msgstr "Erforderliche Stunden erreicht"
+
+#: templates/notification/site.members.html:99
+msgid "Not met required hours"
+msgstr "Erforderliche Stunden nicht erreicht"
+
+#: templates/notification/site.members.html:100
+msgid "No required hours"
+msgstr "Keine erforderlichen Stunden"
+
+#: templates/notification/site.members.html:123
+msgid "updated"
+msgstr "aktualisiert"
+
+#: templates/notification/site.members.html:124
+msgid "deleted"
+msgstr "gelöscht"
+
+#: templates/notification/site.members.html:133
+msgid "No members found."
+msgstr "Keine Mitglieder gefunden."
+
+#: templates/notification/site.members.html:143
+msgid "members"
+msgstr "Mitglieder"
+
+#: templates/notification/site.members.html:168
+msgid "Hours this year"
+msgstr "Stunden dieses Jahr"
+
+#: templates/notification/site.members.html:170
+msgid "Hours Status"
+msgstr "Stundenstatus"
+
+#: templates/notification/site.members.html:207
+msgid "View member"
+msgstr "Mitglied anzeigen"
+
+#: templates/notification/site.rule.html:17
+#: templates/notification/template/placeholders.html:44
+#: templates/notification/template/placeholders.html:272
+msgid "Trigger"
+msgstr "Trigger"
+
+#: templates/notification/site.rule.html:20
+msgid "Back to rules"
+msgstr "Zurück zu den Regeln"
+
+#: templates/notification/site.rule.html:22
+msgid "Copy"
+msgstr "Kopieren"
+
+#: templates/notification/site.rule.html:32
+msgid "Rule details"
+msgstr "Regeldetails"
+
+#: templates/notification/site.rule.html:38
+msgid "Recurrence Type"
+msgstr "Wiederholungstyp"
+
+#: templates/notification/site.rule.html:42
+#: templates/notification/site.rules.html:60
+msgid "Monthly"
+msgstr "Monatlich"
+
+#: templates/notification/site.rule.html:42
+#: templates/notification/site.rules.html:60
+msgid "Day"
+msgstr "Tag"
+
+#: templates/notification/site.rule.html:46
+#: templates/notification/site.rules.html:64
+msgid "Yearly"
+msgstr "Jährlich"
+
+#: templates/notification/site.rule.html:54
+msgid "Days Before"
+msgstr "Tage vorher"
+
+#: templates/notification/site.rule.html:56
+msgid "Years"
+msgstr "Jahre"
+
+#: templates/notification/site.rule.html:59
+msgid "Send Time"
+msgstr "Sendezeit"
+
+#: templates/notification/site.rule.html:61
+#: templates/notification/site.rules.html:46
+#: templates/notification/site.template.html:22
+msgid "Template"
+msgstr "Vorlage"
+
+#: templates/notification/site.rule.html:74
+msgid "Receivers"
+msgstr "Empfänger"
+
+#: templates/notification/site.rule.html:81
+msgid "No receivers assigned."
+msgstr "Keine Empfänger zugewiesen."
+
+#: templates/notification/site.rule.html:91
+msgid "Custom Email"
+msgstr "Eigene E-Mail"
+
+#: templates/notification/site.rules.html:16
+msgid "Configure notification automation rules."
+msgstr "Benachrichtigungs-Automatisierungsregeln konfigurieren."
+
+#: templates/notification/rule/modal.rule.create.html:5
+#: templates/notification/site.rules.html:20
+msgid "Create rule"
+msgstr "Regel erstellen"
+
+#: templates/notification/site.rules.html:38
+msgid "No rules found."
+msgstr "Keine Regeln gefunden."
+
+#: templates/notification/site.template.html:23
+msgid "Template ID"
+msgstr "Vorlagen-ID"
+
+#: templates/notification/site.template.html:27
+msgid "Back to templates"
+msgstr "Zurück zu den Vorlagen"
+
+#: templates/notification/site.template.html:37
+msgid "Subject Template"
+msgstr "Betreffvorlage"
+
+#: templates/notification/site.template.html:45
+msgid "Body Template"
+msgstr "Inhaltvorlage"
+
+#: templates/notification/site.template_placeholders.html:15
+#: templates/notification/site.template_placeholders.html:20
+msgid "Overview: Template Placeholders"
+msgstr "Übersicht: Platzhalter für Vorlagen"
+
+#: templates/notification/site.templates.html:22
+msgid "Manage email subject and body templates used by notification rules."
+msgstr "Verwalte E-Mail-Betreff- und -Inhaltsvorlagen für Benachrichtigungsregeln."
+
+#: templates/notification/site.templates.html:26
+#: templates/notification/template/modal.template.create.html:6
+msgid "Create template"
+msgstr "Vorlage erstellen"
+
+#: templates/notification/site.templates.html:45
+msgid "No templates found."
+msgstr "Keine Vorlagen gefunden."
+
+#: templates/notification/site.templates.html:53
+#: templates/notification/site.trigger_type.html:32
+#: templates/notification/site.trigger_types.html:44
+#: templates/notification/template/placeholders.html:277
+msgid "Code"
+msgstr "Code"
+
+#: templates/notification/site.templates.html:55
+msgid "Updated"
+msgstr "Aktualisiert"
+
+#: templates/notification/site.templates.html:69
+msgid "View template"
+msgstr "Vorlage anzeigen"
+
+#: templates/notification/site.trigger_type.html:20
+msgid "Back to trigger types"
+msgstr "Zurück zu den Trigger-Typen"
+
+#: templates/notification/site.trigger_types.html:16
+msgid "Manage available trigger identifiers for notification rules."
+msgstr "Verfügbare Trigger-Identifikatoren für Benachrichtigungsregeln verwalten."
+
+#: templates/notification/site.trigger_types.html:20
+#: templates/notification/trigger_type/modal.trigger_type.create.html:5
+msgid "Create trigger type"
+msgstr "Trigger-Typ erstellen"
+
+#: templates/notification/site.trigger_types.html:38
+msgid "No trigger types found."
+msgstr "Keine Trigger-Typen gefunden."
+
+#: templates/notification/site.working_hours.dashboard.html:2
+#: templates/notification/site.working_hours.dashboard.html:24
+msgid "Working Hours Dashboard"
+msgstr "Arbeitsstunden-Dashboard"
+
+#: templates/notification/site.working_hours.dashboard.html:26
+msgid "Overview of logged working hours, trends, and top contributors."
+msgstr "Übersicht über erfasste Arbeitsstunden, Trends und wichtigste Mitwirkende."
+
+#: templates/notification/site.working_hours.dashboard.html:35
+msgid "Import CSV"
+msgstr "CSV importieren"
+
+#: templates/notification/site.working_hours.dashboard.html:45
+msgid "Total Entries"
+msgstr "Einträge insgesamt"
+
+#: templates/notification/site.working_hours.dashboard.html:53
+msgid "Total Hours"
+msgstr "Gesamtstunden"
+
+#: templates/notification/site.working_hours.dashboard.html:61
+msgid "This Month"
+msgstr "Dieser Monat"
+
+#: templates/notification/site.working_hours.dashboard.html:69
+msgid "This Year"
+msgstr "Dieses Jahr"
+
+#: templates/notification/site.working_hours.dashboard.html:77
+msgid "Average / Entry"
+msgstr "Durchschnitt / Eintrag"
+
+#: templates/notification/site.working_hours.dashboard.html:85
+msgid "Active Members"
+msgstr "Aktive Mitglieder"
+
+#: templates/notification/site.working_hours.dashboard.html:96
+msgid "Monthly Hours This Year"
+msgstr "Monatliche Stunden dieses Jahr"
+
+#: templates/notification/site.working_hours.dashboard.html:106
+msgid "Top Members"
+msgstr "Top-Mitglieder"
+
+#: templates/notification/site.working_hours.dashboard.html:118
+msgid "hours"
+msgstr "Stunden"
+
+#: templates/notification/site.working_hours.dashboard.html:124
+#: templates/notification/site.working_hours.dashboard.html:163
+#: templates/notification/site.working_hours.html:80
+msgid "No working hours entries found."
+msgstr "Keine Arbeitsstunden-Einträge gefunden."
+
+#: templates/notification/site.working_hours.dashboard.html:135
+msgid "Recent Entries"
+msgstr "Aktuelle Einträge"
+
+#: templates/notification/site.working_hours.dashboard.html:141
+#: templates/notification/site.working_hours.html:50
+#: templates/notification/site.working_hours.html:103
+#: templates/notification/template/placeholders.html:89
+msgid "Date"
+msgstr "Datum"
+
+#: templates/notification/site.working_hours.dashboard.html:144
+#: templates/notification/site.working_hours.html:105
+msgid "Created By"
+msgstr "Erstellt von"
+
+#: templates/notification/site.working_hours.form.html:5
+msgid "Working Hours Entry"
+msgstr "Arbeitsstunden-Eintrag"
+
+#: templates/notification/site.working_hours.html:24
+msgid "Create entry"
+msgstr "Eintrag erstellen"
+
+#: templates/notification/site.working_hours.html:27
+msgid "Import working hours CSV"
+msgstr "Arbeitsstunden-CSV importieren"
+
+#: templates/notification/site.working_hours.html:34
+#: templates/notification/site.working_hours.html:59
+msgid "Filter"
+msgstr "Filter"
+
+#: templates/notification/site.working_hours.html:41
+msgid "All members"
+msgstr "Alle Mitglieder"
+
+#: templates/notification/site.working_hours.html:62
+msgid "Reset"
+msgstr "Zurücksetzen"
+
+#: templates/notification/site.working_hours.html:90
+msgid "working hours entries"
+msgstr "Arbeitsstunden-Einträge"
+
+#: templates/notification/event/form.event.cleanup.html:18
+msgid ""
+"This will delete all events older than the selected age and remove their "
+"related logs and participants."
+msgstr ""
+
+#: templates/notification/event/modal.event.add_member.html:3
+msgid "Add member"
+msgstr "Mitglied hinzufügen"
+
+#: templates/notification/event/modal.event.add_member.html:11
+msgid "Add member to event"
+msgstr "Mitglied zum Ereignis hinzufügen"
+
+#: templates/notification/event/modal.event.delete.html:3
+#: templates/notification/event/modal.event.delete.html:11
+msgid "Delete event"
+msgstr "Ereignis löschen"
+
+#: templates/notification/event/modal.event.delete.html:17
+msgid ""
+"Are you sure you want to delete this event? Related participants and logs"
+" will also be removed. This action cannot be undone."
+msgstr ""
+
+#: templates/notification/event/modal.event.remove_member.html:10
+msgid "Remove member from event"
+msgstr "Mitglied aus Ereignis entfernen"
+
+#: templates/notification/event/modal.event.remove_member.html:16
+msgid "Are you sure you want to remove this member from the event?"
+msgstr "Möchtest du dieses Mitglied wirklich aus dem Ereignis entfernen?"
+
+#: templates/notification/event/modal.event.update.html:3
+#: templates/notification/event/modal.event.update.html:11
+msgid "Edit event"
+msgstr "Ereignis bearbeiten"
+
+#: templates/notification/group/form.group.add_member.html:5
+msgid "Search member..."
+msgstr "Mitglied suchen..."
+
+#: templates/notification/group/modal.group.add_member.html:2
+msgid "Add Member"
+msgstr "Mitglied hinzufügen"
+
+#: templates/notification/group/modal.group.add_member.html:10
+msgid "Add Member to the Group"
+msgstr "Mitglied zur Gruppe hinzufügen"
+
+#: templates/notification/group/modal.group.delete.html:3
+#: templates/notification/group/modal.group.delete.html:10
+#: templates/notification/group/modal.group.delete.html:19
+msgid "Delete group"
+msgstr "Gruppe löschen"
+
+#: templates/notification/group/modal.group.html:3
+#: templates/notification/group/modal.group.html:9
+msgid "Create group"
+msgstr "Gruppe erstellen"
+
+#: templates/notification/group/modal.group.remove_member.html:10
+msgid "Remove member from group"
+msgstr "Mitglied aus Gruppe entfernen"
+
+#: templates/notification/group/modal.group.remove_member.html:16
+msgid ""
+"Are you sure you want to remove this member from the group? This action "
+"cannot be undone."
+msgstr ""
+
+#: templates/notification/group/modal.group.update.html:3
+#: templates/notification/group/modal.group.update.html:9
+msgid "Edit group"
+msgstr "Gruppe bearbeiten"
+
+#: templates/notification/member/modal.member.add_group.html:7
+msgid "Add group to member"
+msgstr "Gruppe zum Mitglied hinzufügen"
+
+#: templates/notification/member/modal.member.delete.html:3
+#: templates/notification/member/modal.member.delete.html:11
+#: templates/notification/member/modal.member.delete.html:22
+msgid "Delete member"
+msgstr "Mitglied löschen"
+
+#: templates/notification/member/modal.member.delete.html:18
+msgid "Are you sure you want to delete this member? This action cannot be undone."
+msgstr "Möchtest du dieses Mitglied wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+
+#: templates/notification/member/modal.member.remove_group.html:6
+msgid "Remove group from member"
+msgstr "Gruppe vom Mitglied entfernen"
+
+#: templates/notification/member/modal.member.remove_group.html:12
+msgid "Are you sure you want to remove this group from the member?"
+msgstr "Möchtest du diese Gruppe wirklich vom Mitglied entfernen?"
+
+#: templates/notification/member/modal.member.update.html:3
+#: templates/notification/member/modal.member.update.html:11
+msgid "Edit member"
+msgstr "Mitglied bearbeiten"
+
+#: templates/notification/rule/modal.rule.add_receiver.html:1
+msgid "Add Receiver"
+msgstr "Empfänger hinzufügen"
+
+#: templates/notification/rule/modal.rule.add_receiver.html:6
+msgid "Add receiver"
+msgstr "Empfänger hinzufügen"
+
+#: templates/notification/rule/modal.rule.delete.html:7
+msgid "Delete rule"
+msgstr "Regel löschen"
+
+#: templates/notification/rule/modal.rule.delete.html:10
+msgid "Are you sure you want to delete this rule?"
+msgstr "Möchtest du diese Regel wirklich löschen?"
+
+#: templates/notification/rule/modal.rule.remove_receiver.html:6
+msgid "Remove receiver"
+msgstr "Empfänger entfernen"
+
+#: templates/notification/rule/modal.rule.remove_receiver.html:9
+msgid "Are you sure you want to remove this receiver?"
+msgstr "Möchtest du diesen Empfänger wirklich entfernen?"
+
+#: templates/notification/rule/modal.rule.update.html:7
+msgid "Edit rule"
+msgstr "Regel bearbeiten"
+
+#: templates/notification/template/form.template.create.html:29
+#: templates/notification/template/form.template.update.html:29
+msgid "Plain text is sent as-is; template variables are rendered before sending."
+msgstr "Klartext wird unverändert gesendet; Vorlagenvariablen werden vor dem Senden gerendert."
+
+#: templates/notification/template/modal.template.delete.html:3
+#: templates/notification/template/modal.template.delete.html:11
+msgid "Delete template"
+msgstr "Vorlage löschen"
+
+#: templates/notification/template/modal.template.delete.html:17
+msgid ""
+"Are you sure you want to delete this template? This action cannot be "
+"undone."
+msgstr ""
+
+#: templates/notification/template/modal.template.update.html:3
+#: templates/notification/template/modal.template.update.html:11
+msgid "Edit template"
+msgstr "Vorlage bearbeiten"
+
+#: templates/notification/template/placeholders.html:4
+msgid "Quick Navigation"
+msgstr "Schnellnavigation"
+
+#: templates/notification/template/placeholders.html:9
+#: templates/notification/template/placeholders.html:64
+#: templates/notification/template/placeholders.html:222
+msgid "Event Context"
+msgstr "Ereigniskontext"
+
+#: templates/notification/template/placeholders.html:12
+#: templates/notification/template/placeholders.html:222
+msgid "Upcoming events"
+msgstr "Bevorstehende Ereignisse"
+
+#: templates/notification/template/placeholders.html:16
+#: templates/notification/template/placeholders.html:104
+#: templates/notification/template/placeholders.html:168
+#: templates/notification/template/placeholders.html:349
+#: templates/notification/template/placeholders.html:361
+msgid "Birthday Context"
+msgstr "Geburtstagskontext"
+
+#: templates/notification/template/placeholders.html:18
+#: templates/notification/template/placeholders.html:104
+msgid "Birthdays"
+msgstr "Geburtstage"
+
+#: templates/notification/template/placeholders.html:19
+#: templates/notification/template/placeholders.html:168
+msgid "Upcoming birthdays"
+msgstr "Bevorstehende Geburtstage"
+
+#: templates/notification/template/placeholders.html:20
+msgid "Members with birthdays"
+msgstr "Mitglieder mit Geburtstagen"
+
+#: templates/notification/template/placeholders.html:21
+#: templates/notification/template/placeholders.html:361
+msgid "Birthday milestones"
+msgstr "Geburtstags-Meilensteine"
+
+#: templates/notification/template/placeholders.html:25
+#: templates/notification/template/placeholders.html:145
+#: templates/notification/template/placeholders.html:194
+#: templates/notification/template/placeholders.html:374
+msgid "Anniversary Context"
+msgstr "Jubiläumskontext"
+
+#: templates/notification/template/placeholders.html:27
+#: templates/notification/template/placeholders.html:145
+msgid "Membership anniversaries"
+msgstr "Mitgliedsjubiläen"
+
+#: templates/notification/template/placeholders.html:28
+#: templates/notification/template/placeholders.html:194
+msgid "Upcoming anniversaries"
+msgstr "Bevorstehende Jubiläen"
+
+#: templates/notification/template/placeholders.html:29
+#: templates/notification/template/placeholders.html:374
+msgid "Membership milestones"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:35
+#: templates/notification/template/placeholders.html:285
+msgid "Member Context"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:38
+#: templates/notification/template/placeholders.html:285
+msgid "Member / Subject"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:42
+#: templates/notification/template/placeholders.html:272
+msgid "Trigger Context"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:48
+#: templates/notification/template/placeholders.html:86
+#: templates/notification/template/placeholders.html:310
+#: templates/notification/template/placeholders.html:321
+#: templates/notification/template/placeholders.html:335
+#: templates/notification/template/placeholders.html:389
+msgid "Global"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:50
+#: templates/notification/template/placeholders.html:86
+msgid "Current date"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:51
+#: templates/notification/template/placeholders.html:310
+msgid "Global hours"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:52
+#: templates/notification/template/placeholders.html:321
+msgid "Participant statistics"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:53
+msgid "Members with/without hours"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:54
+#: templates/notification/template/placeholders.html:389
+msgid "Additional upcoming lists"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:65
+msgid ""
+"Use these placeholders to insert event details into your notification "
+"templates."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:67
+msgid "The event name"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:68
+msgid "Event details and description"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:69
+msgid "Where the event takes place"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:70
+msgid "Start at"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:70
+msgid "Full date and time when event begins"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:71
+msgid "End at"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:71
+msgid "Full date and time when event ends"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:72
+msgid "Start date"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:72
+msgid "Only the start date"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:73
+msgid "Start time"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:73
+msgid "Only the start time"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:74
+msgid "End date"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:74
+msgid "Only the end date"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:75
+msgid "End time"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:75
+msgid "Only the end time"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:76
+msgid "Duration hours"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:76
+msgid "How long the event lasts in hours"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:77
+msgid "Participants count"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:77
+msgid "Number of people attending"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:78
+msgid "Participant names"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:78
+msgid "Comma-separated list of attendees"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:79
+msgid "Participant emails"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:79
+msgid "Comma-separated email addresses"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:80
+msgid "Google calendar"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:80
+msgid "Link to add event to Google Calendar"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:81
+msgid "Outlook calendar"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:81
+msgid "Link to add event to Outlook Calendar"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:87
+msgid "Insert current date and time information into your templates."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:89
+msgid "Today's date"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:90
+msgid "Time"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:90
+msgid "Current time of day"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:91
+msgid "Month"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:91
+msgid "Current month name"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:92
+msgid "Month number"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:92
+msgid "Month as number (1-12)"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:93
+msgid "Year"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:93
+msgid "Current year"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:94
+msgid "Previous month"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:94
+msgid "Last month's name"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:95
+msgid "Previous month number"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:95
+msgid "Last month as number"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:96
+#: templates/notification/template/placeholders.html:112
+msgid "Next month"
+msgstr "Nächsten Monat"
+
+#: templates/notification/template/placeholders.html:96
+msgid "Next month's name"
+msgstr "Nächsten Monat (Name)"
+
+#: templates/notification/template/placeholders.html:97
+msgid "Next month number"
+msgstr "Nächsten Monat (Zahl)"
+
+#: templates/notification/template/placeholders.html:97
+msgid "Next month as number"
+msgstr "Nächsten Monat (Zahl)"
+
+#: templates/notification/template/placeholders.html:105
+msgid "Show birthday-related information for members."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:107
+msgid "Today"
+msgstr "Heute"
+
+#: templates/notification/template/placeholders.html:107
+msgid "List of birthdays today"
+msgstr "Geburtstagsliste heute"
+
+#: templates/notification/template/placeholders.html:108
+msgid "Tomorrow"
+msgstr "Morgen"
+
+#: templates/notification/template/placeholders.html:108
+msgid "List of birthdays tomorrow"
+msgstr "Geburtstagsliste morgen"
+
+#: templates/notification/template/placeholders.html:109
+msgid "This week"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:109
+msgid "List of birthdays this week"
+msgstr "Geburtstagsliste diese Woche"
+
+#: templates/notification/template/placeholders.html:110
+msgid "Next week"
+msgstr "Nächste Woche"
+
+#: templates/notification/template/placeholders.html:110
+msgid "List of birthdays next week"
+msgstr "Geburtstagsliste nächste Woche"
+
+#: templates/notification/template/placeholders.html:111
+msgid "Current month"
+msgstr "Aktueller Monat"
+
+#: templates/notification/template/placeholders.html:111
+msgid "List of birthdays this month"
+msgstr "Geburtstagsliste aktueller Monat"
+
+#: templates/notification/template/placeholders.html:112
+msgid "List of birthdays next month"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:115
+msgid "Birthday Lists"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:116
+msgid ""
+"Loop through lists to display birthday details. Use these in your "
+"notification templates."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:146
+msgid "Display member anniversaries (dates members joined)."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:148
+msgid "Current month count"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:148
+msgid "How many anniversaries this month"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:149
+msgid "Next month count"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:149
+msgid "How many anniversaries next month"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:169
+msgid ""
+"Loop through upcoming birthdays organized by time periods (today, this "
+"week, tomorrow, next week, next month)."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:195
+msgid "Loop through upcoming membership anniversaries organized by time periods."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:223
+msgid ""
+"Display events organized by time periods (today, this week, tomorrow, "
+"next week, next month) and include participant information."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:256
+msgid "Recipient Context"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:257
+msgid "Placeholders for the message recipient (member or external recipient)."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:261
+#: templates/notification/template/placeholders.html:290
+msgid "Full name"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:265
+#: templates/notification/template/placeholders.html:294
+msgid "Birth date"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:266
+#: templates/notification/template/placeholders.html:295
+msgid "Join date"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:267
+#: templates/notification/template/placeholders.html:296
+msgid "Age"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:273
+msgid "Placeholders describing the trigger that fired the notification."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:278
+msgid "Days before"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:286
+msgid ""
+"Placeholders for a member referenced as `member` or `subject` in "
+"templates."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:297
+msgid "Required hours"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:298
+msgid "All hours"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:299
+msgid "This year hours"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:300
+msgid "Today hours"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:301
+msgid "Membership duration"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:311
+msgid "Aggregated hours statistics."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:314
+msgid "This year"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:315
+msgid "This month"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:316
+msgid "Last month"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:322
+msgid "Counts and statistics about participants."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:324
+msgid "Total members"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:325
+msgid "Active members"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:326
+msgid "Worked this month"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:327
+msgid "Worked last month"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:328
+msgid "Worked this year"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:335
+msgid "Members with / without hours"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:336
+msgid "Lists and example loops for members with or without hours."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:349
+msgid "Members with birthdays in the current month"
+msgstr ""
+
+#: templates/notification/template/placeholders.html:350
+msgid "Loop through members who have birthdays this month."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:362
+msgid "Lists for milestone birthdays."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:375
+msgid "Lists for milestone anniversaries."
+msgstr ""
+
+#: templates/notification/template/placeholders.html:390
+msgid "Alternative loop variable names used in some templates."
+msgstr ""
+
+#: templates/notification/trigger_type/modal.trigger_type.delete.html:7
+msgid "Delete trigger type"
+msgstr ""
+
+#: templates/notification/trigger_type/modal.trigger_type.delete.html:10
+msgid "Are you sure you want to delete this trigger type?"
+msgstr ""
+
+#: templates/notification/trigger_type/modal.trigger_type.update.html:7
+msgid "Edit trigger type"
+msgstr ""
+
+#: templates/user/modal.delete.html:9 templates/user/modal.delete.html:19
+msgid "Delete User"
+msgstr ""
+
+#: templates/user/modal.delete.html:15
+msgid "Are you sure you want to delete the user? This action cannot be undone."
+msgstr ""
+
+#: views/admin.py:103
+msgid "Role name already exists."
+msgstr ""
+
+#: views/admin.py:300 views/notification.py:1770 views/notification.py:1859
+msgid "Group name already exists."
+msgstr ""
+
+#: views/admin.py:399
+msgid "Please select a user to add to the group."
+msgstr ""
+
+#: views/notification.py:411 views/notification.py:451
+msgid "Template code already exists."
+msgstr ""
+
+#: views/notification.py:496 views/notification.py:534
+msgid "Trigger type code already exists."
+msgstr ""
+
+#: views/notification.py:612 views/notification.py:695
+msgid "Please select a template."
+msgstr ""
+
+#: views/notification.py:749
+msgid "Please select a group."
+msgstr ""
+
+#: views/notification.py:759
+msgid "Please enter a custom email."
+msgstr ""
+
+#: views/notification.py:846
+msgid "Invalid password. Please try again."
+msgstr ""
+
+#: views/notification.py:1033 views/notification.py:1114
+#: views/notification.py:1270 views/notification.py:2476
+msgid "No file uploaded."
+msgstr ""
+
+#: views/notification.py:1039
+msgid "Invalid ICS file."
+msgstr ""
+
+#: views/notification.py:1082
+msgid "Untitled event"
+msgstr "Unbenanntes Ereignis"
+
+#: views/notification.py:1121 views/notification.py:2483
+msgid "Invalid CSV file encoding. Use UTF-8."
+msgstr ""
+
+#: views/notification.py:1125 views/notification.py:2487
+msgid "The CSV file is empty."
+msgstr ""
+
+#: views/notification.py:1149 views/notification.py:2505
+msgid "The CSV file is missing a header row."
+msgstr ""
+
+#: views/notification.py:1157
+msgid ""
+"The CSV file must contain the columns: member_number, first_name, "
+"last_name, birth_date, email, phone, member_since, required_hours, "
+"status."
+msgstr ""
+
+#: views/notification.py:1179
+msgid "The CSV file does not contain any valid member rows."
+msgstr ""
+
+#: views/notification.py:1277
+msgid "Invalid file encoding. Use UTF-8 or UTF-16."
+msgstr ""
+
+#: views/notification.py:1281
+msgid "The file is empty."
+msgstr "Die Datei ist leer."
+
+#: views/notification.py:1302
+msgid "The file is missing a header row."
+msgstr ""
+
+#: views/notification.py:1310
+msgid ""
+"The file must contain the columns: title, description, start_at, end_at, "
+"location, participants."
+msgstr "Die Datei muss folgende Spalten enthalten: title, description, start_at, end_at, "
+"location, participants."
+
+#: views/notification.py:1353
+msgid "The file does not contain any valid event rows."
+msgstr "Diese Datei enthält keine zulässige Reihe."
+
+#: views/notification.py:1628
+msgid "Please select a member to add to the event."
+msgstr ""
+
+#: views/notification.py:1889
+msgid "Please select a member to add to the group."
+msgstr ""
+
+#: views/notification.py:2236
+msgid "Please select a group to add to the member."
+msgstr ""
+
+#: views/notification.py:2370
+msgid "Unknown member"
+msgstr "Unbekanntes Mitglied"
+
+#: views/notification.py:2415 views/notification.py:2442
+msgid "Please select a member"
+msgstr "Bitte wähle ein Mitglied"
+
+#: views/notification.py:2425
+msgid "Working hours entry created."
+msgstr ""
+
+#: views/notification.py:2449
+msgid "Working hours entry updated."
+msgstr ""
+
+#: views/notification.py:2462
+msgid "Working hours entry deleted."
+msgstr "Arbeitsstundeneintrag gelöscht."
+
+#: views/notification.py:2513
+msgid "The CSV file must contain the columns: member_number, date, and hours."
+msgstr ""
+
+#: views/notification.py:2565
+msgid "The CSV file does not contain any valid working hours rows."
+msgstr ""
+
+#: views/user.py:145
+msgid "User not found."
+msgstr "Benutzer*in nicht gefunden."
+
+#: views/user.py:148
+msgid "Old password is incorrect."
+msgstr "Altes Passwort ist inkorrekt."

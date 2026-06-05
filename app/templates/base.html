@@ -1,16 +1,27 @@
 <!DOCTYPE html> 
 <html lang="en">
 <head>
+    <!--
+         ██████╗  ██████╗     ██╗   ██╗███████╗ ██████╗  █████╗ ███╗   ██╗
+        ██╔════╝ ██╔═══██╗    ██║   ██║██╔════╝██╔════╝ ██╔══██╗████╗  ██║
+        ██║  ███╗██║   ██║    ██║   ██║█████╗  ██║  ███╗███████║██╔██╗ ██║
+        ██║   ██║██║   ██║    ╚██╗ ██╔╝██╔══╝  ██║   ██║██╔══██║██║╚██╗██║
+        ╚██████╔╝╚██████╔╝     ╚████╔╝ ███████╗╚██████╔╝██║  ██║██║ ╚████║
+         ╚═════╝  ╚═════╝       ╚═══╝  ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝
+
+                    🌱 FOR THE ANIMALS • FOR THE PLANET 🌱
+    -->
     <meta charset="UTF-8">
     <meta name="robots" content="noindex,nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{ url_for('static', filename='css/bootstrap.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    
+
+    <link href="{{ url_for('static', filename='css/calendarjs-style.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/calendarjs-index.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/calendarjs-lemonade.min.js') }}"></script>
+
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
-    <!-- Fix to local hosting of bootstrap icons
-    <link href="../static/css/bootstrap-icons.css" rel="stylesheet">
-    -->
     <title>{% block title %}Club Automailer{% endblock %}</title>
     {% block scripts %}{% endblock %}
 
@@ -32,7 +43,7 @@
 
 
     <main class="container my-5">
-        <div class="my-5">
+        <div class="my-4">
         {% block main %}{% endblock %}
         </div>
     </main>

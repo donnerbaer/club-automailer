@@ -1,100 +1,117 @@
 # Club Automailer
-Python tool for sending Email notifications for Clubs
+
+Web application and mail service for club notifications.
+
+## Features
+
+- Manage members, groups, roles, and permissions
+- Create notification rules and templates
+- Send automated email notifications
+- Import events, members, and working hours
+- Generate calendar links and ICS attachments
 
 ## Supported Languages
 
-The following languages are currently supported.
-
-+ en english
+- `en` English
+- `de` Deutsch ~70¼
 
 ## Requirements
 
-Python Version: 3.14.5
+- Python 3.14.5
+- SMTP access for outgoing mail
 
-Older versions maybe work.
+Older Python versions may also work, but are not officially tested.
 
 ## Setup
 
-1. Open a command line/terminal.
-2. Navigate to the project folder.
-
-3. Create a virtual environment:
+1. Create and activate a virtual environment.
 
     ```sh
     python -m venv venv
+    source venv/bin/activate
     ```
 
-4. Activate the virtual environment:
+    On Windows, use `venv\Scripts\activate` instead.
 
-    - **Windows:**
-
-      ```sh
-      venv\Scripts\activate
-      ```
-
-    - **Mac/Linux:**
-
-      ```sh
-      source venv/bin/activate
-      ```
-
-5. Install the required dependencies:
+2. Install dependencies.
 
     ```sh
     pip install -r requirements.txt
     ```
 
-6. Create a `.env` file:
-    1. Add the following content:
-        ```sh
-        DATABASE_URL=sqlite:///database.db
-        SECRET_KEY=mysecretkey
+3. Create a `.env` file in the project root.
 
-        SMTP_HOST=smtp.example.org
-        SMTP_PORT=587
-        SMTP_USER=user@example.org
-        SMTP_PASSWORD=YourPassword
-        MAIL_FROM=Your.Name <mail.example.org>
+    ```sh
+    SECRET_KEY=change-me
+    SQLALCHEMY_DATABASE_URI=sqlite:///database.db
+    EVENT_DOMAIN=example.org
 
-        EVENT_DOMAIN=example.org
+    SMTP_HOST=smtp.example.org
+    SMTP_PORT=587
+    SMTP_USER=user@example.org
+    SMTP_PASSWORD=YourPassword
+    MAIL_FROM=Your Name <mail@example.org>
+    ```
 
-        ```
-    2. Provide your secret key.
-    3. Set your database path.
+    The application requires `SECRET_KEY`. The database URI is read from `SQLALCHEMY_DATABASE_URI`. Other databases may require some changes.
 
-7. Set up the database with standard groups, roles, and permissions by running:
+4. Start the web application once so the database tables are created.
 
-The application has run at least once. This is required for create the database tables.
+    ```sh
+    python main.py
+    ```
 
-```sh
-python setup.py
-```
+5. Populate the default roles, groups, permissions, and admin user.
 
-8. Start the application
+    ```sh
+    python setup.py
+    ```
+
+6. Optional: load demo data for testing.
+
+    ```sh
+    python seed_test_data.py
+    ```
+
+7. Optional: verify the SMTP configuration.
+
+    ```sh
+    python test_smtp.py
+    ```
+
+## Run the Web App
+
+Start the application with:
 
 ```sh
 python main.py
 ```
 
+Then open the web interface in your browser. By default, Flask serves the app on `http://127.0.0.1:5000/`.
 
-# Start the application
+Default login credentials:
 
-1. Start the webserver:
-    - Navigate to the `/` folder and run `main.py`:
-    
-    ```sh
-    python main.py
-    ```
+- Username: `admin`
+- Password: `Starten1!`
 
-2. Open your web browser and visit the URL you have configured for the website.
+Change the password after the first login.
 
-3. Log in with the default credentials:
+## Run the Mail Service
 
-+ username: `admin`
-+ password' `Starten1!` 
-
-# Run the mailing service
+The mail service is intended to run separately, for example via cron:
 
 ```sh
 python mail-service.py
 ```
+
+Useful flags:
+
+- `--debug` for verbose output
+- `--simulate` for dry runs without sending mail
+- `--force-working-hours-monthly` to force the monthly working-hours mail
+
+## Notes
+
+- The web app and the mail service use the same `.env` configuration.
+- If you use SQLite, make sure the target directory exists.
+- The repository also contains `TRANSLATION.md` for localization notes.

@@ -2,6 +2,7 @@
 
 from typing import List
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed
 from wtforms import (
     StringField,
     PasswordField,
@@ -382,7 +383,11 @@ class EventForm(FlaskForm):
 
 class ICSImportForm(FlaskForm):
     """Form for importing events from an .ics file."""
-    ics_file = FileField(_l('ICS File'), validators=[DataRequired()])
+    ics_file = FileField(
+        _l('ICS File'),
+        validators=[DataRequired(), FileAllowed(
+            ['ics'], _l('Only .ics files are allowed.'))]
+    )
     trigger_type = SelectField(
         _l('Trigger Type (apply to all imported events)'),
         choices=[],
@@ -686,7 +691,8 @@ class WorkingHoursImportForm(FlaskForm):
     """Form for importing working hours from a CSV file."""
     csv_file = FileField(
         _l('CSV File'),
-        validators=[DataRequired()]
+        validators=[DataRequired(), FileAllowed(
+            ['csv'], _l('Only .csv files are allowed.'))]
     )
     submit = SubmitField(_l('Import Working Hours'))
 
@@ -695,7 +701,8 @@ class MemberImportForm(FlaskForm):
     """Form for importing members from a CSV file."""
     csv_file = FileField(
         _l('CSV File'),
-        validators=[DataRequired()]
+        validators=[DataRequired(), FileAllowed(
+            ['csv'], _l('Only .csv files are allowed.'))]
     )
     submit = SubmitField(_l('Import Members'))
 
@@ -704,7 +711,11 @@ class EventImportForm(FlaskForm):
     """Form for importing events from a CSV/TSV file."""
     csv_file = FileField(
         _l('CSV/TSV File'),
-        validators=[DataRequired()]
+        validators=[
+            DataRequired(),
+            FileAllowed(['csv', 'tsv'], _l(
+                'Only .csv and .tsv files are allowed.')),
+        ]
     )
     trigger_type = SelectField(
         _l('Trigger Type (apply to all imported events)'),

@@ -7,6 +7,7 @@ targets (events or members), sends emails, and writes audit logs.
 Usage:
   python mail-service.py          # Normal cron mode (silent unless errors)
   python mail-service.py --debug  # Verbose diagnostic output
+    python mail-service.py --simulate  # Dry-run mode (no real email send, no audit log writes)
     python mail-service.py --force-working-hours-monthly  # Force monthly working-hours mail
 """
 
@@ -23,7 +24,7 @@ from urllib.parse import quote
 from dotenv import load_dotenv
 from flask import Flask
 from icalendar import Calendar, Event as ICalEvent
-from jinja2 import Undefined
+from jinja2 import ChainableUndefined
 from jinja2.exceptions import SecurityError, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from sqlalchemy import extract, func
@@ -47,6 +48,11 @@ load_dotenv()
 
 # Global debug flag
 DEBUG = "--debug" in sys.argv
+SIMULATE = (
+    "--simulate" in sys.argv
+    or "--sumlate" in sys.argv
+    or os.getenv("SIMULATE", "") == "1"
+)
 FORCE_WORKING_HOURS_MONTHLY = (
     "--force-working-hours-monthly" in sys.argv
     or os.getenv("FORCE_WORKING_HOURS_MONTHLY", "") == "1"
@@ -57,7 +63,22 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 MAIL_FROM = os.getenv("MAIL_FROM")
-TEMPLATE_ENV = SandboxedEnvironment(autoescape=False, undefined=Undefined)
+TEMPLATE_ENV = SandboxedEnvironment(
+    autoescape=False, undefined=ChainableUndefined)
+
+
+class TemplateParticipants(list):
+    """List-like wrapper that also exposes summary attributes for templates."""
+
+    def __init__(self, items):
+        super().__init__(items or [])
+        self.count = len(self)
+        self.names = ", ".join(
+            [item.get("name", "") for item in self if item.get("name")]
+        )
+        self.emails = ", ".join(
+            [item.get("email", "") for item in self if item.get("email")]
+        )
 
 
 # Calendar import link generation functions
@@ -148,7 +169,9 @@ def debug_log(message: str) -> None:
 
 def sleep_between_emails() -> None:
     """Add a random pause between deliveries to avoid burst sending."""
-    time.sleep(random.randint(1, 10))
+    if SIMULATE:
+        return
+    time.sleep(random.randint(1, 3))
 
 
 def build_runtime_app() -> Flask:
@@ -165,6 +188,11 @@ def send_email(recipient: str, subject: str, body: str, event: Event = None) -> 
     If event is provided, automatically appends calendar import links to the body
     and attaches an ICS file.
     """
+    # Skip sending to example.org addresses (commonly used as a test domain)
+    if recipient and recipient.lower().endswith("@example.org"):
+        debug_log(f"Skipping email send to test domain: {recipient}")
+        return
+
     email_body = body
 
     # Automatically add calendar import links if event is provided
@@ -180,6 +208,15 @@ def send_email(recipient: str, subject: str, body: str, event: Event = None) -> 
 
     email_body = email_body + \
         "\n\nThis is an automated notification. Please do not reply to this email."
+
+    if SIMULATE:
+        #    debug_log(f"[SIMULATE] Rendered email for {recipient}")
+        #    debug_log(f"[SIMULATE] Subject: {subject}")
+        #    if DEBUG:
+        #        print("[DEBUG] [SIMULATE] Body:")
+        #        print(email_body)
+        #        print("[DEBUG] [SIMULATE] End of rendered body")
+        return
 
     msg = EmailMessage()
     msg["Subject"] = subject
@@ -222,7 +259,9 @@ def render_text(raw_text: str, context: dict) -> str:
     if "{{" in raw_text or "{%" in raw_text:
         try:
             return TEMPLATE_ENV.from_string(raw_text).render(context)
-        except (SecurityError, TemplateSyntaxError, UndefinedError):
+        except (SecurityError, TemplateSyntaxError, UndefinedError) as exc:
+            debug_log(
+                f"Template render fallback ({type(exc).__name__}): {exc}")
             return raw_text
 
     try:
@@ -273,19 +312,35 @@ def build_person_template_context(member: Member = None, email: str = "") -> dic
     last_name = member.last_name if member and member.last_name else ""
     resolved_email = email or (member.email if member and member.email else "")
     member_number = member.member_number if member and member.member_number else ""
+    phone = member.phone if member and member.phone else ""
     birth_date = member.birth_date if member else None
     join_date = member.join_date if member else None
+    active = member.active if member else False
+
+    # Compute age if birth date is available
+    age = None
+    if birth_date:
+        today = date.today()
+        age = today.year - birth_date.year - (
+            (today.month, today.day) < (birth_date.month, birth_date.day)
+        )
 
     return {
         "first_name": first_name,
         "last_name": last_name,
+        "fullname": f"{first_name} {last_name}".strip(),
         "email": resolved_email,
+        "phone": phone,
         "member_number": member_number,
+        "number": member_number,
         "birth_date": birth_date,
+        "birthday": birth_date,
         "_birth_date": format_template_value(birth_date),
         "join_date": join_date,
+        "member_since": join_date,
         "_join_date": format_template_value(join_date),
-        "active": member.active if member else False,
+        "active": active,
+        "age": age,
     }
 
 
@@ -295,10 +350,13 @@ def build_named_template_context(name: str, person_context: dict) -> dict:
         name: person_context,
         f"{name}_first_name": person_context["first_name"],
         f"{name}_last_name": person_context["last_name"],
+        f"{name}_fullname": person_context.get("fullname", ""),
         f"{name}_email": person_context["email"],
+        f"{name}_phone": person_context.get("phone", ""),
         f"{name}_member_number": person_context["member_number"],
         f"{name}_birth_date": person_context["birth_date"],
         f"{name}_join_date": person_context["join_date"],
+        f"{name}_age": person_context.get("age"),
     }
 
 
@@ -315,15 +373,73 @@ def build_member_template_context(member: Member) -> dict:
 
     all_hours = 0.0
     hours_this_year = 0.0
-    current_year = date.today().year
+    hours_today = 0.0
+    hours_yesterday = 0.0
+    hours_this_week = 0.0
+    hours_last_week = 0.0
+    hours_this_month = 0.0
+    hours_last_month = 0.0
+    hours_last_year = 0.0
+
+    today = date.today()
+    current_year = today.year
+    current_month = today.month
+
     for log in getattr(member, "working_hours_logs", []) or []:
         try:
             h = float(getattr(log, "hours", 0) or 0)
         except Exception:
             h = 0.0
+
+        log_date = getattr(log, "date", None)
+        if not log_date:
+            continue
+
         all_hours += h
-        if getattr(log, "date", None) and getattr(log, "date").year == current_year:
+
+        # This year
+        if log_date.year == current_year:
             hours_this_year += h
+
+        # Today
+        if log_date == today:
+            hours_today += h
+
+        # Yesterday
+        if log_date == today - timedelta(days=1):
+            hours_yesterday += h
+
+        # This week (Monday=0, Sunday=6)
+        monday = today - timedelta(days=today.weekday())
+        if monday <= log_date <= today:
+            hours_this_week += h
+
+        # Last week
+        last_monday = monday - timedelta(days=7)
+        if last_monday <= log_date < monday:
+            hours_last_week += h
+
+        # This month
+        if log_date.year == current_year and log_date.month == current_month:
+            hours_this_month += h
+
+        # Last month
+        if current_month == 1:
+            last_m, last_y = 12, current_year - 1
+        else:
+            last_m, last_y = current_month - 1, current_year
+        if log_date.year == last_y and log_date.month == last_m:
+            hours_last_month += h
+
+        # Last year
+        if log_date.year == current_year - 1:
+            hours_last_year += h
+
+    # Compute membership duration
+    membership_duration = None
+    if member.join_date:
+        td = today - member.join_date
+        membership_duration = td.days // 365
 
     # Add aggregated fields to the nested person context
     person_ctx.update(
@@ -331,6 +447,17 @@ def build_member_template_context(member: Member) -> dict:
             "required_hours": required_hours,
             "all_hours": all_hours,
             "hours_this_year": hours_this_year,
+            "hours": {
+                "today": hours_today,
+                "yesterday": hours_yesterday,
+                "this_week": hours_this_week,
+                "last_week": hours_last_week,
+                "this_month": hours_this_month,
+                "last_month": hours_last_month,
+                "this_year": hours_this_year,
+                "last_year": hours_last_year,
+            },
+            "membership_duration": membership_duration,
         }
     )
 
@@ -341,6 +468,14 @@ def build_member_template_context(member: Member) -> dict:
             "member_required_hours": required_hours,
             "member_all_hours": all_hours,
             "member_hours_this_year": hours_this_year,
+            "member_hours_today": hours_today,
+            "member_hours_yesterday": hours_yesterday,
+            "member_hours_this_week": hours_this_week,
+            "member_hours_last_week": hours_last_week,
+            "member_hours_this_month": hours_this_month,
+            "member_hours_last_month": hours_last_month,
+            "member_hours_last_year": hours_last_year,
+            "member_membership_duration": membership_duration,
         }
     )
 
@@ -355,8 +490,105 @@ def build_receiver_template_context(recipient_email: str, receiver_member: Membe
     )
 
 
+def build_recipient_template_context(recipient_email: str, recipient_member: Member = None) -> dict:
+    """Build a nested and flat template context for recipient (newer name for receiver)."""
+    return build_named_template_context(
+        "recipient",
+        build_person_template_context(recipient_member, email=recipient_email),
+    )
+
+
+def build_subject_template_context(member: Member) -> dict:
+    """Build context for the 'subject' member (the one being referenced/about)."""
+    member_ctx = build_member_template_context(member)
+
+    # Create subject.* aliases with the same data as member.*
+    subject_ctx = {}
+    for key, value in member_ctx.items():
+        if key.startswith("member_"):
+            subject_ctx[key.replace("member_", "subject_")] = value
+        elif key == "member":
+            # Nested subject object
+            subject_ctx["subject"] = value
+
+    # Also add the flat top-level keys for convenience
+    subject_ctx.update({
+        "subject_first_name": member_ctx.get("member_first_name", ""),
+        "subject_last_name": member_ctx.get("member_last_name", ""),
+        "subject_fullname": member_ctx.get("member_fullname", ""),
+        "subject_email": member_ctx.get("member_email", ""),
+        "subject_phone": member_ctx.get("member_phone", ""),
+        "subject_member_number": member_ctx.get("member_member_number", ""),
+        "subject_birth_date": member_ctx.get("member_birth_date"),
+        "subject_join_date": member_ctx.get("member_join_date"),
+        "subject_age": member_ctx.get("member_age"),
+        "subject_active": member_ctx.get("member_active", False),
+        "subject_hours_today": member_ctx.get("member_hours_today", 0),
+        "subject_hours_yesterday": member_ctx.get("member_hours_yesterday", 0),
+        "subject_hours_this_week": member_ctx.get("member_hours_this_week", 0),
+        "subject_hours_last_week": member_ctx.get("member_hours_last_week", 0),
+        "subject_hours_this_month": member_ctx.get("member_hours_this_month", 0),
+        "subject_hours_last_month": member_ctx.get("member_hours_last_month", 0),
+        "subject_hours_this_year": member_ctx.get("member_hours_this_year", 0),
+        "subject_hours_last_year": member_ctx.get("member_hours_last_year", 0),
+        "subject_membership_duration": member_ctx.get("member_membership_duration"),
+        "subject_required_hours": member_ctx.get("member_required_hours", 0),
+        "subject_all_hours": member_ctx.get("member_all_hours", 0),
+    })
+
+    return subject_ctx
+
+
+def build_anniversary_deprecated_context(member: Member) -> dict:
+    """Build context for deprecated anniversary.* placeholders (kept for backwards compatibility)."""
+    years = None
+    if member and member.join_date:
+        today = date.today()
+        years = today.year - member.join_date.year - (
+            (today.month, today.day) < (
+                member.join_date.month, member.join_date.day)
+        )
+
+    return {
+        "anniversary": {
+            "firstname": member.first_name if member else "",
+            "lastname": member.last_name if member else "",
+            "fullname": f"{member.first_name} {member.last_name}".strip() if member else "",
+            "years": years,
+            "member_since": format_template_value(member.join_date) if member and member.join_date else "",
+        },
+        "anniversary_firstname": member.first_name if member else "",
+        "anniversary_lastname": member.last_name if member else "",
+        "anniversary_fullname": f"{member.first_name} {member.last_name}".strip() if member else "",
+        "anniversary_years": years,
+        "anniversary_member_since": format_template_value(member.join_date) if member and member.join_date else "",
+    }
+
+
 def build_event_template_context(event: Event, days_before: int) -> dict:
     """Build a nested and flat template context for an event."""
+    # Compute duration in hours
+    duration_hours = None
+    if event.start_at and event.end_at:
+        td = event.end_at - event.start_at
+        duration_hours = td.total_seconds() / 3600.0
+
+    # Get participants (list of member names/emails)
+    participants = []
+    participants_count = 0
+    if event.participants:
+        for ep in event.participants:
+            if ep.member:
+                name = f"{ep.member.first_name} {ep.member.last_name}".strip()
+                participants.append({
+                    "name": name,
+                    "email": ep.member.email,
+                    "member_number": ep.member.member_number,
+                })
+                participants_count += 1
+
+    participant_collection = TemplateParticipants(participants)
+
     event_context = {
         "title": event.title,
         "description": event.description or "",
@@ -364,7 +596,14 @@ def build_event_template_context(event: Event, days_before: int) -> dict:
         "end_at": format_template_value(event.end_at),
         "start_date": format_template_value(event.start_at),
         "end_date": format_template_value(event.end_at),
+        "start_time": event.start_at.strftime("%H:%M") if event.start_at else "",
+        "end_time": event.end_at.strftime("%H:%M") if event.end_at else "",
+        "duration_hours": duration_hours,
         "location": event.location or "",
+        "participants": participant_collection,
+        "participants_count": participants_count,
+        "participants_names": participant_collection.names,
+        "participants_emails": participant_collection.emails,
     }
 
     # Generate calendar import links
@@ -373,6 +612,10 @@ def build_event_template_context(event: Event, days_before: int) -> dict:
         "outlook": generate_outlook_calendar_link(event),
     }
 
+    # Build participant name/email lists for convenience
+    participant_names = ", ".join([p["name"] for p in participants])
+    participant_emails = ", ".join([p["email"] for p in participants])
+
     return {
         "event": event_context,
         "event_title": event_context["title"],
@@ -380,12 +623,938 @@ def build_event_template_context(event: Event, days_before: int) -> dict:
         "event_start": event_context["start_at"],
         "event_end": event_context["end_at"],
         "event_start_date": event_context["start_date"],
+        "event_start_time": event_context["start_time"],
         "event_end_date": event_context["end_date"],
+        "event_end_time": event_context["end_time"],
+        "event_duration_hours": duration_hours,
         "event_location": event_context["location"],
+        "event_participants": participants,
+        "event_participants_count": participants_count,
+        "event_participants_names": participant_names,
+        "event_participants_emails": participant_emails,
         "days_before": days_before,
         "calendar_links": calendar_links,
         "event_calendar_google": calendar_links["google"],
         "event_calendar_outlook": calendar_links["outlook"],
+    }
+
+
+def build_trigger_template_context(rule: NotificationRule, trigger: TriggerType) -> dict:
+    """Build context for trigger/rule information."""
+    return {
+        "trigger": {
+            "name": rule.name or "",
+            "description": trigger.description if trigger else rule.description or "",
+            "code": trigger.code if trigger else "",
+            "days_before": rule.days_before or 0,
+        },
+        "trigger_name": rule.name or "",
+        "trigger_description": trigger.description if trigger else rule.description or "",
+        "trigger_days_before": rule.days_before or 0,
+    }
+
+
+def build_global_hours_context() -> dict:
+    """Build context for global working hours statistics."""
+    try:
+        total_hours = db.session.query(
+            func.sum(WorkingHoursLog.hours)).scalar() or 0
+        total_hours = float(total_hours)
+    except Exception:
+        total_hours = 0.0
+
+    try:
+        current_year = date.today().year
+        total_hours_this_year = (
+            db.session.query(func.sum(WorkingHoursLog.hours))
+            .filter(extract("year", WorkingHoursLog.date) == current_year)
+            .scalar()
+            or 0
+        )
+        total_hours_this_year = float(total_hours_this_year)
+    except Exception:
+        total_hours_this_year = 0.0
+
+    try:
+        current_month = date.today().month
+        total_hours_this_month = (
+            db.session.query(func.sum(WorkingHoursLog.hours))
+            .filter(
+                extract("year", WorkingHoursLog.date) == date.today().year,
+                extract("month", WorkingHoursLog.date) == current_month,
+            )
+            .scalar()
+            or 0
+        )
+        total_hours_this_month = float(total_hours_this_month)
+    except Exception:
+        total_hours_this_month = 0.0
+
+    try:
+        if date.today().month == 1:
+            last_month, last_year = 12, date.today().year - 1
+        else:
+            last_month, last_year = date.today().month - 1, date.today().year
+        total_hours_last_month = (
+            db.session.query(func.sum(WorkingHoursLog.hours))
+            .filter(
+                extract("year", WorkingHoursLog.date) == last_year,
+                extract("month", WorkingHoursLog.date) == last_month,
+            )
+            .scalar()
+            or 0
+        )
+        total_hours_last_month = float(total_hours_last_month)
+    except Exception:
+        total_hours_last_month = 0.0
+
+    return {
+        "hours": {
+            "total": total_hours,
+            "this_year": total_hours_this_year,
+            "this_month": total_hours_this_month,
+            "last_month": total_hours_last_month,
+        },
+        "hours_total": total_hours,
+        "hours_this_year": total_hours_this_year,
+        "hours_this_month": total_hours_this_month,
+        "hours_last_month": total_hours_last_month,
+        "all_working_hours": total_hours,
+        "all_working_hours_this_year": total_hours_this_year,
+    }
+
+
+def build_participants_stats_context() -> dict:
+    """Build context for global member/participant statistics."""
+    try:
+        total_members = db.session.query(func.count(Member.id)).scalar() or 0
+    except Exception:
+        total_members = 0
+
+    try:
+        active_members = (
+            db.session.query(func.count(Member.id))
+            .filter(Member.active == True)
+            .scalar()
+            or 0
+        )
+    except Exception:
+        active_members = 0
+
+    try:
+        current_year = date.today().year
+        current_month = date.today().month
+        members_with_hours_this_month = (
+            db.session.query(func.count(
+                func.distinct(WorkingHoursLog.member_id)))
+            .filter(
+                extract("year", WorkingHoursLog.date) == current_year,
+                extract("month", WorkingHoursLog.date) == current_month,
+            )
+            .scalar()
+            or 0
+        )
+    except Exception:
+        members_with_hours_this_month = 0
+
+    try:
+        if current_month == 1:
+            last_month, last_year = 12, current_year - 1
+        else:
+            last_month, last_year = current_month - 1, current_year
+        members_with_hours_last_month = (
+            db.session.query(func.count(
+                func.distinct(WorkingHoursLog.member_id)))
+            .filter(
+                extract("year", WorkingHoursLog.date) == last_year,
+                extract("month", WorkingHoursLog.date) == last_month,
+            )
+            .scalar()
+            or 0
+        )
+    except Exception:
+        members_with_hours_last_month = 0
+
+    try:
+        members_with_hours_this_year = (
+            db.session.query(func.count(
+                func.distinct(WorkingHoursLog.member_id)))
+            .filter(extract("year", WorkingHoursLog.date) == current_year)
+            .scalar()
+            or 0
+        )
+    except Exception:
+        members_with_hours_this_year = 0
+
+    return {
+        "participants": {
+            "total": {"count": total_members},
+            "active": {"count": active_members},
+            "worked": {
+                "this_month": {"count": members_with_hours_this_month},
+                "last_month": {"count": members_with_hours_last_month},
+                "this_year": {"count": members_with_hours_this_year},
+            },
+        },
+        "participants_total_count": total_members,
+        "participants_active_count": active_members,
+        "participants_worked_this_month_count": members_with_hours_this_month,
+        "participants_worked_last_month_count": members_with_hours_last_month,
+        "participants_worked_this_year_count": members_with_hours_this_year,
+    }
+
+
+def build_birthdays_context() -> dict:
+    """Build context for birthdays in various periods."""
+    today = date.today()
+    tomorrow = today + timedelta(days=1)
+    monday = today - timedelta(days=today.weekday())
+    sunday = monday + timedelta(days=6)
+    next_monday = sunday + timedelta(days=1)
+    next_sunday = next_monday + timedelta(days=6)
+
+    try:
+        # Today
+        birthdays_today = [
+            m
+            for m in db.session.query(Member).all()
+            if m.birth_date
+            and m.birth_date.month == today.month
+            and m.birth_date.day == today.day
+        ]
+
+        # Tomorrow
+        birthdays_tomorrow = [
+            m
+            for m in db.session.query(Member).all()
+            if m.birth_date
+            and m.birth_date.month == tomorrow.month
+            and m.birth_date.day == tomorrow.day
+        ]
+
+        # This week
+        birthdays_this_week = [
+            m
+            for m in db.session.query(Member).all()
+            if m.birth_date
+            and (
+                (m.birth_date.month == today.month and today.day <=
+                 m.birth_date.day <= sunday.day)
+                or (m.birth_date.month == sunday.month and sunday.month != today.month and m.birth_date.day <= sunday.day)
+            )
+        ]
+
+        # Next week
+        birthdays_next_week = [
+            m
+            for m in db.session.query(Member).all()
+            if m.birth_date
+            and (
+                (m.birth_date.month == next_monday.month and next_monday.day <=
+                 m.birth_date.day <= next_sunday.day)
+                or (m.birth_date.month == next_sunday.month and next_sunday.month != next_monday.month and m.birth_date.day <= next_sunday.day)
+            )
+        ]
+
+        # Current month
+        birthdays_current_month = [
+            m
+            for m in db.session.query(Member).all()
+            if m.birth_date and m.birth_date.month == today.month
+        ]
+
+        # Next month
+        next_month = today.month + 1 if today.month < 12 else 1
+        birthdays_next_month = [
+            m
+            for m in db.session.query(Member).all()
+            if m.birth_date and m.birth_date.month == next_month
+        ]
+    except Exception:
+        birthdays_today = []
+        birthdays_tomorrow = []
+        birthdays_this_week = []
+        birthdays_next_week = []
+        birthdays_current_month = []
+        birthdays_next_month = []
+
+    return {
+        "birthdays": {
+            "today": birthdays_today,
+            "tomorrow": birthdays_tomorrow,
+            "this_week": birthdays_this_week,
+            "next_week": birthdays_next_week,
+            "current_month": birthdays_current_month,
+            "next_month": birthdays_next_month,
+            "count": {
+                "today": len(birthdays_today),
+                "this_week": len(birthdays_this_week),
+                "current_month": len(birthdays_current_month),
+            },
+        },
+        "birthdays_today": birthdays_today,
+        "birthdays_tomorrow": birthdays_tomorrow,
+        "birthdays_this_week": birthdays_this_week,
+        "birthdays_next_week": birthdays_next_week,
+        "birthdays_current_month": birthdays_current_month,
+        "birthdays_next_month": birthdays_next_month,
+        "birthdays_count_today": len(birthdays_today),
+        "birthdays_count_this_week": len(birthdays_this_week),
+        "birthdays_count_current_month": len(birthdays_current_month),
+    }
+
+
+def build_anniversaries_context() -> dict:
+    """Build context for membership anniversaries in various periods."""
+    today = date.today()
+    next_month = today.month + 1 if today.month < 12 else 1
+
+    try:
+        # Current month
+        anniversaries_current_month = [
+            m
+            for m in db.session.query(Member).all()
+            if m.join_date and m.join_date.month == today.month
+        ]
+
+        # Next month
+        anniversaries_next_month = [
+            m
+            for m in db.session.query(Member).all()
+            if m.join_date and m.join_date.month == next_month
+        ]
+    except Exception:
+        anniversaries_current_month = []
+        anniversaries_next_month = []
+
+    return {
+        "membership": {
+            "anniversaries": {
+                "current_month": anniversaries_current_month,
+                "next_month": anniversaries_next_month,
+                "count": {
+                    "current_month": len(anniversaries_current_month),
+                    "next_month": len(anniversaries_next_month),
+                },
+            }
+        },
+        "membership_anniversaries_current_month": anniversaries_current_month,
+        "membership_anniversaries_next_month": anniversaries_next_month,
+        "membership_anniversaries_count_current_month": len(anniversaries_current_month),
+        "membership_anniversaries_count_next_month": len(anniversaries_next_month),
+    }
+
+
+def build_current_date_context() -> dict:
+    """Build context for current, previous, and next date/time information."""
+    today = date.today()
+    current_month = today.month
+    current_year = today.year
+
+    # Previous month
+    if current_month == 1:
+        prev_month = 12
+    else:
+        prev_month = current_month - 1
+
+    # Next month
+    next_month = current_month + 1 if current_month < 12 else 1
+
+    # Month names
+    month_names = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ]
+
+    return {
+        "current": {
+            "date": format_template_value(today),
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "month": month_names[current_month - 1],
+            "month_number": current_month,
+            "year": current_year,
+        },
+        "previous": {
+            "month": month_names[prev_month - 1],
+            "month_number": prev_month,
+        },
+        "next": {
+            "month": month_names[next_month - 1],
+            "month_number": next_month,
+        },
+        "current_date": format_template_value(today),
+        "current_time": datetime.now().strftime("%H:%M:%S"),
+        "current_month": month_names[current_month - 1],
+        "current_year": current_year,
+        "previous_month": month_names[prev_month - 1],
+        "next_month": month_names[next_month - 1],
+    }
+
+
+def build_members_with_hours_context() -> dict:
+    """Build context for members with working hours in various time periods."""
+    today = date.today()
+    current_year = today.year
+    current_month = today.month
+    monday = today - timedelta(days=today.weekday())
+    last_monday = monday - timedelta(days=7)
+    last_month = current_month - 1 if current_month > 1 else 12
+    last_month_year = current_year if current_month > 1 else current_year - 1
+
+    try:
+        # Current week
+        members_with_hours_this_week = (
+            db.session.query(Member)
+            .join(WorkingHoursLog, Member.id == WorkingHoursLog.member_id)
+            .filter(
+                WorkingHoursLog.date >= monday,
+                WorkingHoursLog.date <= today,
+            )
+            .distinct()
+            .all()
+        )
+
+        # Last week
+        members_with_hours_last_week = (
+            db.session.query(Member)
+            .join(WorkingHoursLog, Member.id == WorkingHoursLog.member_id)
+            .filter(
+                WorkingHoursLog.date >= last_monday,
+                WorkingHoursLog.date < monday,
+            )
+            .distinct()
+            .all()
+        )
+
+        # Current month
+        members_with_hours_this_month = (
+            db.session.query(Member)
+            .join(WorkingHoursLog, Member.id == WorkingHoursLog.member_id)
+            .filter(
+                extract("year", WorkingHoursLog.date) == current_year,
+                extract("month", WorkingHoursLog.date) == current_month,
+            )
+            .distinct()
+            .all()
+        )
+
+        # Last month
+        members_with_hours_last_month = (
+            db.session.query(Member)
+            .join(WorkingHoursLog, Member.id == WorkingHoursLog.member_id)
+            .filter(
+                extract("year", WorkingHoursLog.date) == last_month_year,
+                extract("month", WorkingHoursLog.date) == last_month,
+            )
+            .distinct()
+            .all()
+        )
+
+        # Current year
+        members_with_hours_this_year = (
+            db.session.query(Member)
+            .join(WorkingHoursLog, Member.id == WorkingHoursLog.member_id)
+            .filter(extract("year", WorkingHoursLog.date) == current_year)
+            .distinct()
+            .all()
+        )
+
+        # Last year
+        members_with_hours_last_year = (
+            db.session.query(Member)
+            .join(WorkingHoursLog, Member.id == WorkingHoursLog.member_id)
+            .filter(extract("year", WorkingHoursLog.date) == current_year - 1)
+            .distinct()
+            .all()
+        )
+    except Exception:
+        members_with_hours_this_week = []
+        members_with_hours_last_week = []
+        members_with_hours_this_month = []
+        members_with_hours_last_month = []
+        members_with_hours_this_year = []
+        members_with_hours_last_year = []
+
+    return {
+        "members": {
+            "with_hours": {
+                "current": {
+                    "week": members_with_hours_this_week,
+                    "month": members_with_hours_this_month,
+                    "year": members_with_hours_this_year,
+                },
+                "last": {
+                    "week": members_with_hours_last_week,
+                    "month": members_with_hours_last_month,
+                    "year": members_with_hours_last_year,
+                },
+            }
+        },
+        "members_with_hours_this_week": members_with_hours_this_week,
+        "members_with_hours_last_week": members_with_hours_last_week,
+        "members_with_hours_this_month": members_with_hours_this_month,
+        "members_with_hours_last_month": members_with_hours_last_month,
+        "members_with_hours_this_year": members_with_hours_this_year,
+        "members_with_hours_last_year": members_with_hours_last_year,
+    }
+
+
+def build_members_without_hours_context() -> dict:
+    """Build context for members without working hours in various time periods."""
+    today = date.today()
+    current_year = today.year
+    current_month = today.month
+    monday = today - timedelta(days=today.weekday())
+    last_monday = monday - timedelta(days=7)
+    last_month = current_month - 1 if current_month > 1 else 12
+    last_month_year = current_year if current_month > 1 else current_year - 1
+
+    try:
+        # All active members
+        all_active_members = db.session.query(
+            Member).filter(Member.active.is_(True)).all()
+
+        # Members with hours this week
+        members_with_hours_this_week = (
+            db.session.query(Member)
+            .join(WorkingHoursLog, Member.id == WorkingHoursLog.member_id)
+            .filter(
+                WorkingHoursLog.date >= monday,
+                WorkingHoursLog.date <= today,
+            )
+            .distinct()
+            .all()
+        )
+        members_without_hours_this_week = [
+            m for m in all_active_members if m not in members_with_hours_this_week]
+
+        # Members with hours last week
+        members_with_hours_last_week = (
+            db.session.query(Member)
+            .join(WorkingHoursLog, Member.id == WorkingHoursLog.member_id)
+            .filter(
+                WorkingHoursLog.date >= last_monday,
+                WorkingHoursLog.date < monday,
+            )
+            .distinct()
+            .all()
+        )
+        members_without_hours_last_week = [
+            m for m in all_active_members if m not in members_with_hours_last_week]
+
+        # Members with hours this month
+        members_with_hours_this_month = (
+            db.session.query(Member)
+            .join(WorkingHoursLog, Member.id == WorkingHoursLog.member_id)
+            .filter(
+                extract("year", WorkingHoursLog.date) == current_year,
+                extract("month", WorkingHoursLog.date) == current_month,
+            )
+            .distinct()
+            .all()
+        )
+        members_without_hours_this_month = [
+            m for m in all_active_members if m not in members_with_hours_this_month]
+
+        # Members with hours last month
+        members_with_hours_last_month = (
+            db.session.query(Member)
+            .join(WorkingHoursLog, Member.id == WorkingHoursLog.member_id)
+            .filter(
+                extract("year", WorkingHoursLog.date) == last_month_year,
+                extract("month", WorkingHoursLog.date) == last_month,
+            )
+            .distinct()
+            .all()
+        )
+        members_without_hours_last_month = [
+            m for m in all_active_members if m not in members_with_hours_last_month]
+
+        # Members with hours this year
+        members_with_hours_this_year = (
+            db.session.query(Member)
+            .join(WorkingHoursLog, Member.id == WorkingHoursLog.member_id)
+            .filter(extract("year", WorkingHoursLog.date) == current_year)
+            .distinct()
+            .all()
+        )
+        members_without_hours_this_year = [
+            m for m in all_active_members if m not in members_with_hours_this_year]
+
+        # Members with hours last year
+        members_with_hours_last_year = (
+            db.session.query(Member)
+            .join(WorkingHoursLog, Member.id == WorkingHoursLog.member_id)
+            .filter(extract("year", WorkingHoursLog.date) == current_year - 1)
+            .distinct()
+            .all()
+        )
+        members_without_hours_last_year = [
+            m for m in all_active_members if m not in members_with_hours_last_year]
+    except Exception:
+        members_without_hours_this_week = []
+        members_without_hours_last_week = []
+        members_without_hours_this_month = []
+        members_without_hours_last_month = []
+        members_without_hours_this_year = []
+        members_without_hours_last_year = []
+
+    return {
+        "members": {
+            "without_hours": {
+                "current": {
+                    "week": members_without_hours_this_week,
+                    "month": members_without_hours_this_month,
+                    "year": members_without_hours_this_year,
+                },
+                "last": {
+                    "week": members_without_hours_last_week,
+                    "month": members_without_hours_last_month,
+                    "year": members_without_hours_last_year,
+                },
+            }
+        },
+        "members_without_hours_this_week": members_without_hours_this_week,
+        "members_without_hours_last_week": members_without_hours_last_week,
+        "members_without_hours_this_month": members_without_hours_this_month,
+        "members_without_hours_last_month": members_without_hours_last_month,
+        "members_without_hours_this_year": members_without_hours_this_year,
+        "members_without_hours_last_year": members_without_hours_last_year,
+    }
+
+
+def build_members_by_birthday_context() -> dict:
+    """Build context for members with birthdays in the current month."""
+    today = date.today()
+    current_month = today.month
+
+    try:
+        members_birthday_current_month = [
+            m
+            for m in db.session.query(Member).all()
+            if m.birth_date and m.birth_date.month == current_month
+        ]
+    except Exception:
+        members_birthday_current_month = []
+
+    return {
+        "members": {
+            "birthday": {
+                "current_month": members_birthday_current_month,
+            }
+        },
+        "members_birthday_current_month": members_birthday_current_month,
+    }
+
+
+def build_birthdays_milestones_context() -> dict:
+    """Build context for birthdays filtered by milestone ages (40, 50, 60, etc.)."""
+    today = date.today()
+
+    try:
+        all_members = db.session.query(Member).all()
+
+        # Common milestone ages
+        milestones = {40, 50, 60, 70, 80, 90, 100}
+        birthdays_by_milestone = {}
+
+        for milestone in milestones:
+            birthdays_by_milestone[milestone] = [
+                m for m in all_members
+                if m.birth_date
+                and (today.year - m.birth_date.year - (
+                    (today.month, today.day) < (
+                        m.birth_date.month, m.birth_date.day)
+                )) == milestone
+            ]
+    except Exception:
+        birthdays_by_milestone = {}
+
+    return {
+        "birthdays": {
+            "milestones": birthdays_by_milestone,
+        },
+        "birthdays_milestone_40": birthdays_by_milestone.get(40, []),
+        "birthdays_milestone_50": birthdays_by_milestone.get(50, []),
+        "birthdays_milestone_60": birthdays_by_milestone.get(60, []),
+        "birthdays_milestone_70": birthdays_by_milestone.get(70, []),
+        "birthdays_milestone_80": birthdays_by_milestone.get(80, []),
+        "birthdays_milestone_90": birthdays_by_milestone.get(90, []),
+        "birthdays_milestone_100": birthdays_by_milestone.get(100, []),
+    }
+
+
+def build_anniversaries_milestones_context() -> dict:
+    """Build context for membership anniversaries filtered by milestone years (10, 25, 50, etc.)."""
+    today = date.today()
+
+    try:
+        all_members = db.session.query(Member).all()
+
+        # Common milestone years
+        milestones = {10, 25, 50, 75, 100}
+        anniversaries_by_milestone = {}
+
+        for milestone in milestones:
+            anniversaries_by_milestone[milestone] = [
+                m for m in all_members
+                if m.join_date
+                and (today.year - m.join_date.year - (
+                    (today.month, today.day) < (
+                        m.join_date.month, m.join_date.day)
+                )) == milestone
+            ]
+    except Exception:
+        anniversaries_by_milestone = {}
+
+    return {
+        "membership": {
+            "anniversaries": {
+                "milestones": anniversaries_by_milestone,
+            }
+        },
+        "membership_anniversaries_milestone_10": anniversaries_by_milestone.get(10, []),
+        "membership_anniversaries_milestone_25": anniversaries_by_milestone.get(25, []),
+        "membership_anniversaries_milestone_50": anniversaries_by_milestone.get(50, []),
+        "membership_anniversaries_milestone_75": anniversaries_by_milestone.get(75, []),
+        "membership_anniversaries_milestone_100": anniversaries_by_milestone.get(100, []),
+    }
+
+
+def build_upcoming_birthdays_context() -> dict:
+    """Build context for upcoming birthdays in various time periods."""
+    today = date.today()
+    tomorrow = today + timedelta(days=1)
+    monday = today - timedelta(days=today.weekday())
+    sunday = monday + timedelta(days=6)
+    next_monday = sunday + timedelta(days=1)
+    next_sunday = next_monday + timedelta(days=6)
+
+    try:
+        all_members = db.session.query(Member).all()
+
+        # Today
+        upcoming_birthdays_today = [
+            m for m in all_members
+            if m.birth_date
+            and m.birth_date.month == today.month
+            and m.birth_date.day == today.day
+        ]
+
+        # Tomorrow
+        upcoming_birthdays_tomorrow = [
+            m for m in all_members
+            if m.birth_date
+            and m.birth_date.month == tomorrow.month
+            and m.birth_date.day == tomorrow.day
+        ]
+
+        # This week
+        upcoming_birthdays_this_week = [
+            m for m in all_members
+            if m.birth_date
+            and (
+                (m.birth_date.month == today.month and today.day <=
+                 m.birth_date.day <= sunday.day)
+                or (m.birth_date.month == sunday.month and sunday.month != today.month and m.birth_date.day <= sunday.day)
+            )
+        ]
+
+        # Next week
+        upcoming_birthdays_next_week = [
+            m for m in all_members
+            if m.birth_date
+            and (
+                (m.birth_date.month == next_monday.month and next_monday.day <=
+                 m.birth_date.day <= next_sunday.day)
+                or (m.birth_date.month == next_sunday.month and next_sunday.month != next_monday.month and m.birth_date.day <= next_sunday.day)
+            )
+        ]
+
+        # Next month
+        next_month = today.month + 1 if today.month < 12 else 1
+        upcoming_birthdays_next_month = [
+            m for m in all_members
+            if m.birth_date and m.birth_date.month == next_month
+        ]
+    except Exception:
+        upcoming_birthdays_today = []
+        upcoming_birthdays_tomorrow = []
+        upcoming_birthdays_this_week = []
+        upcoming_birthdays_next_week = []
+        upcoming_birthdays_next_month = []
+
+    return {
+        "upcoming_birthdays": {
+            "current": {
+                "today": upcoming_birthdays_today,
+                "this_week": upcoming_birthdays_this_week,
+            },
+            "next": {
+                "week": upcoming_birthdays_next_week,
+                "month": upcoming_birthdays_next_month,
+                "tomorrow": upcoming_birthdays_tomorrow,
+            },
+        },
+        "upcoming_birthdays_today": upcoming_birthdays_today,
+        "upcoming_birthdays_tomorrow": upcoming_birthdays_tomorrow,
+        "upcoming_birthdays_this_week": upcoming_birthdays_this_week,
+        "upcoming_birthdays_next_week": upcoming_birthdays_next_week,
+        "upcoming_birthdays_next_month": upcoming_birthdays_next_month,
+    }
+
+
+def build_upcoming_anniversaries_context() -> dict:
+    """Build context for upcoming membership anniversaries in various time periods."""
+    today = date.today()
+    tomorrow = today + timedelta(days=1)
+    monday = today - timedelta(days=today.weekday())
+    sunday = monday + timedelta(days=6)
+    next_monday = sunday + timedelta(days=1)
+    next_sunday = next_monday + timedelta(days=6)
+
+    try:
+        all_members = db.session.query(Member).all()
+
+        # Today
+        upcoming_anniversaries_today = [
+            m for m in all_members
+            if m.join_date
+            and m.join_date.month == today.month
+            and m.join_date.day == today.day
+        ]
+
+        # Tomorrow
+        upcoming_anniversaries_tomorrow = [
+            m for m in all_members
+            if m.join_date
+            and m.join_date.month == tomorrow.month
+            and m.join_date.day == tomorrow.day
+        ]
+
+        # This week
+        upcoming_anniversaries_this_week = [
+            m for m in all_members
+            if m.join_date
+            and (
+                (m.join_date.month == today.month and today.day <=
+                 m.join_date.day <= sunday.day)
+                or (m.join_date.month == sunday.month and sunday.month != today.month and m.join_date.day <= sunday.day)
+            )
+        ]
+
+        # Next week
+        upcoming_anniversaries_next_week = [
+            m for m in all_members
+            if m.join_date
+            and (
+                (m.join_date.month == next_monday.month and next_monday.day <=
+                 m.join_date.day <= next_sunday.day)
+                or (m.join_date.month == next_sunday.month and next_sunday.month != next_monday.month and m.join_date.day <= next_sunday.day)
+            )
+        ]
+
+        # Next month
+        next_month = today.month + 1 if today.month < 12 else 1
+        upcoming_anniversaries_next_month = [
+            m for m in all_members
+            if m.join_date and m.join_date.month == next_month
+        ]
+    except Exception:
+        upcoming_anniversaries_today = []
+        upcoming_anniversaries_tomorrow = []
+        upcoming_anniversaries_this_week = []
+        upcoming_anniversaries_next_week = []
+        upcoming_anniversaries_next_month = []
+
+    return {
+        "upcoming_anniversaries": {
+            "current": {
+                "today": upcoming_anniversaries_today,
+                "this_week": upcoming_anniversaries_this_week,
+            },
+            "next": {
+                "week": upcoming_anniversaries_next_week,
+                "month": upcoming_anniversaries_next_month,
+                "tomorrow": upcoming_anniversaries_tomorrow,
+            },
+        },
+        "upcoming_anniversaries_today": upcoming_anniversaries_today,
+        "upcoming_anniversaries_tomorrow": upcoming_anniversaries_tomorrow,
+        "upcoming_anniversaries_this_week": upcoming_anniversaries_this_week,
+        "upcoming_anniversaries_next_week": upcoming_anniversaries_next_week,
+        "upcoming_anniversaries_next_month": upcoming_anniversaries_next_month,
+    }
+
+
+def build_upcoming_events_context() -> dict:
+    """Build context for upcoming events in various time periods."""
+    now = datetime.now()
+    today = now.date()
+    tomorrow = today + timedelta(days=1)
+    monday = today - timedelta(days=today.weekday())
+    sunday = monday + timedelta(days=6)
+    next_monday = sunday + timedelta(days=1)
+    next_sunday = next_monday + timedelta(days=6)
+    next_month = today.month + 1 if today.month < 12 else 1
+    next_month_year = today.year if today.month < 12 else today.year + 1
+
+    try:
+        all_events = db.session.query(Event).filter(Event.start_at > now).all()
+
+        # Today
+        upcoming_events_today = [
+            e for e in all_events
+            if e.start_at.date() == today
+        ]
+
+        # Tomorrow
+        upcoming_events_tomorrow = [
+            e for e in all_events
+            if e.start_at.date() == tomorrow
+        ]
+
+        # This week
+        upcoming_events_this_week = [
+            e for e in all_events
+            if monday <= e.start_at.date() <= sunday
+        ]
+
+        # Next week
+        upcoming_events_next_week = [
+            e for e in all_events
+            if next_monday <= e.start_at.date() <= next_sunday
+        ]
+
+        # Next month
+        upcoming_events_next_month = [
+            e for e in all_events
+            if e.start_at.month == next_month and e.start_at.year == next_month_year
+        ]
+    except Exception:
+        upcoming_events_today = []
+        upcoming_events_tomorrow = []
+        upcoming_events_this_week = []
+        upcoming_events_next_week = []
+        upcoming_events_next_month = []
+
+    return {
+        "upcoming_events": {
+            "current": {
+                "today": upcoming_events_today,
+                "this_week": upcoming_events_this_week,
+            },
+            "next": {
+                "week": upcoming_events_next_week,
+                "month": upcoming_events_next_month,
+                "tomorrow": upcoming_events_tomorrow,
+            },
+        },
+        "upcoming_events_today": upcoming_events_today,
+        "upcoming_events_tomorrow": upcoming_events_tomorrow,
+        "upcoming_events_this_week": upcoming_events_this_week,
+        "upcoming_events_next_week": upcoming_events_next_week,
+        "upcoming_events_next_month": upcoming_events_next_month,
     }
 
 
@@ -401,6 +1570,12 @@ def log_notification(
     error_message: str = None,
 ) -> None:
     """Persist one delivery attempt in the notification log."""
+    if SIMULATE:
+        debug_log(
+            f"[SIMULATE] Persisting NotificationLog entry | rule_id={rule_id} "
+            f"recipient={recipient_email} status={status}"
+        )
+
     entry = NotificationLog(
         rule_id=rule_id,
         event_id=event_id,
@@ -496,6 +1671,7 @@ def process_event_start_rule(
     template: NotificationTemplate,
     now_dt: datetime,
     trigger_code: str,
+    trigger: TriggerType = None,
 ) -> None:
     """Send notifications for EVENT_START trigger rules."""
     # Consider any future event whose start time is within the configured
@@ -540,30 +1716,25 @@ def process_event_start_rule(
             }
             context.update(build_receiver_template_context(
                 email, receiver_member))
+            context.update(build_recipient_template_context(
+                email, receiver_member))
             context.update(build_event_template_context(
                 event, rule.days_before or 0))
-            # Global working hours placeholders
-            try:
-                total_hours = db.session.query(
-                    func.sum(WorkingHoursLog.hours)).scalar() or 0
-            except Exception:
-                total_hours = 0
-            try:
-                year = date.today().year
-                total_hours_year = (
-                    db.session.query(func.sum(WorkingHoursLog.hours))
-                    .filter(extract('year', WorkingHoursLog.date) == year)
-                    .scalar()
-                    or 0
-                )
-            except Exception:
-                total_hours_year = 0
-            context.update(
-                {
-                    "all_working_hours": float(total_hours),
-                    "all_working_hours_this_year": float(total_hours_year),
-                }
-            )
+            context.update(build_trigger_template_context(rule, trigger))
+            context.update(build_global_hours_context())
+            context.update(build_participants_stats_context())
+            context.update(build_birthdays_context())
+            context.update(build_anniversaries_context())
+            context.update(build_current_date_context())
+            context.update(build_members_with_hours_context())
+            context.update(build_members_without_hours_context())
+            context.update(build_members_by_birthday_context())
+            context.update(build_birthdays_milestones_context())
+            context.update(build_anniversaries_milestones_context())
+            context.update(build_upcoming_birthdays_context())
+            context.update(build_upcoming_anniversaries_context())
+            context.update(build_upcoming_events_context())
+
             subject = render_text(template.subject_template, context)
             body = render_text(template.body_template, context)
 
@@ -602,6 +1773,7 @@ def process_member_date_rule(
     template: NotificationTemplate,
     now_dt: datetime,
     trigger_code: str,
+    trigger: TriggerType = None,
 ) -> None:
     """Send notifications for BIRTHDAY and MEMBER_ANNIVERSARY rules."""
     target_day = now_dt.date() + timedelta(days=rule.days_before or 0)
@@ -633,29 +1805,26 @@ def process_member_date_rule(
             }
             context.update(build_receiver_template_context(
                 email, receiver_member))
+            context.update(build_recipient_template_context(
+                email, receiver_member))
             context.update(build_member_template_context(member))
-            # Global working hours placeholders
-            try:
-                total_hours = db.session.query(
-                    func.sum(WorkingHoursLog.hours)).scalar() or 0
-            except Exception:
-                total_hours = 0
-            try:
-                year = date.today().year
-                total_hours_year = (
-                    db.session.query(func.sum(WorkingHoursLog.hours))
-                    .filter(extract('year', WorkingHoursLog.date) == year)
-                    .scalar()
-                    or 0
-                )
-            except Exception:
-                total_hours_year = 0
-            context.update(
-                {
-                    "all_working_hours": float(total_hours),
-                    "all_working_hours_this_year": float(total_hours_year),
-                }
-            )
+            context.update(build_subject_template_context(member))
+            context.update(build_anniversary_deprecated_context(member))
+            context.update(build_trigger_template_context(rule, trigger))
+            context.update(build_global_hours_context())
+            context.update(build_participants_stats_context())
+            context.update(build_birthdays_context())
+            context.update(build_anniversaries_context())
+            context.update(build_current_date_context())
+            context.update(build_members_with_hours_context())
+            context.update(build_members_without_hours_context())
+            context.update(build_members_by_birthday_context())
+            context.update(build_birthdays_milestones_context())
+            context.update(build_anniversaries_milestones_context())
+            context.update(build_upcoming_birthdays_context())
+            context.update(build_upcoming_anniversaries_context())
+            context.update(build_upcoming_events_context())
+
             subject = render_text(template.subject_template, context)
             body = render_text(template.body_template, context)
 
@@ -690,6 +1859,7 @@ def process_working_hours_monthly_rule(
     template: NotificationTemplate,
     now_dt: datetime,
     trigger_code: str,
+    trigger: TriggerType = None,
 ) -> None:
     """Send a monthly working-hours summary to every member on the 1st of the month."""
     # Only run on the 1st day of the month
@@ -739,13 +1909,25 @@ def process_working_hours_monthly_rule(
         context = {"recipient_email": recipient}
         context.update(build_receiver_template_context(
             recipient, receiver_member=member))
+        context.update(build_recipient_template_context(
+            recipient, recipient_member=member))
         context.update(build_member_template_context(member))
-        context.update(
-            {
-                "all_working_hours": float(total_hours),
-                "all_working_hours_this_year": float(total_hours_year),
-            }
-        )
+        context.update(build_subject_template_context(member))
+        context.update(build_anniversary_deprecated_context(member))
+        context.update(build_trigger_template_context(rule, trigger))
+        context.update(build_global_hours_context())
+        context.update(build_participants_stats_context())
+        context.update(build_birthdays_context())
+        context.update(build_anniversaries_context())
+        context.update(build_current_date_context())
+        context.update(build_members_with_hours_context())
+        context.update(build_members_without_hours_context())
+        context.update(build_members_by_birthday_context())
+        context.update(build_birthdays_milestones_context())
+        context.update(build_anniversaries_milestones_context())
+        context.update(build_upcoming_birthdays_context())
+        context.update(build_upcoming_anniversaries_context())
+        context.update(build_upcoming_events_context())
 
         subject = render_text(template.subject_template, context)
         body = render_text(template.body_template, context)
@@ -999,16 +2181,19 @@ def process_rule(rule: NotificationRule, now_dt: datetime) -> None:
     # if trigger_code == "EVENT_START":
     #    process_event_start_rule(rule, template, now_dt)
     if trigger_code in ("BIRTHDAY", "MEMBER_ANNIVERSARY"):
-        process_member_date_rule(rule, template, now_dt, trigger_code)
+        process_member_date_rule(rule, template, now_dt, trigger_code, trigger)
     elif trigger_code == "WORKING_HOURS_MONTHLY":
         process_working_hours_monthly_rule(
-            rule, template, now_dt, trigger_code)
+            rule, template, now_dt, trigger_code, trigger)
     else:
-        process_event_start_rule(rule, template, now_dt, trigger_code)
+        process_event_start_rule(rule, template, now_dt, trigger_code, trigger)
 
 
 def validate_environment() -> None:
     """Validate required SMTP environment values before running the job."""
+    if SIMULATE:
+        return
+
     required = {
         "SMTP_HOST": SMTP_HOST,
         "SMTP_USER": SMTP_USER,
@@ -1029,6 +2214,8 @@ def run_service(now_dt: datetime = None) -> None:
     if DEBUG:
         print(f"\n{'='*60}")
         print(f"Mail Service Diagnostic Run: {now_dt}")
+        if SIMULATE:
+            print("Mode: SIMULATE (no SMTP send, NotificationLog writes enabled)")
         print(f"{'='*60}\n")
 
     active_rules = NotificationRule.query.filter_by(active=True).all()
@@ -1047,4 +2234,6 @@ if __name__ == '__main__':
     cron_app = build_runtime_app()
     with cron_app.app_context():
         print("Mail service is running...")
+        if SIMULATE:
+            print("SIMULATE mode enabled: no real emails will be sent; logs are saved.")
         run_service()
