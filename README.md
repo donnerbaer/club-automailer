@@ -13,7 +13,7 @@ Web application and mail service for club notifications.
 ## Supported Languages
 
 - `en` English
-- `de` Deutsch ~70¼
+- `de` Deutsch ~70%
 
 ## Requirements
 
@@ -21,6 +21,10 @@ Web application and mail service for club notifications.
 - SMTP access for outgoing mail
 
 Older Python versions may also work, but are not officially tested.
+
+## Commendation
+
+It is recommended to use an .htaccess file for this application.
 
 ## Setup
 
